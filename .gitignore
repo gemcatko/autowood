@@ -1,3 +1,5 @@
 cfg/
 data/
 weights/
+.idea/
+.git/
