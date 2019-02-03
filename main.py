@@ -1,20 +1,13 @@
-import time
-import traceback
-import sys
 from pydarknet import Detector, Image
+
 import cv2
-import logging
-import weakref
+import numpy as np
+
 ####################################################
 # for manual see: https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
 from pyimagesearch.centroidtracker import CentroidTracker
-from imutils.video import VideoStream
-import numpy as np
-import argparse
-import imutils
-import time
-import cv2
 
+# set resolution taken from webcam
 Xresolution = 1280
 Yresolution = 720
 cell_phone = []
@@ -23,7 +16,6 @@ field_of_view = 40  # field of view in cm for camera
 x_norm_last = 0
 y_norm_last = 0
 move_treshold = 0.05
-
 
 # initialize our centroid tracker and frame dimensions
 ct = CentroidTracker()
@@ -36,7 +28,7 @@ ct = CentroidTracker()
 # TODO calculate speed of objects
 # TODO Show found erros with ID on separate screen
 
-def chyba_one_mark_small(object_to_check,cat, score, x, y, w, h, ):
+def chyba_one_mark_small(object_to_check, cat, score, x, y, w, h, ):
     """
     :param cat:
     :param score:
@@ -48,7 +40,7 @@ def chyba_one_mark_small(object_to_check,cat, score, x, y, w, h, ):
     It is also drawing magenta line on 0.9 of screen => if object is touching almost edge of the screen
     :return:
     """
-    #giving category do utf-8 so is can compare it human language
+    # giving category do utf-8 so is can compare it human language
     x_norm, y_norm, w_norm, h_norm, volume_norm = calculate_volume_norm(x, y, w, h)
     # W_norm is used_for triger how big error to detect 1 is one screen 0.5 is alf screen on x axis . If 0.5 it si detecting object smoler then 0.5 of screen
     if cat.decode("utf-8") == object_to_check and w_norm <= 0.5:
@@ -64,9 +56,10 @@ def chyba_one_mark_small(object_to_check,cat, score, x, y, w, h, ):
     else:
         pass
 
+
 def calculate_volume_norm(x, y, w, h):
     """
-    Calculate codinates in percentage
+    Calculate coordinates in percentage
     :param x: center of detected object on x axis in pixels
     :param y: center of detected object on y axis in pixels
     :param w: width of detected object on x axis in pixels
@@ -95,12 +88,10 @@ if __name__ == "__main__":
     net = Detector(bytes("cfg/yolov3.cfg", encoding="utf-8"), bytes("weights/yolov3.weights", encoding="utf-8"), 0,
                    bytes("cfg/coco.data", encoding="utf-8"), )
     # net = Detector(bytes("cfg/2018_12_15_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2018_12_15_yolo-obj_2197.backup", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
-    # set webcam propertiesthe width and height, working for USB for webcam
+    # set web cam properties width and height, working for USB for webcam
     cap = cv2.VideoCapture(0)
     cap.set(3, Xresolution)
     cap.set(4, Yresolution)
-
-
 
     while True:
         r, frame = cap.read()
@@ -114,7 +105,7 @@ if __name__ == "__main__":
             del dark_frame
             # clean rect so it is clean an can be filled with new detecttion from frame later used in conversion_to_x1y1x2y2
             rects = []
-            resultsWithID =[]
+            resultsWithID = []
             # enable below if you want to see detections from yolo34
             print(type(results), results)
 
@@ -124,7 +115,7 @@ if __name__ == "__main__":
                 cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 0))
                 cv2.putText(frame, str(cat.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1,
                             (255, 255, 0))
-                chyba_one_mark_small("cell phone",cat, score, x, y, w, h, )
+                chyba_one_mark_small("cell phone", cat, score, x, y, w, h, )
                 cv2.putText(frame, str(count_objects_in_frame("cell phone")),
                             (int(Xresolution - 50), int(Yresolution - 50)), cv2.FONT_HERSHEY_COMPLEX, 1,
                             (150, 150, 150))
@@ -136,36 +127,37 @@ if __name__ == "__main__":
                 box = np.array([x - w / 2, y - h / 2, x + w / 2, y + h / 2])
                 rects.append(box.astype("int"))
 
-            # enable below if you want to see detections from yolo conversersed to centroid format
+            # enable below if you want to see detections from yolo conversed to centroid format
             # print("rect", rects)
 
-            # update our centroid tracker using the computed set of boundingbox rectangles
+            # update our centroid tracker using the computed set of bounding box rectangles
             objects = ct.update(rects)
             # loop over the tracked objects from Centroids
             for (objectID, centroid) in objects.items():
                 # draw both the ID of the object and the centroid of the
                 # object on the output frame
                 text = "ID {}".format(objectID)
-                cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(0, 255, 0), 2)
+                cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                            (0, 255, 0), 2)
                 cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
 
-            #Reconstruct Yolo34 results with object id (data from cetroid tracker) an put i to idresults list, like below:
-            #class 'list'>[(b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
-            #class 'list'>[(1, b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (4, b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
-            idresults=[]
+            # Reconstruct Yolo34 results with object id (data from centroid tracker) an put object ID to idresults list, like :
+            # class 'list'>[(b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
+            # class 'list'>[(1, b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (4, b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
+            idresults = []
             # loop over the tracked objects from Yolo34
             for cat, score, bounds in results:
                 x, y, w, h = bounds
                 # loop over the tracked objects from Centroid
                 for (objectID, centroid) in objects.items():
-                    # put centroid coodinates to cX and Cy variables
+                    # put centroid coordinates to cX and Cy variables
                     cX, cY = centroid[0], centroid[1]
-                    # there is diffrerence betwean yolo34 centroids and centroids calculated by centroid tracker,Centroid closer then 2 pixel are considired to matcg  TODO find where?
-                    if abs(cX - int(x))<=2 and abs(cY - int(y))<=2:
+                    # there is difference between yolo34 centroids and centroids calculated by centroid tracker,Centroid closer then 2 pixel are considired to matcg  TODO find where?
+                    if abs(cX - int(x)) <= 2 and abs(cY - int(y)) <= 2:
                         # reconstruct detection list as from yolo34 including ID from centroid
                         idresult = objectID, cat, score, bounds
                         idresults.append(idresult)
-            #print results with Id on screen
+            # print results with Id on screen
             print(type(idresults), idresults)
             cv2.imshow("preview", frame)
 
