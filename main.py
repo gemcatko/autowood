@@ -114,8 +114,9 @@ if __name__ == "__main__":
             del dark_frame
             # clean rect so it is clean an can be filled with new detecttion from frame later used in conversion_to_x1y1x2y2
             rects = []
-            # enable below if you want to see detections from yolo
-            # print(type(results), results)
+            resultsWithID =[]
+            # enable below if you want to see detections from yolo34
+            print(type(results), results)
 
             # for every detection in results do
             for cat, score, bounds in results:
@@ -127,27 +128,46 @@ if __name__ == "__main__":
                 cv2.putText(frame, str(count_objects_in_frame("cell phone")),
                             (int(Xresolution - 50), int(Yresolution - 50)), cv2.FONT_HERSHEY_COMPLEX, 1,
                             (150, 150, 150))
-                # converse data from yolo format to cetroid format
+                """
+                converse data from yolo format to cetroid format
+                [(b'person', 0.9299755096435547, (363.68475341796875, 348.0577087402344, 252.04286193847656, 231.17266845703125)), (b'vase', 0.3197628855705261, (120.3013687133789, 405.3641357421875, 40.76551055908203, 32.07142639160156))]
+                [array([145, 153, 248, 274]), array([113, 178, 148, 224])]
+                """
                 box = np.array([x - w / 2, y - h / 2, x + w / 2, y + h / 2])
                 rects.append(box.astype("int"))
 
             # enable below if you want to see detections from yolo conversersed to centroid format
             # print("rect", rects)
-            # update our centroid tracker using the computed set of bounding
-            # box rectangles
-            objects = ct.update(rects)
 
-            # loop over the tracked objects
+            # update our centroid tracker using the computed set of boundingbox rectangles
+            objects = ct.update(rects)
+            # loop over the tracked objects from Centroids
             for (objectID, centroid) in objects.items():
                 # draw both the ID of the object and the centroid of the
                 # object on the output frame
                 text = "ID {}".format(objectID)
-                cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                            (0, 255, 0), 2)
+                cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(0, 255, 0), 2)
                 cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
 
+            #Reconstruct Yolo34 results with object id (data from cetroid tracker) an put i to idresults list, like below:
+            #class 'list'>[(b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
+            #class 'list'>[(1, b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (4, b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
+            idresults=[]
+            # loop over the tracked objects from Yolo34
+            for cat, score, bounds in results:
+                x, y, w, h = bounds
+                # loop over the tracked objects from Centroid
+                for (objectID, centroid) in objects.items():
+                    # put centroid coodinates to cX and Cy variables
+                    cX, cY = centroid[0], centroid[1]
+                    # there is diffrerence betwean yolo34 centroids and centroids calculated by centroid tracker,Centroid closer then 2 pixel are considired to matcg  TODO find where?
+                    if abs(cX - int(x))<=2 and abs(cY - int(y))<=2:
+                        # reconstruct detection list as from yolo34 including ID from centroid
+                        idresult = objectID, cat, score, bounds
+                        idresults.append(idresult)
+            #print results with Id on screen
+            print(type(idresults), idresults)
             cv2.imshow("preview", frame)
-            # print(results)
 
         k = cv2.waitKey(1)
         if k == 0xFF & ord("q"):
