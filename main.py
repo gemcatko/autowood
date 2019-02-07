@@ -1,7 +1,12 @@
+import threading
+
 from pydarknet import Detector, Image
 
 import cv2
 import numpy as np
+import time
+import os
+import shlex, subprocess
 
 ####################################################
 # for manual see: https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
@@ -12,10 +17,15 @@ Xresolution = 1280
 Yresolution = 720
 cell_phone = []
 list_chyba = []
-field_of_view = 40  # field of view in cm for camera
+field_of_view = 0,40  # field of view in m for camera
 x_norm_last = 0
 y_norm_last = 0
-move_treshold = 0.05
+speed = 2   #MS
+#move_treshold = 0.05
+# set web cam properties width and height, working for USB for webcam
+cap = cv2.VideoCapture(0)
+cap.set(3, Xresolution)
+cap.set(4, Yresolution)
 
 # initialize our centroid tracker and frame dimensions
 ct = CentroidTracker()
@@ -56,6 +66,9 @@ def chyba_one_mark_small(object_to_check, cat, score, x, y, w, h, ):
     else:
         pass
 
+def error_small(id,object_to_check, cat, score, x, y, w, h,):
+    pass
+
 
 def calculate_volume_norm(x, y, w, h):
     """
@@ -81,6 +94,27 @@ def count_objects_in_frame(object_to_check):
             number_of_object_to_check = number_of_object_to_check + 1
     return number_of_object_to_check
 
+class BlinkStickThread(threading.Thread):
+    def run(self):
+        '''Start your thread here'''
+        subprocess.Popen(["python2", "BlinkStick.py"])
+        pass
+
+def BlinkOnce():
+    """
+    Is using threading for blinking once, create tread for BlinkStick.py (python2.7)
+
+    """
+    try:
+        # os.system('python2 BlinkStick.py') # najpomalsie
+        # subprocess.Popen(["python2", "BlinkStick.py"]) #troska ryclesie
+        thread = BlinkStickThread()
+        thread.daemon = True
+        thread.start()
+    except:
+        print("BlinkStick exception occurred ")
+    pass
+
 
 if __name__ == "__main__":
     # Optional statement to configure preferred GPU. Available only in GPU version.
@@ -88,15 +122,10 @@ if __name__ == "__main__":
     net = Detector(bytes("cfg/yolov3.cfg", encoding="utf-8"), bytes("weights/yolov3.weights", encoding="utf-8"), 0,
                    bytes("cfg/coco.data", encoding="utf-8"), )
     # net = Detector(bytes("cfg/2018_12_15_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2018_12_15_yolo-obj_2197.backup", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
-    # set web cam properties width and height, working for USB for webcam
-    cap = cv2.VideoCapture(0)
-    cap.set(3, Xresolution)
-    cap.set(4, Yresolution)
-
     while True:
         r, frame = cap.read()
         if r:
-            # start_time = time.time()
+            start_time = time.time()
             # Only measure the time taken by YOLO and API Call overhead
             dark_frame = Image(frame)
             # This are the function parameters of detect:
@@ -107,7 +136,7 @@ if __name__ == "__main__":
             rects = []
             resultsWithID = []
             # enable below if you want to see detections from yolo34
-            print(type(results), results)
+            #print(type(results), results)
 
             # for every detection in results do
             for cat, score, bounds in results:
@@ -115,7 +144,6 @@ if __name__ == "__main__":
                 cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 0))
                 cv2.putText(frame, str(cat.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1,
                             (255, 255, 0))
-                chyba_one_mark_small("cell phone", cat, score, x, y, w, h, )
                 cv2.putText(frame, str(count_objects_in_frame("cell phone")),
                             (int(Xresolution - 50), int(Yresolution - 50)), cv2.FONT_HERSHEY_COMPLEX, 1,
                             (150, 150, 150))
@@ -144,10 +172,12 @@ if __name__ == "__main__":
             # Reconstruct Yolo34 results with object id (data from centroid tracker) an put object ID to idresults list, like :
             # class 'list'>[(b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
             # class 'list'>[(1, b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (4, b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
+
             idresults = []
             # loop over the tracked objects from Yolo34
             for cat, score, bounds in results:
                 x, y, w, h = bounds
+                chyba_one_mark_small("cell phone", cat, score, x, y, w, h, )
                 # loop over the tracked objects from Centroid
                 for (objectID, centroid) in objects.items():
                     # put centroid coordinates to cX and Cy variables
@@ -157,9 +187,27 @@ if __name__ == "__main__":
                         # reconstruct detection list as from yolo34 including ID from centroid
                         idresult = objectID, cat, score, bounds
                         idresults.append(idresult)
-            # print results with Id on screen
+
+            #print results with Id on screen
             print(type(idresults), idresults)
+            BlinkOnce()
+            end_time = time.time()
+            print("Elapsed Time:",end_time-start_time)
+
+            for id, cat, score, bounds in idresults:
+                x_norm, y_norm, w_norm, h_norm, volume_norm = calculate_volume_norm(x, y, w, h)
+                if cat.decode("utf-8") == "cell" and w_norm <= 0.5:
+                    if (x_norm + w_norm / 2) > 0.80:
+
+                        print("sprav znacku zaciatok koniec ")
+                        cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)),
+                                 (255, 0, 255), 10)
+                        pass
+                else:
+                    pass
+
             cv2.imshow("preview", frame)
+
 
         k = cv2.waitKey(1)
         if k == 0xFF & ord("q"):
