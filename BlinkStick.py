@@ -16,7 +16,7 @@ for bstick in blinkstick.find_all():
     """
     bstick.set_color(channel=0, index=0, name="red")
     bstick.set_color(channel=0, index=1, name="red")
-    bstick.set_color(channel=0, index=2, name="red")
+    #bstick.set_color(channel=0, index=2, name="red")
     #bstick.set_color(channel=0, index=3, name="red")
     """
     bstick.set_color(channel=0, index=4, name="red")
@@ -31,7 +31,7 @@ for bstick in blinkstick.find_all():
     """
     bstick.set_color(channel=0, index=0, name="")
     bstick.set_color(channel=0, index=1, name="")
-    bstick.set_color(channel=0, index=2, name="")
+    #bstick.set_color(channel=0, index=2, name="")
     #bstick.set_color(channel=0, index=3, name="")
     """
     bstick.set_color(channel=0, index=4, name="")

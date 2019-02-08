@@ -17,10 +17,14 @@ Xresolution = 1280
 Yresolution = 720
 cell_phone = []
 list_chyba = []
+trigerlist = []
 field_of_view = 0,40  # field of view in m for camera
 x_norm_last = 0
 y_norm_last = 0
-speed = 2   #MS
+speed_ms = 2   #MS Metere za Sekundu rychlost pasu pily
+w_of_one_picture_m = 0.4 # M Meter width og on screen in meter
+duration_1screen_s = w_of_one_picture_m / speed_ms # time za kolko prejde jedna obrazovka pri speed_ms
+delay = 1
 #move_treshold = 0.05
 # set web cam properties width and height, working for USB for webcam
 cap = cv2.VideoCapture(0)
@@ -116,6 +120,7 @@ def BlinkOnce():
     pass
 
 
+
 if __name__ == "__main__":
     # Optional statement to configure preferred GPU. Available only in GPU version.
     # pydarknet.set_cuda_device(0)
@@ -177,7 +182,7 @@ if __name__ == "__main__":
             # loop over the tracked objects from Yolo34
             for cat, score, bounds in results:
                 x, y, w, h = bounds
-                chyba_one_mark_small("cell phone", cat, score, x, y, w, h, )
+                #chyba_one_mark_small("cell phone", cat, score, x, y, w, h, )
                 # loop over the tracked objects from Centroid
                 for (objectID, centroid) in objects.items():
                     # put centroid coordinates to cX and Cy variables
@@ -189,20 +194,27 @@ if __name__ == "__main__":
                         idresults.append(idresult)
 
             #print results with Id on screen
-            print(type(idresults), idresults)
-            BlinkOnce()
-            end_time = time.time()
-            print("Elapsed Time:",end_time-start_time)
+            #print(type(idresults), idresults)
+            #BlinkOnce()
+            #end_time = time.time()
+            #print("Elapsed Time:",end_time-start_time)
 
+            #vramci jednoho brazka prejdi vsetky cell phone co su vo vzdialenosti x<0,8 su 0.3 >=siroke  >= 0.05 a uz predtym si ich nevidel (triger list)
             for id, cat, score, bounds in idresults:
+                x, y, w, h = bounds
                 x_norm, y_norm, w_norm, h_norm, volume_norm = calculate_volume_norm(x, y, w, h)
-                if cat.decode("utf-8") == "cell" and w_norm <= 0.5:
-                    if (x_norm + w_norm / 2) > 0.80:
+                if cat.decode("utf-8") == "cell phone" and 0.3 >= w_norm >= 0.05 and (x_norm + (w_norm / 2)) > 0.80 and not (any(id in sublist for sublist in trigerlist)):
 
-                        print("sprav znacku zaciatok koniec ")
-                        cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)),
+                    print("sprav znacku zaciatok koniec")
+                    cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)),
                                  (255, 0, 255), 10)
-                        pass
+                    time_begining = time.time() + delay + ((1-(x_norm + (w_norm/2)))*duration_1screen_s)
+                    time_ending = time_begining + ((1-(x_norm - (w_norm/2)))*duration_1screen_s)
+                    print (time_ending -time_begining)
+                    triger = id, time_begining, time_ending
+                    trigerlist.append(triger)
+                    print ("trigerlist:",trigerlist)
+                    pass
                 else:
                     pass
 
