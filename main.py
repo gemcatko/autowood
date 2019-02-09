@@ -18,14 +18,15 @@ Yresolution = 720
 cell_phone = []
 list_chyba = []
 trigerlist = []
-field_of_view = 0,40  # field of view in m for camera
+fastTrigerList =[]
+field_of_view = 0, 40  # field of view in m for camera
 x_norm_last = 0
 y_norm_last = 0
-speed_ms = 2   #MS Metere za Sekundu rychlost pasu pily
-w_of_one_picture_m = 0.4 # M Meter width og on screen in meter
-duration_1screen_s = w_of_one_picture_m / speed_ms # time za kolko prejde jedna obrazovka pri speed_ms
-delay = 1
-#move_treshold = 0.05
+speed_ms = 2  # MS Metere za Sekundu rychlost pasu pily
+w_of_one_picture_m = 0.4  # M Meter width og on screen in meter
+duration_1screen_s = w_of_one_picture_m / speed_ms  # time za kolko prejde jedna obrazovka pri speed_ms
+delay = 1  # time in s to delay marking, can be use to set distance.
+# move_treshold = 0.05
 # set web cam properties width and height, working for USB for webcam
 cap = cv2.VideoCapture(0)
 cap.set(3, Xresolution)
@@ -70,7 +71,8 @@ def chyba_one_mark_small(object_to_check, cat, score, x, y, w, h, ):
     else:
         pass
 
-def error_small(id,object_to_check, cat, score, x, y, w, h,):
+
+def error_small(id, object_to_check, cat, score, x, y, w, h, ):
     pass
 
 
@@ -98,11 +100,13 @@ def count_objects_in_frame(object_to_check):
             number_of_object_to_check = number_of_object_to_check + 1
     return number_of_object_to_check
 
+
 class BlinkStickThread(threading.Thread):
     def run(self):
         '''Start your thread here'''
         subprocess.Popen(["python2", "BlinkStick.py"])
         pass
+
 
 def BlinkOnce():
     """
@@ -120,6 +124,36 @@ def BlinkOnce():
     pass
 
 
+class loopTrigerlistThread(threading.Thread):
+    def run(self):
+        '''Start your thread here'''
+
+        while True:
+            start_time_loop = time.time()
+            for ida, time_begining, idb, time_ending in trigerlist:
+                if time.time()-time_begining >= 0 and not (any(ida in sublist for sublist in fastTrigerList)):
+                    fastTriger = ida, time_begining
+                    fastTrigerList.append(fastTriger)
+                    print("trigerlist:", fastTrigerList)
+                    BlinkOnce()
+
+                if time.time()-time_ending >= 0 and not (any(idb in sublist for sublist in fastTrigerList)):
+                    fastTriger = idb, time_ending
+                    fastTrigerList.append(fastTriger)
+                    print("trigerlist:", fastTrigerList)
+                    BlinkOnce()
+
+            time.sleep(0.001)
+            end_time_loop = time.time()
+            if (end_time_loop - start_time_loop) > 0.0015:
+                print("Loop time:", end_time_loop - start_time_loop)
+
+
+def loopTrigerlist():
+    thread = loopTrigerlistThread()
+    thread.daemon = True
+    thread.start()
+
 
 if __name__ == "__main__":
     # Optional statement to configure preferred GPU. Available only in GPU version.
@@ -127,7 +161,10 @@ if __name__ == "__main__":
     net = Detector(bytes("cfg/yolov3.cfg", encoding="utf-8"), bytes("weights/yolov3.weights", encoding="utf-8"), 0,
                    bytes("cfg/coco.data", encoding="utf-8"), )
     # net = Detector(bytes("cfg/2018_12_15_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2018_12_15_yolo-obj_2197.backup", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
+    #Start thread for check of trigerlist
+    loopTrigerlist()
     while True:
+        start_time = time.time()
         r, frame = cap.read()
         if r:
             start_time = time.time()
@@ -141,7 +178,7 @@ if __name__ == "__main__":
             rects = []
             resultsWithID = []
             # enable below if you want to see detections from yolo34
-            #print(type(results), results)
+            # print(type(results), results)
 
             # for every detection in results do
             for cat, score, bounds in results:
@@ -182,7 +219,7 @@ if __name__ == "__main__":
             # loop over the tracked objects from Yolo34
             for cat, score, bounds in results:
                 x, y, w, h = bounds
-                #chyba_one_mark_small("cell phone", cat, score, x, y, w, h, )
+                # chyba_one_mark_small("cell phone", cat, score, x, y, w, h, )
                 # loop over the tracked objects from Centroid
                 for (objectID, centroid) in objects.items():
                     # put centroid coordinates to cX and Cy variables
@@ -193,34 +230,36 @@ if __name__ == "__main__":
                         idresult = objectID, cat, score, bounds
                         idresults.append(idresult)
 
-            #print results with Id on screen
-            #print(type(idresults), idresults)
-            #BlinkOnce()
-            #end_time = time.time()
-            #print("Elapsed Time:",end_time-start_time)
+            # print results with Id on screen
+            # print(type(idresults), idresults)
+            # BlinkOnce()
+            # end_time = time.time()
+            # print("Elapsed Time:",end_time-start_time)
 
-            #vramci jednoho brazka prejdi vsetky cell phone co su vo vzdialenosti x<0,8 su 0.3 >=siroke  >= 0.05 a uz predtym si ich nevidel (triger list)
+            # vramci jednoho brazka prejdi vsetky cell phone co su vo vzdialenosti x<0,8 su 0.3 >=siroke  >= 0.05 a uz predtym si ich nevidel (triger list)
             for id, cat, score, bounds in idresults:
                 x, y, w, h = bounds
                 x_norm, y_norm, w_norm, h_norm, volume_norm = calculate_volume_norm(x, y, w, h)
-                if cat.decode("utf-8") == "cell phone" and 0.3 >= w_norm >= 0.05 and (x_norm + (w_norm / 2)) > 0.80 and not (any(id in sublist for sublist in trigerlist)):
+                if cat.decode("utf-8") == "cell phone" and 0.9 >= w_norm >= 0.05 and (
+                        x_norm + (w_norm / 2)) > 0.80 and not (any(id in sublist for sublist in trigerlist)):
 
                     print("sprav znacku zaciatok koniec")
                     cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)),
-                                 (255, 0, 255), 10)
-                    time_begining = time.time() + delay + ((1-(x_norm + (w_norm/2)))*duration_1screen_s)
-                    time_ending = time_begining + ((1-(x_norm - (w_norm/2)))*duration_1screen_s)
-                    print (time_ending -time_begining)
-                    triger = id, time_begining, time_ending
+                             (255, 0, 255), 10)
+                    time_begining = time.time() + delay + ((1 - (x_norm + (w_norm / 2))) * duration_1screen_s)
+                    time_ending = time_begining + ((1 - (x_norm - (w_norm / 2))) * duration_1screen_s)
+                    #print(time_ending - time_begining)
+                    # add to triger list Id, time when beginning mark, time when ending mark
+                    triger = id+0.1, time_begining, id+0.2, time_ending
                     trigerlist.append(triger)
-                    print ("trigerlist:",trigerlist)
+                    print("trigerlist:", trigerlist)
                     pass
                 else:
                     pass
 
             cv2.imshow("preview", frame)
-
-
+        end_time = time.time()
+        #print("Elapsed Time:",end_time-start_time)
         k = cv2.waitKey(1)
         if k == 0xFF & ord("q"):
             break
