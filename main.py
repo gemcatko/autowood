@@ -136,13 +136,13 @@ class loopTrigerlistThread(threading.Thread):
                 if time.time()-time_begining >= 0 and not (any(ida in sublist for sublist in fastTrigerList)):
                     fastTriger = ida, time_begining
                     fastTrigerList.append(fastTriger)
-                    logging.debug('trigerlist:%s', fastTrigerList)
+                    logging.debug('fastTrigerlist:%s', fastTrigerList)
                     BlinkOnce()
 
                 if time.time()-time_ending >= 0 and not (any(idb in sublist for sublist in fastTrigerList)):
                     fastTriger = idb, time_ending
                     fastTrigerList.append(fastTriger)
-                    logging.debug('trigerlist:%s', fastTrigerList)
+                    logging.debug('fastTrigerlist:%s', fastTrigerList)
                     BlinkOnce()
 
             time.sleep(0.001)

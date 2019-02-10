@@ -44,6 +44,7 @@ try:
         """
         end_time = time.time()
         #print("You have bliked, Elapsed Time of the Blink:", end_time - start_time)
-        logging.debug('You have bliked, Elapsed Time of the Blink: %s', end_time - start_time)
+        #logging.debug('You have bliked, Elapsed Time of the Blink: %s', end_time - start_time)
+        logging.debug('You have bliked, System time: %s', time.time())
 except:
     print("you have called blink stick to many times per second")
