@@ -1,4 +1,5 @@
 import threading
+import logging
 
 from pydarknet import Detector, Image
 
@@ -11,6 +12,7 @@ import shlex, subprocess
 ####################################################
 # for manual see: https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
 from pyimagesearch.centroidtracker import CentroidTracker
+logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s',)
 
 # set resolution taken from webcam
 Xresolution = 1280
@@ -134,19 +136,20 @@ class loopTrigerlistThread(threading.Thread):
                 if time.time()-time_begining >= 0 and not (any(ida in sublist for sublist in fastTrigerList)):
                     fastTriger = ida, time_begining
                     fastTrigerList.append(fastTriger)
-                    print("trigerlist:", fastTrigerList)
+                    logging.debug('trigerlist:%s', fastTrigerList)
                     BlinkOnce()
 
                 if time.time()-time_ending >= 0 and not (any(idb in sublist for sublist in fastTrigerList)):
                     fastTriger = idb, time_ending
                     fastTrigerList.append(fastTriger)
-                    print("trigerlist:", fastTrigerList)
+                    logging.debug('trigerlist:%s', fastTrigerList)
                     BlinkOnce()
 
             time.sleep(0.001)
             end_time_loop = time.time()
-            if (end_time_loop - start_time_loop) > 0.0015:
-                print("Loop time:", end_time_loop - start_time_loop)
+            if (end_time_loop - start_time_loop) > 0.0035:
+                #print("loopTrigerlistThread:", end_time_loop - start_time_loop)
+                logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
 
 
 def loopTrigerlist():
@@ -167,7 +170,7 @@ if __name__ == "__main__":
         start_time = time.time()
         r, frame = cap.read()
         if r:
-            start_time = time.time()
+            #start_time = time.time()
             # Only measure the time taken by YOLO and API Call overhead
             dark_frame = Image(frame)
             # This are the function parameters of detect:
@@ -240,19 +243,18 @@ if __name__ == "__main__":
             for id, cat, score, bounds in idresults:
                 x, y, w, h = bounds
                 x_norm, y_norm, w_norm, h_norm, volume_norm = calculate_volume_norm(x, y, w, h)
-                if cat.decode("utf-8") == "cell phone" and 0.9 >= w_norm >= 0.05 and (
-                        x_norm + (w_norm / 2)) > 0.80 and not (any(id in sublist for sublist in trigerlist)):
-
-                    print("sprav znacku zaciatok koniec")
+                if cat.decode("utf-8") == "cell phone" and 0.9 >= w_norm >= 0.05 and (x_norm + (w_norm / 2)) > 0.80 and not (any((id+0.1) in sublist for sublist in trigerlist)):
+                    logging.debug('sprav znacku zaciatok koniec')
                     cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)),
                              (255, 0, 255), 10)
                     time_begining = time.time() + delay + ((1 - (x_norm + (w_norm / 2))) * duration_1screen_s)
                     time_ending = time_begining + ((1 - (x_norm - (w_norm / 2))) * duration_1screen_s)
                     #print(time_ending - time_begining)
                     # add to triger list Id, time when beginning mark, time when ending mark
-                    triger = id+0.1, time_begining, id+0.2, time_ending
+                    triger = id + 0.1, time_begining, id+0.2, time_ending
                     trigerlist.append(triger)
-                    print("trigerlist:", trigerlist)
+                    #print("trigerlist:", trigerlist)
+                    logging.debug('trigerlist:%s',trigerlist)
                     pass
                 else:
                     pass

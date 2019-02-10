@@ -2,6 +2,9 @@
 #  add blink stick as root: sudo blinkstick --add-udev-rule
 from blinkstick import blinkstick
 import time
+import logging
+logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s',)
+
 try:
     for bstick in blinkstick.find_all():
         start_time = time.time()
@@ -40,6 +43,7 @@ try:
         bstick.set_color(channel=0, index=7, name="")
         """
         end_time = time.time()
-        print("You have bliked, Elapsed Time of the Blink:", end_time - start_time)
+        #print("You have bliked, Elapsed Time of the Blink:", end_time - start_time)
+        logging.debug('You have bliked, Elapsed Time of the Blink: %s', end_time - start_time)
 except:
     print("you have called blink stick to many times per second")
