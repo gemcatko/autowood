@@ -30,12 +30,14 @@ y_norm_last = 0
 speed_ms = 1  # MS Metere za Sekundu rychlost pasu pily
 w_of_one_picture_m = 0.4  # M Meter width og on screen in meter
 duration_1screen_s = w_of_one_picture_m / speed_ms  # time za kolko prejde jedna obrazovka pri speed_ms
-delay = 1  # time in s to delay marking, can be use to set distance of sensing camera from BliknStick.
+delay = 0  # time in s to delay marking, can be use to set distance of sensing camera from BliknStick.
+margin = 0.8 # place on screen where it is detecting objects,
 # move_treshold = 0.05
 # set web cam properties width and height, working for USB for webcam
 cap = cv2.VideoCapture(0)
 cap.set(3, Xresolution)
 cap.set(4, Yresolution)
+
 
 # initialize our centroid tracker and frame dimensions
 ct = CentroidTracker()
@@ -51,7 +53,7 @@ ct = CentroidTracker()
 
 def calculate_volume_norm(x, y, w, h):
     """
-    Calculate coordinates in percentage to the screen
+    Calculate coordinates in percentage relative to the screen
     :param x: center of detected object on x axis in pixels
     :param y: center of detected object on y axis in pixels
     :param w: width of detected object on x axis in pixels
@@ -98,6 +100,11 @@ def BlinkOnce():
 
 
 def pLoopTrigerlist(qtrigerlist):
+    """
+    Loop for trigering small error in another process
+    :param qtrigerlist:
+    :return:
+    """
     while True:
         start_time_loop = time.time()
         try:
@@ -135,11 +142,10 @@ def error4Cm(idresults):
     for id, cat, score, bounds in idresults:
         x, y, w, h = bounds
         x_norm, y_norm, w_norm, h_norm, volume_norm = calculate_volume_norm(x, y, w, h)
-        if cat.decode("utf-8") == "cell phone" and 0.9 >= w_norm >= 0.05 and (x_norm + (w_norm / 2)) > 0.80 and not (
-        any((id + 0.1) in sublist for sublist in trigerlist)):
+        if cat.decode("utf-8") == "cell phone" and 0.9 >= w_norm >= 0.05 and (x_norm + (w_norm / 2)) > margin and not (any((id + 0.1) in sublist for sublist in trigerlist)):
             logging.debug('sprav znacku zaciatok koniec')
-            cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)),
-                     (255, 0, 255), 10)
+            cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)),(255, 0, 255), 10)
+            # time of right bounding box
             time_begining = time.time() + delay + ((1 - (x_norm + (w_norm / 2))) * duration_1screen_s)
             time_ending = time_begining + ((1 - (x_norm - (w_norm / 2))) * duration_1screen_s)
             # add to triger list Id, time when beginning mark, time when ending mark
@@ -221,11 +227,9 @@ if __name__ == "__main__":
             for cat, score, bounds in results:
                 x, y, w, h = bounds
                 cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 0))
-                cv2.putText(frame, str(cat.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1,
-                            (255, 255, 0))
+                cv2.putText(frame, str(cat.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1,(255, 255, 0))
                 #will show number of objects you are looking for at screens
-                cv2.putText(frame, str(count_objects_in_frame("cell phone")),
-                            (int(Xresolution - 50), int(Yresolution - 50)), cv2.FONT_HERSHEY_COMPLEX, 1,
+                cv2.putText(frame, str(count_objects_in_frame("cell phone")),(int(Xresolution - 50), int(Yresolution - 50)), cv2.FONT_HERSHEY_COMPLEX, 1,
                             (150, 150, 150))
                 """
                 converse data from yolo format to cetroid format
@@ -248,7 +252,9 @@ if __name__ == "__main__":
                             (0, 255, 0), 2)
                 cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
             updateResutlsForId(results)
+
             error4Cm(idresults)
+            #print("idresults:",type(idresults),idresults)
 
             cv2.imshow("preview", frame)
         end_time = time.time()
