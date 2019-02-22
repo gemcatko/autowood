@@ -6,7 +6,7 @@ from multiprocessing import Process, Value
 class Mpoint(Process):
 
 
-    def __init__(self, shared_x, shared_y, measurement_delay=0, filename="/dev/input/mice" ):
+    def __init__(self, shared_x, shared_y, measurement_delay=0, filename="/dev/input/mice"):
         Process.__init__(self)
         self.delta_x = shared_x
         self.delta_y = shared_y
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     s_y = multiprocessing.Value('i', 0)
 
     #create instance of Process subclass Mpoint and pass shared values vars
-    mp = Mpoint(shared_x=s_x, shared_y=s_y, measurement_delay=0.1)
+    mp = Mpoint(shared_x=s_x, shared_y=s_y)
     mp.start()
 
     # for i in range(10):
