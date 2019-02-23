@@ -1,4 +1,4 @@
-import struct, os, time
+import struct, time
 import multiprocessing
 from multiprocessing import Process, Value
 
@@ -14,7 +14,7 @@ class Mpoint(Process):
         self.measurement_delay = measurement_delay
 
     def calculate_mouse_relmov(self):
-        with open(self.filename) as file:
+        with open(self.filename, "rb") as file:
             buf = file.read(3)
             self.delta_x.value, self.delta_y.value = struct.unpack("bb", buf[1:])
 
