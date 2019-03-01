@@ -93,29 +93,32 @@ def BlinkOnce():
         print("BlinkStickOnce exception occurred ")
     pass
 
-def pLoopTrigerlist(qtrigerlist):
+def pLoopTrigerlist(qtrigerlist,shared_x, shared_y):
     """
-    Loop for trigering small error in another process running faster then main loo in separate process it is interconnected with main process with trigerlist
-    :param qtrigerlist:
-    :return:
+    Loop for trigering small error in another process running faster then main loop in separate process it is interconnected with main process with trigerlist and shared_x, shared_y
+    :param qtrigerlist, shared_x, shared_y:
+    :return:nothing
     """
     while True:
+        print("X: {} Y: {}".format(shared_x.value, shared_y.value))
         start_time_loop = time.time()
         try:
             trigerlist = qtrigerlist.get_nowait()
             logging.debug("trigerlist%s",trigerlist)
 
         except:
+            # is setting speed of the loop in case 0.0005 it is 2000 times per second
             time.sleep(0.0005)
-        for ida, time_begining, idb, time_ending in trigerlist:
-            if time.time() - time_begining >= 0 and not (any(ida in sublist for sublist in fastTrigerList)):
-                fastTriger = ida, time_begining
+        # id + 0.1, time_begining, id + 0.2, time_ending
+        for id_begining, time_begining, id_ending, time_ending in trigerlist:
+            if time.time() - time_begining >= 0 and not (any(id_begining in sublist for sublist in fastTrigerList)):
+                fastTriger = id_begining, time_begining
                 fastTrigerList.append(fastTriger)
                 logging.debug('Done fastTrigerlist:%s', fastTrigerList)
                 BlinkOnce()
 
-            if time.time() - time_ending >= 0 and not (any(idb in sublist for sublist in fastTrigerList)):
-                fastTriger = idb, time_ending
+            if time.time() - time_ending >= 0 and not (any(id_ending in sublist for sublist in fastTrigerList)):
+                fastTriger = id_ending, time_ending
                 fastTrigerList.append(fastTriger)
                 logging.debug('done fastTrigerlist:%s', fastTrigerList)
                 BlinkOnce()
@@ -128,6 +131,7 @@ def pLoopTrigerlist(qtrigerlist):
 
 def error4Cm(idresults):
     """
+    # is executed in main loop
     Vramci jednoho brazka prejdi vsetky cell phone co su vo vzdialenosti x<0,8 su 0.3 >=siroke  >= 0.05 a uz predtym si ich nevidel (triger list)
     :param idresults:
     :return:
@@ -189,12 +193,6 @@ if __name__ == "__main__":
                    bytes("cfg/coco.data", encoding="utf-8"), )
     # net = Detector(bytes("cfg/2018_12_15_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2018_12_15_yolo-obj_2197.backup", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
     #Start loop for blinking in separate process
-    qtrigerlist = multiprocessing.Queue()
-    qtrigerlist.put(trigerlist)
-    process1 = multiprocessing.Process(target=pLoopTrigerlist,args=((qtrigerlist),))
-    process1.daemon = True
-    process1.start()
-
     #initialize shared vars  for speed/movement x,y
     s_x = multiprocessing.Value('i', 0)
     s_y = multiprocessing.Value('i', 0)
@@ -202,6 +200,13 @@ if __name__ == "__main__":
     #create instance of Process subclass Mpoint and pass shared values vars
     mp = Mpoint(shared_x=s_x, shared_y=s_y)
     mp.start()
+
+    qtrigerlist = multiprocessing.Queue()
+    qtrigerlist.put(trigerlist)
+    process1 = multiprocessing.Process(target=pLoopTrigerlist, args=(qtrigerlist, s_x, s_y))
+    process1.daemon = True
+    process1.start()
+
 
     while True:
         start_time = time.time()
