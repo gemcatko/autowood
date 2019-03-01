@@ -4,9 +4,18 @@ from multiprocessing import Process, Value
 
 
 class Mpoint(Process):
+    """
+    You have to change access rights to file /dev/input/mice !!!
+    chmod 666 /dev/input/mice
+    For using particular mouse use files
+    /dev/input/mouse0
+    /dev/input/mouse1
 
 
-    def __init__(self, shared_x, shared_y, measurement_delay=0, filename="/dev/input/mice"):
+    """
+
+
+    def __init__(self, shared_x, shared_y, measurement_delay=0, filename="/dev/input/mouse1"):
         Process.__init__(self)
         self.delta_x = shared_x
         self.delta_y = shared_y
@@ -24,11 +33,11 @@ class Mpoint(Process):
     def run(self):
         while True:
             self.calculate_mouse_relmov()
-            # print ("X: {} Y: {}".format(self.delta_x.value, self.delta_y.value))
+            print ("X: {} Y: {}".format(self.delta_x.value, self.delta_y.value))
             time.sleep(self.measurement_delay)
 
 
-
+"""
 if __name__ == '__main__':
 
     #initialize shared vars  for speed/movement x,y
@@ -42,3 +51,4 @@ if __name__ == '__main__':
     # for i in range(10):
     #      print("X:{} ".format(s_x.value))
     #      time.sleep(1)
+"""

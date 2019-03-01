@@ -1,28 +1,27 @@
 import threading
 import logging
-
 from pydarknet import Detector, Image
-
 import cv2
 import numpy as np
 import time
 import os
 import shlex, subprocess
 import multiprocessing
-
-
-####################################################
+from mpoint.mpoint import Mpoint
 # for manual see: https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
 from pyimagesearch.centroidtracker import CentroidTracker
+
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s',)
 
 # set resolution taken from webcam
-Xresolution = 720
+Xresolution = 640
 Yresolution = 480
 cell_phone = []
 list_chyba = []
+#Used by pLoopTrigerlist  to communicate with main loop format is [(2.1, 1551338571.7396123, 2.2, 1551338571.9881353), (3.1, 1551338578.9405866, 3.2, 1551338579.1024451), (0.1, 1551338586.2836142, 0.2, 1551338586.4773874)]
 trigerlist = []
 idresults = []
+# Used by pLoopTrigerlist  to confirm object was marked  format is [(2.1, 1551338571.7396123), (2.2, 1551338571.9881353), (3.1, 1551338578.9405866), (3.2, 1551338579.1024451), (0.1, 1551338586.2836142), (0.2, 1551338586.4773874)]
 fastTrigerList =[]
 field_of_view = 0, 40  # field of view in m for camera
 x_norm_last = 0
@@ -30,7 +29,7 @@ y_norm_last = 0
 speed_ms = 1  # MS Metere za Sekundu rychlost pasu pily
 w_of_one_picture_m = 0.4  # M Meter width og on screen in meter
 duration_1screen_s = w_of_one_picture_m / speed_ms  # time za kolko prejde jedna obrazovka pri speed_ms
-delay = 0  # time in s to delay marking, can be use to set distance of sensing camera from BliknStick.
+delay = 1  # time in s to delay marking, can be use to set distance of sensing camera from BliknStick.
 margin = 0.8 # place on screen where it is detecting objects,
 # move_treshold = 0.05
 # set web cam properties width and height, working for USB for webcam
@@ -47,9 +46,8 @@ ct = CentroidTracker()
 # DONE how to triger saw https://www.sick.com/es/en/registration-sensors/luminescence-sensors/lut9/lut9b-11626/p/p143229  (light? maybe) SEMI TRANSPARENT GLASS WITH WARM WHITE LED OR red light => red led
 # DONE Solve how to triger sensor from code? => https://learn.adafruit.com/adafruit-ft232h-breakout/linux-setup check if possible with python 3 => https://shop.blinkstick.com/
 # DONE give objecs uniqe ID
-# TODO calculate speed of objects
+# TODO calculate speed of objects integarde mpoint
 # TODO Show found erros with ID on separate screen
-
 
 def calculate_volume_norm(x, y, w, h):
     """
@@ -67,7 +65,6 @@ def calculate_volume_norm(x, y, w, h):
     volume_norm = w_norm * h_norm
     return x_norm, y_norm, w_norm, h_norm, volume_norm
 
-
 def count_objects_in_frame(object_to_check):
     number_of_object_to_check = 0
     for cat, score, bounds in results:
@@ -75,13 +72,11 @@ def count_objects_in_frame(object_to_check):
             number_of_object_to_check = number_of_object_to_check + 1
     return number_of_object_to_check
 
-
 class BlinkStickThread(threading.Thread):
     def run(self):
         '''Starting blinkStick to blink once in Separate Thread'''
         subprocess.Popen(["python2", "BlinkStick.py"])
         pass
-
 
 def BlinkOnce():
     """
@@ -98,10 +93,9 @@ def BlinkOnce():
         print("BlinkStickOnce exception occurred ")
     pass
 
-
 def pLoopTrigerlist(qtrigerlist):
     """
-    Loop for trigering small error in another process
+    Loop for trigering small error in another process running faster then main loo in separate process it is interconnected with main process with trigerlist
     :param qtrigerlist:
     :return:
     """
@@ -125,7 +119,6 @@ def pLoopTrigerlist(qtrigerlist):
                 fastTrigerList.append(fastTriger)
                 logging.debug('done fastTrigerlist:%s', fastTrigerList)
                 BlinkOnce()
-
 
         end_time_loop = time.time()
         #check for long duration of loop if is not too long
@@ -154,7 +147,7 @@ def error4Cm(idresults):
             try:
                 qtrigerlist.put(trigerlist)
             except:
-                print("Main trehread exxception qtrigerlist.put(trigerlist)")
+                print("Main thread exception occurred qtrigerlist.put(trigerlist)")
 
             logging.debug('trigerlist:%s', trigerlist)
 
@@ -189,22 +182,26 @@ def updateResutlsForId(results):
     # print(type(idresults), idresults
     return idresults
 
-
-
-
 if __name__ == "__main__":
     # Optional statement to configure preferred GPU. Available only in GPU version.
     # pydarknet.set_cuda_device(0)
     net = Detector(bytes("cfg/yolov3.cfg", encoding="utf-8"), bytes("weights/yolov3.weights", encoding="utf-8"), 0,
                    bytes("cfg/coco.data", encoding="utf-8"), )
     # net = Detector(bytes("cfg/2018_12_15_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2018_12_15_yolo-obj_2197.backup", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
-
     #Start loop for blinking in separate process
     qtrigerlist = multiprocessing.Queue()
     qtrigerlist.put(trigerlist)
     process1 = multiprocessing.Process(target=pLoopTrigerlist,args=((qtrigerlist),))
     process1.daemon = True
     process1.start()
+
+    #initialize shared vars  for speed/movement x,y
+    s_x = multiprocessing.Value('i', 0)
+    s_y = multiprocessing.Value('i', 0)
+
+    #create instance of Process subclass Mpoint and pass shared values vars
+    mp = Mpoint(shared_x=s_x, shared_y=s_y)
+    mp.start()
 
     while True:
         start_time = time.time()
@@ -217,12 +214,11 @@ if __name__ == "__main__":
             # Possible inputs: def detect(self, Image image, float thresh=.5, float hier_thresh=.5, float nms=.45):
             results = net.detect(dark_frame, thresh=.5)
             del dark_frame
-            # clean rect so it is clean an can be filled with new detecttion from frame later used in conversion_to_x1y1x2y2 . Confersion from yolo format to Centroid Format
-            # rects are
+            # clean rect so it is clean an can be filled with new detecttion from frame later used in conversion_to_x1y1x2y2 . Conversion from yolo format to Centroid Format
+            # rects are needed for neded to work with centroid thy need to be cleared every time
             rects = []
             # enable below if you want to see detections from yolo34
             # print(type(results), results)
-
             # for every detection in results do use thi loop for drawing
             for cat, score, bounds in results:
                 x, y, w, h = bounds
@@ -251,11 +247,9 @@ if __name__ == "__main__":
                 cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                             (0, 255, 0), 2)
                 cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
-            updateResutlsForId(results)
-
-            error4Cm(idresults)
+            error4Cm(updateResutlsForId(results))
             #print("idresults:",type(idresults),idresults)
-
+            #print("X:{} ".format(s_x.value))
             cv2.imshow("preview", frame)
         end_time = time.time()
         #print("Elapsed Time:",end_time-start_time)
