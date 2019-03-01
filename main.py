@@ -98,6 +98,7 @@ def pLoopTrigerlist(qtrigerlist,shared_x, shared_y):
     Loop for trigering small error in another process running faster then main loop in separate process it is interconnected with main process with trigerlist and shared_x, shared_y
     :param qtrigerlist, shared_x, shared_y:
     :return:nothing
+
     """
     while True:
         print("X: {} Y: {}".format(shared_x.value, shared_y.value))
@@ -253,6 +254,10 @@ if __name__ == "__main__":
                             (0, 255, 0), 2)
                 cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
             error4Cm(updateResutlsForId(results))
+
+            #TODO Here you can write yor own function which will be using class or another object oriented aproach, use
+            # idresults variable. You can whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
+
             #print("idresults:",type(idresults),idresults)
             #print("X:{} ".format(s_x.value))
             cv2.imshow("preview", frame)
