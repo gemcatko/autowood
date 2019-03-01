@@ -11,11 +11,10 @@ class Mpoint(Process):
     /dev/input/mouse0
     /dev/input/mouse1
 
-
     """
 
 
-    def __init__(self, shared_x, shared_y, measurement_delay=0, filename="/dev/input/mouse1"):
+    def __init__(self, shared_x, shared_y, measurement_delay=0, filename="/dev/input/mice"):
         Process.__init__(self)
         self.delta_x = shared_x
         self.delta_y = shared_y
