@@ -6,7 +6,7 @@ from multiprocessing import Process, Value
 class Mpoint(Process):
     """
     You have to change access rights to file /dev/input/mice !!!
-    chmod 666 /dev/input/mice
+    sudo chmod 666 /dev/input/mice
     For using particular mouse use files
     /dev/input/mouse0
     /dev/input/mouse1

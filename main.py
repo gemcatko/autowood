@@ -39,7 +39,7 @@ cap.set(4, Yresolution)
 
 
 # initialize our centroid tracker and frame dimensions
-ct = CentroidTracker()
+ct = CentroidTracker(maxDisappeared=5)
 (H, W) = (None, None)
 
 
@@ -101,32 +101,46 @@ def pLoopTrigerlist(qtrigerlist,shared_x, shared_y):
 
     """
     while True:
-        print("X: {} Y: {}".format(shared_x.value, shared_y.value))
         start_time_loop = time.time()
         try:
+            #needed because qtrigerlist is not always having object inside
             trigerlist = qtrigerlist.get_nowait()
             logging.debug("trigerlist%s",trigerlist)
 
         except:
             # is setting speed of the loop in case 0.0005 it is 2000 times per second
             time.sleep(0.0005)
-        # id + 0.1, time_begining, id + 0.2, time_ending
+        #Data format: id + 0.1, time_begining, id + 0.2, time_ending
+        #trigerlist[(4.1, 1551555880.4178755, 4.2, 1551555880.576961), (11.1, 1551555884.1779869, 11.2, 1551555884.252769), (5.1, 1551555885.0371258, 5.2, 1551555885.2632303)]
+        #fastTrigerlist:[(4.1, 1551555880.4184797), (4.2, 1551555880.577546), (11.1, 1551555884.1785562), (11.2, 1551555884.2533839), (5.1, 1551555885.0377772)]
+        #
+        #check for every object in trigerList
+        index = 0
         for id_begining, time_begining, id_ending, time_ending in trigerlist:
-            if time.time() - time_begining >= 0 and not (any(id_begining in sublist for sublist in fastTrigerList)):
-                fastTriger = id_begining, time_begining
-                fastTrigerList.append(fastTriger)
-                logging.debug('Done fastTrigerlist:%s', fastTrigerList)
-                BlinkOnce()
+                if shared_x.value + shared_y.value < 20:
+                    time_begining = time_begining + last_loop_duration
+                    time_ending = time_ending + last_loop_duration
+                    trigerlist[index]
 
-            if time.time() - time_ending >= 0 and not (any(id_ending in sublist for sublist in fastTrigerList)):
-                fastTriger = id_ending, time_ending
-                fastTrigerList.append(fastTriger)
-                logging.debug('done fastTrigerlist:%s', fastTrigerList)
-                BlinkOnce()
+
+                if time.time() - time_begining >= 0 and not (any(id_begining in sublist for sublist in fastTrigerList)):
+                    fastTriger = id_begining, time_begining
+                    fastTrigerList.append(fastTriger)
+                    logging.debug('Done fastTrigerlist:%s', fastTrigerList)
+                    BlinkOnce()
+
+                if time.time() - time_ending >= 0 and not (any(id_ending in sublist for sublist in fastTrigerList)):
+                    fastTriger = id_ending, time_ending
+                    fastTrigerList.append(fastTriger)
+                    logging.debug('done fastTrigerlist:%s', fastTrigerList)
+                    BlinkOnce()
+                index = index +1
 
         end_time_loop = time.time()
         #check for long duration of loop if is not too long
-        if (end_time_loop - start_time_loop) > 0.005:
+        last_loop_duration = end_time_loop - start_time_loop
+
+        if (last_loop_duration) > 0.005:
             # print("loopTrigerlistThread:", end_time_loop - start_time_loop)
             logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
 
@@ -186,6 +200,7 @@ def updateResutlsForId(results):
     # print results with Id on screen
     # print(type(idresults), idresults
     return idresults
+
 
 if __name__ == "__main__":
     # Optional statement to configure preferred GPU. Available only in GPU version.
@@ -264,5 +279,6 @@ if __name__ == "__main__":
         end_time = time.time()
         #print("Elapsed Time:",end_time-start_time)
         k = cv2.waitKey(1)
+
         if k == 0xFF & ord("q"):
             break
