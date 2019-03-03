@@ -7,6 +7,7 @@ import os
 import shlex
 import subprocess
 import multiprocessing
+import re
 from mpoint.mpoint import Mpoint
 from pydarknet import Detector, Image
 # for manual see: https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
@@ -66,7 +67,7 @@ def BlinkOnce():
         print("BlinkStickOnce exception occurred ")
     pass
 
-def pLoopTrigerlist(qtrigerlist,shared_x, shared_y):
+def fasterLoopTrigerlist(qtrigerlist, shared_x, shared_y):
     """
     Loop for trigering small error in another process running faster then main loop in separate process it is interconnected with main process with trigerlist and shared_x, shared_y
     :param qtrigerlist, shared_x, shared_y:
@@ -88,34 +89,42 @@ def pLoopTrigerlist(qtrigerlist,shared_x, shared_y):
         #fastTrigerlist:[(4.1, 1551555880.4184797), (4.2, 1551555880.577546), (11.1, 1551555884.1785562), (11.2, 1551555884.2533839), (5.1, 1551555885.0377772)]
         #
         #check for every object in trigerList
-        index = 0
+        #TODO osetrit vstup nemozu is velmi rychlo po sebe dve rozne chybi
         for id_begining, time_begining, id_ending, time_ending in trigerlist:
-                if shared_x.value + shared_y.value < 20:
-                    time_begining = time_begining + last_loop_duration
-                    time_ending = time_ending + last_loop_duration
-                    trigerlist[index]
+                if shared_x.value + shared_y.value < speed_considered_trail_stoped:
+                    new_time_begining = time_begining + absolut_last_loop_duration
+                    new_time_ending = time_ending + absolut_last_loop_duration
+                    # get index of acual tuple in list
+                    index_trigerlist = trigerlist.index((id_begining, time_begining, id_ending, time_ending))
+                    # update triger list with newly calculated new_time_begining  new_time_ending
+                    trigerlist[index_trigerlist] = id_begining, new_time_begining, id_ending, new_time_ending
+                    #return updated values to current loop
+                    time_begining,time_ending = new_time_begining, new_time_ending
 
 
+                # if time for blink  of beginning of object (time.time() - time_begining) is passed and object is not blinked yet (any(id_begining in sublist for sublist in fastTrigerList)) do:
                 if time.time() - time_begining >= 0 and not (any(id_begining in sublist for sublist in fastTrigerList)):
                     fastTriger = id_begining, time_begining
                     fastTrigerList.append(fastTriger)
-                    logging.debug('Done fastTrigerlist:%s', fastTrigerList)
                     BlinkOnce()
-
+                    logging.debug('id_begining BlinkOnce() called for blink fastTrigerlist:%s', fastTrigerList)
+                # if time for blink of beginning of object (time.time() - time_ending) is passed and object is not blinked yet (any(id_ending in sublist for sublist in fastTrigerList)) do:
                 if time.time() - time_ending >= 0 and not (any(id_ending in sublist for sublist in fastTrigerList)):
                     fastTriger = id_ending, time_ending
                     fastTrigerList.append(fastTriger)
-                    logging.debug('done fastTrigerlist:%s', fastTrigerList)
                     BlinkOnce()
-                index = index +1
+                    logging.debug('id_ending BlinkOnce() called for blink fastTrigerlist:%s', fastTrigerList)
+
 
         end_time_loop = time.time()
         #check for long duration of loop if is not too long
+        # only for logging purpuses
         last_loop_duration = end_time_loop - start_time_loop
-
         if (last_loop_duration) > 0.005:
-            # print("loopTrigerlistThread:", end_time_loop - start_time_loop)
             logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
+        absolut_end_time_loop = time.time()
+        absolut_last_loop_duration = absolut_end_time_loop - start_time_loop
+
 
 def error4Cm(idresults, margin):
     """
@@ -199,6 +208,7 @@ if __name__ == "__main__":
     duration_1screen_s = w_of_one_picture_m / speed_ms  # time za kolko prejde jedna obrazovka pri speed_ms
     delay = 1  # time in s to delay marking, can be use to set distance of sensing camera from BliknStick.
     margin = 0.8  # place on screen where it is detecting objects,
+    speed_considered_trail_stoped = 20
     # move_treshold = 0.05
     # set web cam properties width and height, working for USB for webcam
     cap = cv2.VideoCapture(0)
@@ -225,7 +235,7 @@ if __name__ == "__main__":
 
     qtrigerlist = multiprocessing.Queue()
     qtrigerlist.put(trigerlist)
-    process1 = multiprocessing.Process(target=pLoopTrigerlist, args=(qtrigerlist, s_x, s_y))
+    process1 = multiprocessing.Process(target=fasterLoopTrigerlist, args=(qtrigerlist, s_x, s_y))
     process1.daemon = True
     process1.start()
 
@@ -281,9 +291,8 @@ if __name__ == "__main__":
                 cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
             error4Cm(updateResutlsForId(results), margin)
 
-
             #TODO Here you can write yor own function which will be using class or another object oriented aproach, use
-            # idresults variable. You can whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
+            # idresults variable. You cando whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
             #TODO Detection for errors which are longer then XX(probably 15) cm
 
 
