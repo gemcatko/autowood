@@ -52,7 +52,7 @@ class BlinkStickThread(threading.Thread):
         subprocess.Popen(["python2", "BlinkStick.py"])
         pass
 
-def BlinkOnce():
+def blink_once():
     """
     Is using threading for blinking once, create tread for BlinkStick.py (python2.7)
 
@@ -67,7 +67,7 @@ def BlinkOnce():
         print("BlinkStickOnce exception occurred ")
     pass
 
-def fasterLoopTrigerlist(qtrigerlist, shared_x, shared_y):
+def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
     """
     Loop for trigering small error in another process running faster then main loop in separate process it is interconnected with main process with trigerlist and shared_x, shared_y
     :param qtrigerlist, shared_x, shared_y:
@@ -83,6 +83,7 @@ def fasterLoopTrigerlist(qtrigerlist, shared_x, shared_y):
 
         except:
             # is setting speed of the loop in case 0.0005 it is 2000 times per second
+            # except is not executed if qtrigerlist is have data
             time.sleep(0.0005)
         #Data format: id + 0.1, time_begining, id + 0.2, time_ending
         #trigerlist[(4.1, 1551555880.4178755, 4.2, 1551555880.576961), (11.1, 1551555884.1779869, 11.2, 1551555884.252769), (5.1, 1551555885.0371258, 5.2, 1551555885.2632303)]
@@ -91,62 +92,73 @@ def fasterLoopTrigerlist(qtrigerlist, shared_x, shared_y):
         #check for every object in trigerList
         #TODO osetrit vstup nemozu is velmi rychlo po sebe dve rozne chybi
         for id_begining, time_begining, id_ending, time_ending in trigerlist:
-                if shared_x.value + shared_y.value < speed_considered_trail_stoped:
+                # is trail running left direction ? using only Y
+                if  shared_y.value < (speed_considered_trail_stoped*-1):
+                    logging.debug('Trail is running left direction')
+                    #do some action if needed
+
+                # is trail running right direction ? using only Y
+                if  shared_y.value < speed_considered_trail_stoped:
                     new_time_begining = time_begining + absolut_last_loop_duration
                     new_time_ending = time_ending + absolut_last_loop_duration
-                    # get index of acual tuple in list
+                    # get index of actual tuple in list
                     index_trigerlist = trigerlist.index((id_begining, time_begining, id_ending, time_ending))
-                    # update triger list with newly calculated new_time_begining  new_time_ending
+                    # update trigerlist with newly calculated new_time_begining  new_time_ending
                     trigerlist[index_trigerlist] = id_begining, new_time_begining, id_ending, new_time_ending
                     #return updated values to current loop
                     time_begining,time_ending = new_time_begining, new_time_ending
 
 
-                # if time for blink  of beginning of object (time.time() - time_begining) is passed and object is not blinked yet (any(id_begining in sublist for sublist in fastTrigerList)) do:
+                # if time for blink  of beginning of object (time.time() - time_begining) passed and object is not blinked yet (any(id_begining in sublist for sublist in fastTrigerList)) do:
                 if time.time() - time_begining >= 0 and not (any(id_begining in sublist for sublist in fastTrigerList)):
                     fastTriger = id_begining, time_begining
+                    # needed thus the function know which object was already blinked and which not
                     fastTrigerList.append(fastTriger)
-                    BlinkOnce()
-                    logging.debug('id_begining BlinkOnce() called for blink fastTrigerlist:%s', fastTrigerList)
-                # if time for blink of beginning of object (time.time() - time_ending) is passed and object is not blinked yet (any(id_ending in sublist for sublist in fastTrigerList)) do:
+                    blink_once()
+                    logging.debug('id_begining blink_once() called for blink fastTrigerlist:%s', fastTrigerList)
+                # if time for blink of beginning of object (time.time() - time_ending)  passed and object is not blinked yet (any(id_ending in sublist for sublist in fastTrigerList)) do:
                 if time.time() - time_ending >= 0 and not (any(id_ending in sublist for sublist in fastTrigerList)):
                     fastTriger = id_ending, time_ending
+                    # needed thus the function know which object was already blinked and which not
                     fastTrigerList.append(fastTriger)
-                    BlinkOnce()
-                    logging.debug('id_ending BlinkOnce() called for blink fastTrigerlist:%s', fastTrigerList)
-
+                    blink_once()
+                    logging.debug('id_ending blink_once() called for blink fastTrigerlist:%s', fastTrigerList)
+                #TODO implement cleaning-deleting old objects from beginning offastTrigerList and trigerlist (the one which is inside this function )
 
         end_time_loop = time.time()
-        #check for long duration of loop if is not too long
-        # only for logging purpuses
+        #check for how long took execution the loop and log if it is too long
         last_loop_duration = end_time_loop - start_time_loop
         if (last_loop_duration) > 0.005:
             logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
+        # need to be on the end to improve measurement
         absolut_end_time_loop = time.time()
         absolut_last_loop_duration = absolut_end_time_loop - start_time_loop
 
 
-def error4Cm(idresults, margin):
+def error_4_cm(idresults, triger_margin):
     """
     # is executed in main loop
     Vramci jednoho brazka prejdi vsetky cell phone co su vo vzdialenosti x<0,8 su 0.3 >=siroke  >= 0.05 a uz predtym si ich nevidel (triger list)
-    For every detection in idresults check a every "cell phone" resp every detected object which is meets requriments of if loop
+    For every detection in idresults check a every "cell phone" resp every detected object which is meets requirements of if loop
+    The function should be executed once per every frame
     :param idresults:
     :return:
     """
-    margin = margin
+    triger_margin = triger_margin
     for id, cat, score, bounds in idresults:
         x, y, w, h = bounds
         x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
-        if cat.decode("utf-8") == "cell phone" and 0.9 >= w_rel >= 0.05 and (x_rel + (w_rel / 2)) > margin and not (any((id + 0.1) in sublist for sublist in trigerlist)):
-            logging.debug('sprav znacku zaciatok koniec')
+        ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
+        if cat.decode("utf-8") == "cell phone" and 0.9 >= w_rel >= 0.05 and (x_rel + (w_rel / 2)) > triger_margin and not (any((id + 0.1) in sublist for sublist in trigerlist)):
+            logging.debug('sprav znacky zaciatok a koniec')
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)),(255, 0, 255), 10)
-            # time of right bounding box
+            # time of right bounding line
             time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
             time_ending = time_begining + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
-            # add to triger list Id, time when beginning mark, time when ending mark
+            # add to trigerlist id.01, time when beginning mark, and id.02 time when ending mark
             triger = id + 0.1, time_begining, id + 0.2, time_ending
             trigerlist.append(triger)
+            # TODO implement cleaning-deleting old objects from beginning of the trigerlist
             try:
                 qtrigerlist.put(trigerlist)
             except:
@@ -158,7 +170,7 @@ def error4Cm(idresults, margin):
         else:
             pass
 
-def updateResutlsForId(results):
+def update_resutls_for_id(results):
     """
     loop over the tracked objects from Yolo34
     Reconstruct Yolo34 results with object id (data from centroid tracker) an put object ID to idresults list, like :
@@ -216,7 +228,7 @@ if __name__ == "__main__":
     cap.set(4, Yresolution)
 
     # initialize our centroid tracker and frame dimensions
-    ct = CentroidTracker(maxDisappeared=5)
+    ct = CentroidTracker(maxDisappeared=10)
     (H, W) = (None, None)
 
     # Optional statement to configure preferred GPU. Available only in GPU version.
@@ -235,7 +247,7 @@ if __name__ == "__main__":
 
     qtrigerlist = multiprocessing.Queue()
     qtrigerlist.put(trigerlist)
-    process1 = multiprocessing.Process(target=fasterLoopTrigerlist, args=(qtrigerlist, s_x, s_y))
+    process1 = multiprocessing.Process(target=faster_loop_trigerlist, args=(qtrigerlist, s_x, s_y))
     process1.daemon = True
     process1.start()
 
@@ -289,7 +301,7 @@ if __name__ == "__main__":
                 cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                             (0, 255, 0), 2)
                 cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
-            error4Cm(updateResutlsForId(results), margin)
+            error_4_cm(update_resutls_for_id(results), margin)
 
             #TODO Here you can write yor own function which will be using class or another object oriented aproach, use
             # idresults variable. You cando whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
