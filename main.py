@@ -135,31 +135,40 @@ def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
         absolut_last_loop_duration = absolut_end_time_loop - start_time_loop
 
 
-def error_4_cm(idresults, triger_margin):
+def detect_object_4_cm(idresults, triger_margin, object_to_detect):
     """
     # is executed in main loop
     Vramci jednoho brazka prejdi vsetky cell phone co su vo vzdialenosti x<0,8 su 0.3 >=siroke  >= 0.05 a uz predtym si ich nevidel (triger list)
     For every detection in idresults check a every "cell phone" resp every detected object which is meets requirements of if loop
     The function should be executed once per every frame
     :param idresults:
+    triger_margin:
+    object_to_detect
+
     :return:
     """
+
+
     triger_margin = triger_margin
     for id, cat, score, bounds in idresults:
         x, y, w, h = bounds
         x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
         ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
-        if cat.decode("utf-8") == "cell phone" and 0.9 >= w_rel >= 0.05 and (x_rel + (w_rel / 2)) > triger_margin and not (any((id + 0.1) in sublist for sublist in trigerlist)):
+        if cat.decode("utf-8") == object_to_detect and 0.9 >= w_rel >= 0.05 and (x_rel + (w_rel / 2)) > triger_margin and not (any((id + 0.1) in sublist for sublist in trigerlist)):
             logging.debug('sprav znacky zaciatok a koniec')
+            # draw purple line on the screens it is just for visual control when call for blink ocure
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)),(255, 0, 255), 10)
-            # time of right bounding line
+            # time of right blink
             time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
+            # time of left blink
             time_ending = time_begining + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
-            # add to trigerlist id.01, time when beginning mark, and id.02 time when ending mark
+            # add to trigerlist id.01, time when right blink and id.02 time left blink
             triger = id + 0.1, time_begining, id + 0.2, time_ending
             trigerlist.append(triger)
             # TODO implement cleaning-deleting old objects from beginning of the trigerlist
+            # TODO or implement class
             try:
+                #add to trigerlist id.01, time when right blink and id.02 time left blink to
                 qtrigerlist.put(trigerlist)
             except:
                 print("Main thread exception occurred qtrigerlist.put(trigerlist)")
@@ -169,6 +178,24 @@ def error_4_cm(idresults, triger_margin):
             pass
         else:
             pass
+#TODO FINISH class
+class Yolo_object():
+    def __init__(self,id, cat, score, bounds):
+        #co vychadza z jola [(1, b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (4, b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
+        #centroid_id , detected_category, score, object_x ,y ,w, h
+        #copy paste finktionality of  detect_object_4_cm
+        self.id = id
+        self.cat = cat
+        self.score = score
+        self.bounds = bounds
+    #def update_cat_score_bounds (self):
+    def update_cat_score_bouds(self):
+        pass
+
+
+        pass
+
+
 
 def update_resutls_for_id(results):
     """
@@ -203,8 +230,8 @@ if __name__ == "__main__":
     #### VARS : ####
 
     # set resolution taken from webcam
-    Xresolution = 640
-    Yresolution = 480
+    Xresolution = 1280
+    Yresolution = 720
     cell_phone = []
     list_chyba = []
     # Used by pLoopTrigerlist  to communicate with main loop format is [(2.1, 1551338571.7396123, 2.2, 1551338571.9881353), (3.1, 1551338578.9405866, 3.2, 1551338579.1024451), (0.1, 1551338586.2836142, 0.2, 1551338586.4773874)]
@@ -223,7 +250,7 @@ if __name__ == "__main__":
     speed_considered_trail_stoped = 20
     # move_treshold = 0.05
     # set web cam properties width and height, working for USB for webcam
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
     cap.set(3, Xresolution)
     cap.set(4, Yresolution)
 
@@ -301,7 +328,7 @@ if __name__ == "__main__":
                 cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                             (0, 255, 0), 2)
                 cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
-            error_4_cm(update_resutls_for_id(results), margin)
+            detect_object_4_cm(update_resutls_for_id(results), margin, "cell phone")
 
             #TODO Here you can write yor own function which will be using class or another object oriented aproach, use
             # idresults variable. You cando whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
