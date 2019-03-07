@@ -15,8 +15,6 @@ from pyimagesearch.centroidtracker import CentroidTracker
 
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s',)
 
-
-
 # DONE how to triger saw https://www.sick.com/es/en/registration-sensors/luminescence-sensors/lut9/lut9b-11626/p/p143229  (light? maybe) SEMI TRANSPARENT GLASS WITH WARM WHITE LED OR red light => red led
 # DONE Solve how to triger sensor from code? => https://learn.adafruit.com/adafruit-ft232h-breakout/linux-setup check if possible with python 3 => https://shop.blinkstick.com/
 # DONE give objecs uniqe ID
@@ -44,6 +42,7 @@ def count_objects_in_frame(object_to_check):
     for cat, score, bounds in results:
         if cat.decode("utf-8") == object_to_check:
             number_of_object_to_check = number_of_object_to_check + 1
+        cv2.putText(frame, str(number_of_object_to_check), (int(Xresolution - 20), int(Yresolution-20)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
     return number_of_object_to_check
 
 class BlinkStickThread(threading.Thread):
@@ -134,7 +133,6 @@ def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
         absolut_end_time_loop = time.time()
         absolut_last_loop_duration = absolut_end_time_loop - start_time_loop
 
-
 def detect_object_4_cm(idresults, triger_margin, object_to_detect):
     """
     # is executed in main loop
@@ -176,9 +174,6 @@ def detect_object_4_cm(idresults, triger_margin, object_to_detect):
             pass
         else:
             pass
-#TODO FINISH the class
-
-
 
 class YObject:
     # z Yola ide odresult a v idrusulte su id, cat, score, bounds
@@ -190,27 +185,31 @@ class YObject:
         self.category = category
         self.score = score
         self.bounds = bounds
+        self.x,self.y,self.w,self.h = bounds
 
-    def show_objects(self):
+    def draw_object_and_id(self):
 
         #print("bounds:",self.id, self.category, self.score, self.bounds)
         # draw  dark purple line on the screens it is just for visual control when call for blink ocure
         #cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (125, 0, 125), 10)
-        cv2.rectangle(frame, (int(x - w / 2 - 10), int(y - h / 2 - 10 )), (int(x + w / 2 - 10), int(y + h / 2 - 10)), (125, 125, 125),5)
+        cv2.rectangle(frame, (int(self.x - self.w / 2), int(self.y - self.h / 2)), (int(self.x + self.w / 2), int(self.y + self.h / 2)), (125, 125, 125),4)
+        # draw what is name of the object
+        cv2.putText(frame, str(self.category.decode("utf-8")), (int(self.x), int(self.y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
+
+        #Draw ID dot
+        #TODO finish
+        #Draw id number text
+        #TODO finish
 
     def detect_object(self, object_to_detect,triger_margin):
         # copy paste functionality of  detect_object_4_c
-
+        x,y,w,h = self.bounds
         x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
         ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
         if self.category.decode("utf-8") == object_to_detect and 0.9 >= w_rel >= 0.05 and (x_rel + (w_rel / 2)) > triger_margin:
             logging.debug('Sprav znacky zaciatok a koniec')
             # draw purple line on the screens it is just for visual control when call for blink ocure
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
-
-
-
-
 
 def update_resutls_for_id(results):
     """
@@ -238,6 +237,52 @@ def update_resutls_for_id(results):
     # print results with Id on screen
     # print(type(idresults), idresults
     return idresults
+
+def convert_boundin_boxes_form_Yolo_Centroid_format(results):
+    # clean rect so it is clean an can be filled with new detection from frame\
+    # later used in conversion_to_x1y1x2y2 . Conversion from yolo format to Centroid Format
+    # rects are needed for centroid to work. They need to be cleared every time
+    rects = []
+    for cat, score, bounds in results:
+        x, y, w, h = bounds
+        """
+        convert from yolo format to cetroid format
+        Yolo output:
+        [(b'person', 0.9299755096435547, (363.68475341796875, 348.0577087402344, 252.04286193847656, 231.17266845703125)), (b'vase', 0.3197628855705261, (120.3013687133789, 405.3641357421875, 40.76551055908203, 32.07142639160156))]
+        centroid input: 
+        [array([145, 153, 248, 274]), array([113, 178, 148, 224])]
+        """
+        # calculate bounding box for every object from YOLO for centroid purposes
+        box = np.array([x - w / 2, y - h / 2, x + w / 2, y + h / 2])
+        # append to list of  bounding boxes for centroid
+        rects.append(box.astype("int"))
+    return rects
+
+def draw_ids_on_screens(objects):
+    """
+
+    :param objects:  from cetroid tracker
+    :return: none
+    """
+
+    for (objectID, centroid) in objects.items():
+        # draw both the ID of the object and the centroid of the
+        # object on the output frame
+        text = "ID {}".format(objectID)
+        cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
+
+def draw_yolo_output_on_screen(results):
+    """
+
+    :param results: results from Yolo34
+    :return: none
+    """
+    # for every detection in results do use this loop for drawing
+    for cat, score, bounds in results:
+        x, y, w, h = bounds
+        cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 0))
+        cv2.putText(frame, str(cat.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
 
 
 if __name__ == "__main__":
@@ -271,9 +316,6 @@ if __name__ == "__main__":
     cap.set(4, Yresolution)
     triger_margin = 0.8
     object_to_detect = "cell phone"
-
-
-
     # initialize our centroid tracker and frame dimensions
     ct = CentroidTracker(maxDisappeared=10)
     (H, W) = (None, None)
@@ -310,60 +352,26 @@ if __name__ == "__main__":
             # Possible inputs: def detect(self, Image image, float thresh=.5, float hier_thresh=.5, float nms=.45):
             results = net.detect(dark_frame, thresh=.5)
             del dark_frame
-            # clean rect so it is clean an can be filled with new detection from frame\
-            # later used in conversion_to_x1y1x2y2 . Conversion from yolo format to Centroid Format
-            # rects are needed for centroid to work. They need to be cleared every time
-            rects = []
             # enable below if you want to see detections from yolo34
             # print(type(results), results)
-            # for every detection in results do use this loop for drawing
-            for cat, score, bounds in results:
-                x, y, w, h = bounds
-                cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 0))
-                cv2.putText(frame, str(cat.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1,(255, 255, 0))
-                # will show number of objects you are looking for at screens
-                cv2.putText(frame, str(count_objects_in_frame("cell phone")),(int(Xresolution - 50), int(Yresolution - 50)), cv2.FONT_HERSHEY_COMPLEX, 1,
-                            (150, 150, 150))
-                """
-                convert from yolo format to cetroid format
-                Yolo output:
-                [(b'person', 0.9299755096435547, (363.68475341796875, 348.0577087402344, 252.04286193847656, 231.17266845703125)), (b'vase', 0.3197628855705261, (120.3013687133789, 405.3641357421875, 40.76551055908203, 32.07142639160156))]
-                centroid input: 
-                [array([145, 153, 248, 274]), array([113, 178, 148, 224])]
-                """
-                # calculate bounding box for every object from YOLO for centroid purposes
-                box = np.array([x - w / 2, y - h / 2, x + w / 2, y + h / 2])
-                # append to list of  bounding boxes for centroid
-                rects.append(box.astype("int"))
-
-            # enable below if you want to see detections from yolo conversed to centroid format
-            # print("rect", rects)
-            # update our centroid tracker using the computed set of bounding box rectangles
+            # !!!!!draw_yolo_output_on_screen(results) is not pbject oriented drawing do not use any more!!!!!
+            # draw_yolo_output_on_screen(results)
+            rects=convert_boundin_boxes_form_Yolo_Centroid_format(results)
+            # enable below if you want to see detections of jast the !!!points!!! from yolo conversed to centroid format
+            # print("rects", rects)
             objects = ct.update(rects)
-            # loop over the tracked objects from Centroids and put id on screens
-            for (objectID, centroid) in objects.items():
-                # draw both the ID of the object and the centroid of the
-                # object on the output frame
-                text = "ID {}".format(objectID)
-                cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                            (0, 255, 0), 2)
-                cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
-
+            draw_ids_on_screens(objects)
             #!!!!!OLD_WAY!!!!!!
             #detect_object_4_cm(update_resutls_for_id(results), margin, "cell phone")
             #!!!!!OBJECT_ORIENTED_WAY!!!!!
-            update_resutls_for_id(results)
+            idresults = update_resutls_for_id(results)
             for id, category, score, bounds in idresults:
                 objekty[id] = YObject(id, category, score, bounds)
                 objekty[id].detect_object(object_to_detect,triger_margin)
-
-
-
-
-            #TODO Here you can write yor own function which will be using class or another object oriented aproach, use
-            # idresults variable. You cando whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
+                objekty[id].draw_object_and_id()
+                #TODO fix: count_objects_in_frame("cell phone")
+            #TODO Here you can write yor own function which will be using class or another object oriented aproach, use !!!! 1idresults !!!! variable. You can do whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
             #TODO Detection for errors which are longer then XX(probably 15) cm
-
 
             #print("idresults:",type(idresults),idresults)
             #print("X:{} ".format(s_x.value))
@@ -371,6 +379,5 @@ if __name__ == "__main__":
         end_time = time.time()
         #print("Elapsed Time:",end_time-start_time)
         k = cv2.waitKey(1)
-
         if k == 0xFF & ord("q"):
             break
