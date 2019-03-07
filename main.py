@@ -147,8 +147,6 @@ def detect_object_4_cm(idresults, triger_margin, object_to_detect):
 
     :return:
     """
-
-
     triger_margin = triger_margin
     for id, cat, score, bounds in idresults:
         x, y, w, h = bounds
@@ -178,22 +176,39 @@ def detect_object_4_cm(idresults, triger_margin, object_to_detect):
             pass
         else:
             pass
-#TODO FINISH class
-class Yolo_object():
-    def __init__(self,id, cat, score, bounds):
-        #co vychadza z jola [(1, b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (4, b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
-        #centroid_id , detected_category, score, object_x ,y ,w, h
-        #copy paste finktionality of  detect_object_4_cm
+#TODO FINISH the class
+
+
+
+class YObject:
+    # z Yola ide odresult a v idrusulte su id, cat, score, bounds
+    # def __init__(self, centroid_id, category, score, bounds):
+    def __init__(self, id, category, score, bounds):
+        # centroid_id , detected_category, score, object_position_center_x ,object_position_center_y ,width w, height_h
+        # copy paste functionality of  detect_object_4_c
         self.id = id
-        self.cat = cat
+        self.category = category
         self.score = score
         self.bounds = bounds
-    #def update_cat_score_bounds (self):
-    def update_cat_score_bouds(self):
-        pass
+
+    def show_objects(self):
+
+        #print("bounds:",self.id, self.category, self.score, self.bounds)
+        # draw  dark purple line on the screens it is just for visual control when call for blink ocure
+        #cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (125, 0, 125), 10)
+        cv2.rectangle(frame, (int(x - w / 2 - 10), int(y - h / 2 - 10 )), (int(x + w / 2 - 10), int(y + h / 2 - 10)), (125, 125, 125),5)
+
+    def detect_object(self, object_to_detect,triger_margin):
+        # copy paste functionality of  detect_object_4_c
+
+        x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
+        ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
+        if self.category.decode("utf-8") == object_to_detect and 0.9 >= w_rel >= 0.05 and (x_rel + (w_rel / 2)) > triger_margin:
+            logging.debug('Sprav znacky zaciatok a koniec')
+            # draw purple line on the screens it is just for visual control when call for blink ocure
+            cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
 
 
-        pass
 
 
 
@@ -248,11 +263,16 @@ if __name__ == "__main__":
     delay = 1  # time in s to delay marking, can be use to set distance of sensing camera from BliknStick.
     margin = 0.8  # place on screen where it is detecting objects,
     speed_considered_trail_stoped = 20
+    objekty = {}
     # move_treshold = 0.05
     # set web cam properties width and height, working for USB for webcam
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
     cap.set(3, Xresolution)
     cap.set(4, Yresolution)
+    triger_margin = 0.8
+    object_to_detect = "cell phone"
+
+
 
     # initialize our centroid tracker and frame dimensions
     ct = CentroidTracker(maxDisappeared=10)
@@ -311,9 +331,9 @@ if __name__ == "__main__":
                 centroid input: 
                 [array([145, 153, 248, 274]), array([113, 178, 148, 224])]
                 """
-                # bounding box for centroid
+                # calculate bounding box for every object from YOLO for centroid purposes
                 box = np.array([x - w / 2, y - h / 2, x + w / 2, y + h / 2])
-                # list of  bounding boxes for  centroid
+                # append to list of  bounding boxes for centroid
                 rects.append(box.astype("int"))
 
             # enable below if you want to see detections from yolo conversed to centroid format
@@ -328,7 +348,17 @@ if __name__ == "__main__":
                 cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                             (0, 255, 0), 2)
                 cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
-            detect_object_4_cm(update_resutls_for_id(results), margin, "cell phone")
+
+            #!!!!!OLD_WAY!!!!!!
+            #detect_object_4_cm(update_resutls_for_id(results), margin, "cell phone")
+            #!!!!!OBJECT_ORIENTED_WAY!!!!!
+            update_resutls_for_id(results)
+            for id, category, score, bounds in idresults:
+                objekty[id] = YObject(id, category, score, bounds)
+                objekty[id].detect_object(object_to_detect,triger_margin)
+
+
+
 
             #TODO Here you can write yor own function which will be using class or another object oriented aproach, use
             # idresults variable. You cando whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
