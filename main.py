@@ -207,7 +207,7 @@ class YObject:
         x,y,w,h = self.bounds
         x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
         ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
-        if self.category.decode("utf-8") == object_to_detect and 0.9 >= w_rel >= 0.05 and (x_rel + (w_rel / 2)) > triger_margin :
+        if self.category.decode("utf-8") == object_to_detect and 0.9 >= w_rel >= 0.05 and (x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink == False :
             logging.debug('Sprav znacky zaciatok a koniec')
             # draw purple line on the screens it is just for visual control when call for blink ocure
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
@@ -370,7 +370,15 @@ if __name__ == "__main__":
             #!!!!!OBJECT_ORIENTED_WAY!!!!!
             idresults = update_resutls_for_id(results)
             for id, category, score, bounds in idresults:
-                objekty[id] = YObject(id, category, score, bounds)
+                try:
+                    if objekty[id].id == id:
+                        objekty[id].category = category
+                        objekty[id].score = score
+                        objekty[id].bounds = bounds
+                except:
+                    objekty[id] = YObject(id, category, score, bounds)
+
+                #objekty[id] = YObject(id, category, score, bounds)
                 objekty[id].detect_object(object_to_detect,triger_margin)
                 objekty[id].draw_object_and_id()
                 #TODO fix: count_objects_in_frame("cell phone")

@@ -55,3 +55,10 @@ for id, category, score, bounds in idresults:
     objekty[id].show_objects()
     objekty[id].detect_object_4_cm(object_to_detect)
 
+    print(objekty[id].id)
+
+for k, v in objekty.items():
+    print( f"key: {k} value: {v}" )
+
+
+
