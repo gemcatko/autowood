@@ -127,7 +127,7 @@ def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
         end_time_loop = time.time()
         #check for how long took execution the loop and log if it is too long
         last_loop_duration = end_time_loop - start_time_loop
-        if (last_loop_duration) > 0.005:
+        if (last_loop_duration) > 0.010:
             logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
         # need to be on the end to improve measurement
         absolut_end_time_loop = time.time()
@@ -186,6 +186,7 @@ class YObject:
         self.score = score
         self.bounds = bounds
         self.x,self.y,self.w,self.h = bounds
+        self.ready_for_blink = False
 
     def draw_object_and_id(self):
 
@@ -206,10 +207,13 @@ class YObject:
         x,y,w,h = self.bounds
         x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
         ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
-        if self.category.decode("utf-8") == object_to_detect and 0.9 >= w_rel >= 0.05 and (x_rel + (w_rel / 2)) > triger_margin:
+        if self.category.decode("utf-8") == object_to_detect and 0.9 >= w_rel >= 0.05 and (x_rel + (w_rel / 2)) > triger_margin :
             logging.debug('Sprav znacky zaciatok a koniec')
             # draw purple line on the screens it is just for visual control when call for blink ocure
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
+            self.ready_for_blink = True
+
+
 
 def update_resutls_for_id(results):
     """
