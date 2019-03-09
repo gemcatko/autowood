@@ -49,7 +49,7 @@ class YObject:
         #Draw id number text
         #TODO finish
 
-    def detect_object(self, object_to_detect,triger_margin):
+    def detect_object(self, object_to_detect,triger_margin,how_big_object_max, how_big_object_min):
         """
 
         :param object_to_detect:
@@ -59,7 +59,7 @@ class YObject:
         x,y,w,h = self.bounds
         x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
         ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
-        if self.category.decode("utf-8") == object_to_detect and 0.9 >= w_rel >= 0.05 and (x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink == False :
+        if self.category.decode("utf-8") == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink == False :
             print('Sprav znacky for ID',self.id)
             # draw purple line on the screens it is just for visual check when call for blink
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
@@ -291,7 +291,10 @@ if __name__ == "__main__":
     margin = 0.8  # place on screen where it is detecting objects,
     speed_considered_trail_stoped = 20
     objekty = {}
-    # move_treshold = 0.05
+    #
+    how_big_object_max_small = 0.9
+    how_big_object_min_small = 0.05
+
     # set web cam properties width and height, working for USB for webcam
     cap = cv2.VideoCapture(0)
     cap.set(3, Xresolution)
@@ -354,7 +357,7 @@ if __name__ == "__main__":
                     objekty[id] = YObject(id, category, score, bounds)
 
                 objekty[id].draw_object_and_id()
-                objekty[id].detect_object(object_to_detect,triger_margin)
+                objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
 
                 #TODO fix: count_objects_in_frame("cell phone")
             #TODO Here you can write yor own function which will be using class or another object oriented aproach, use !!!! 1idresults !!!! variable. You can do whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
