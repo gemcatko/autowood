@@ -189,26 +189,32 @@ class YObject:
         self.ready_for_blink = False
 
     def draw_object_and_id(self):
-
-        #print("bounds:",self.id, self.category, self.score, self.bounds)
-        # draw  dark purple line on the screens it is just for visual control when call for blink ocure
-        #cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (125, 0, 125), 10)
-        cv2.rectangle(frame, (int(self.x - self.w / 2), int(self.y - self.h / 2)), (int(self.x + self.w / 2), int(self.y + self.h / 2)), (125, 125, 125),4)
+        """
+        Draw objects on screen using cv2
+        :return: none
+        """
+        x, y, w, h = self.bounds
+        cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (125, 125, 125),4)
         # draw what is name of the object
-        cv2.putText(frame, str(self.category.decode("utf-8")), (int(self.x), int(self.y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
-
+        cv2.putText(frame, str(category.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
         #Draw ID dot
         #TODO finish
         #Draw id number text
         #TODO finish
 
     def detect_object(self, object_to_detect,triger_margin):
+        """
+
+        :param object_to_detect:
+        :param triger_margin:
+        :return:
+        """
         # copy paste functionality of  detect_object_4_c
         x,y,w,h = self.bounds
         x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
         ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
         if self.category.decode("utf-8") == object_to_detect and 0.9 >= w_rel >= 0.05 and (x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink == False :
-            logging.debug('Sprav znacky zaciatok a koniec')
+            print('Sprav znacky zaciatok a for ID',self.id)
             # draw purple line on the screens it is just for visual control when call for blink ocure
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
             self.ready_for_blink = True
@@ -372,15 +378,23 @@ if __name__ == "__main__":
             for id, category, score, bounds in idresults:
                 try:
                     if objekty[id].id == id:
+                        #print("id", id)
                         objekty[id].category = category
+                        #print("category", category)
                         objekty[id].score = score
+                        #print("score", score)
                         objekty[id].bounds = bounds
                 except:
                     objekty[id] = YObject(id, category, score, bounds)
 
-                #objekty[id] = YObject(id, category, score, bounds)
-                objekty[id].detect_object(object_to_detect,triger_margin)
                 objekty[id].draw_object_and_id()
+                objekty[id].detect_object(object_to_detect,triger_margin)
+
+
+                #objekty[id] = YObject(id, category, score, bounds)
+            #for id, category, score, bounds in idresults:
+                #objekty[id].detect_object(object_to_detect,triger_margin)
+                #objekty[id].draw_object_and_id()
                 #TODO fix: count_objects_in_frame("cell phone")
             #TODO Here you can write yor own function which will be using class or another object oriented aproach, use !!!! 1idresults !!!! variable. You can do whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
             #TODO Detection for errors which are longer then XX(probably 15) cm
