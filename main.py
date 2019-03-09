@@ -185,7 +185,7 @@ class YObject:
         self.category = category
         self.score = score
         self.bounds = bounds
-        self.x,self.y,self.w,self.h = bounds
+        #self.x,self.y,self.w,self.h = bounds
         self.ready_for_blink = False
 
     def draw_object_and_id(self):
@@ -214,10 +214,25 @@ class YObject:
         x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
         ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
         if self.category.decode("utf-8") == object_to_detect and 0.9 >= w_rel >= 0.05 and (x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink == False :
-            print('Sprav znacky zaciatok a for ID',self.id)
-            # draw purple line on the screens it is just for visual control when call for blink ocure
+            print('Sprav znacky for ID',self.id)
+            # draw purple line on the screens it is just for visual check when call for blink
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
             self.ready_for_blink = True
+
+            # time of right blink
+            time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
+            # time of left blink
+            time_ending = time_begining + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
+            # add to trigerlist id.01, time when right blink and id.02 time left blink
+            triger = id + 0.1, time_begining, id + 0.2, time_ending
+            trigerlist.append(triger)
+            try:
+                #add to trigerlist id.01, time when right blink and id.02 time left blink to
+                qtrigerlist.put(trigerlist)
+            except:
+                print("Main thread exception occurred qtrigerlist.put(trigerlist)")
+
+
 
 
 
@@ -378,11 +393,8 @@ if __name__ == "__main__":
             for id, category, score, bounds in idresults:
                 try:
                     if objekty[id].id == id:
-                        #print("id", id)
                         objekty[id].category = category
-                        #print("category", category)
                         objekty[id].score = score
-                        #print("score", score)
                         objekty[id].bounds = bounds
                 except:
                     objekty[id] = YObject(id, category, score, bounds)
@@ -390,11 +402,6 @@ if __name__ == "__main__":
                 objekty[id].draw_object_and_id()
                 objekty[id].detect_object(object_to_detect,triger_margin)
 
-
-                #objekty[id] = YObject(id, category, score, bounds)
-            #for id, category, score, bounds in idresults:
-                #objekty[id].detect_object(object_to_detect,triger_margin)
-                #objekty[id].draw_object_and_id()
                 #TODO fix: count_objects_in_frame("cell phone")
             #TODO Here you can write yor own function which will be using class or another object oriented aproach, use !!!! 1idresults !!!! variable. You can do whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
             #TODO Detection for errors which are longer then XX(probably 15) cm
