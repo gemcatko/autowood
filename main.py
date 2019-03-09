@@ -21,6 +21,85 @@ logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-
 # TODO calculate speed of objects integarde mpoint
 # TODO Store image detections as thumbnails(small images) somewhere
 
+
+class YObject:
+    # z Yola ide odresult a v idrusulte su id, cat, score, bounds
+    # def __init__(self, centroid_id, category, score, bounds):
+    def __init__(self, id, category, score, bounds):
+        # centroid_id , detected_category, score, object_position_center_x ,object_position_center_y ,width w, height_h
+        # copy paste functionality of  detect_object_4_c
+        self.id = id
+        self.category = category
+        self.score = score
+        self.bounds = bounds
+        #self.x,self.y,self.w,self.h = bounds
+        self.ready_for_blink = False
+
+    def draw_object_and_id(self):
+        """
+        Draw objects on screen using cv2
+        :return: none
+        """
+        x, y, w, h = self.bounds
+        cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (125, 125, 125),4)
+        # draw what is name of the object
+        cv2.putText(frame, str(category.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
+        #Draw ID dot
+        #TODO finish
+        #Draw id number text
+        #TODO finish
+
+    def detect_object(self, object_to_detect,triger_margin):
+        """
+
+        :param object_to_detect:
+        :param triger_margin:
+        :return:
+        """
+        x,y,w,h = self.bounds
+        x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
+        ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
+        if self.category.decode("utf-8") == object_to_detect and 0.9 >= w_rel >= 0.05 and (x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink == False :
+            print('Sprav znacky for ID',self.id)
+            # draw purple line on the screens it is just for visual check when call for blink
+            cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
+            self.ready_for_blink = True
+
+            # time of right blink
+            time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
+            # time of left blink
+            time_ending = time_begining + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
+            # add to trigerlist id.01, time when right blink and id.02 time left blink
+            triger = id + 0.1, time_begining, id + 0.2, time_ending
+            trigerlist.append(triger)
+            try:
+                #add to trigerlist id.01, time when right blink and id.02 time left blink to
+                qtrigerlist.put(trigerlist)
+            except:
+                print("Main thread exception occurred qtrigerlist.put(trigerlist)")
+
+class BlinkStickThread(threading.Thread):
+    def run(self):
+        '''Starting blinkStick to blink once in Separate Thread'''
+        subprocess.Popen(["python2", "BlinkStick.py"])
+        pass
+
+def blink_once():
+    """
+    Is using threading for blinking once, create tread for BlinkStick.py (python2.7)
+
+    """
+    try:
+        # os.system('python2 BlinkStick.py') # najpomalsie
+        # subprocess.Popen(["python2", "BlinkStick.py"]) #troska ryclesie
+        thread = BlinkStickThread()
+        thread.daemon = True
+        thread.start()
+    except:
+        print("BlinkStickOnce exception occurred ")
+    pass
+
+
 def calculate_relative_coordinates(x, y, w, h):
     """
     Calculate coordinates in percentage relative to the screen
@@ -45,26 +124,6 @@ def count_objects_in_frame(object_to_check):
         cv2.putText(frame, str(number_of_object_to_check), (int(Xresolution - 20), int(Yresolution-20)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
     return number_of_object_to_check
 
-class BlinkStickThread(threading.Thread):
-    def run(self):
-        '''Starting blinkStick to blink once in Separate Thread'''
-        subprocess.Popen(["python2", "BlinkStick.py"])
-        pass
-
-def blink_once():
-    """
-    Is using threading for blinking once, create tread for BlinkStick.py (python2.7)
-
-    """
-    try:
-        # os.system('python2 BlinkStick.py') # najpomalsie
-        # subprocess.Popen(["python2", "BlinkStick.py"]) #troska ryclesie
-        thread = BlinkStickThread()
-        thread.daemon = True
-        thread.start()
-    except:
-        print("BlinkStickOnce exception occurred ")
-    pass
 
 def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
     """
@@ -133,108 +192,6 @@ def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
         absolut_end_time_loop = time.time()
         absolut_last_loop_duration = absolut_end_time_loop - start_time_loop
 
-def detect_object_4_cm(idresults, triger_margin, object_to_detect):
-    """
-    # is executed in main loop
-    Vramci jednoho brazka prejdi vsetky cell phone co su vo vzdialenosti x<0,8 su 0.3 >=siroke  >= 0.05 a uz predtym si ich nevidel (triger list)
-    For every detection in idresults check a every "cell phone" resp every detected object which is meets requirements of if loop
-    The function should be executed once per every frame
-    :param idresults:
-    triger_margin:
-    object_to_detect
-
-    :return:
-    """
-    triger_margin = triger_margin
-    for id, cat, score, bounds in idresults:
-        x, y, w, h = bounds
-        x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
-        ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
-        if cat.decode("utf-8") == object_to_detect and 0.9 >= w_rel >= 0.05 and (x_rel + (w_rel / 2)) > triger_margin and not (any((id + 0.1) in sublist for sublist in trigerlist)):
-            logging.debug('sprav znacky zaciatok a koniec')
-            # draw purple line on the screens it is just for visual control when call for blink ocure
-            cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)),(255, 0, 255), 10)
-            # time of right blink
-            time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
-            # time of left blink
-            time_ending = time_begining + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
-            # add to trigerlist id.01, time when right blink and id.02 time left blink
-            triger = id + 0.1, time_begining, id + 0.2, time_ending
-            trigerlist.append(triger)
-            # TODO implement cleaning-deleting old objects from beginning of the trigerlist
-            # TODO or implement class
-            try:
-                #add to trigerlist id.01, time when right blink and id.02 time left blink to
-                qtrigerlist.put(trigerlist)
-            except:
-                print("Main thread exception occurred qtrigerlist.put(trigerlist)")
-
-            logging.debug('trigerlist:%s', trigerlist)
-
-            pass
-        else:
-            pass
-
-class YObject:
-    # z Yola ide odresult a v idrusulte su id, cat, score, bounds
-    # def __init__(self, centroid_id, category, score, bounds):
-    def __init__(self, id, category, score, bounds):
-        # centroid_id , detected_category, score, object_position_center_x ,object_position_center_y ,width w, height_h
-        # copy paste functionality of  detect_object_4_c
-        self.id = id
-        self.category = category
-        self.score = score
-        self.bounds = bounds
-        #self.x,self.y,self.w,self.h = bounds
-        self.ready_for_blink = False
-
-    def draw_object_and_id(self):
-        """
-        Draw objects on screen using cv2
-        :return: none
-        """
-        x, y, w, h = self.bounds
-        cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (125, 125, 125),4)
-        # draw what is name of the object
-        cv2.putText(frame, str(category.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
-        #Draw ID dot
-        #TODO finish
-        #Draw id number text
-        #TODO finish
-
-    def detect_object(self, object_to_detect,triger_margin):
-        """
-
-        :param object_to_detect:
-        :param triger_margin:
-        :return:
-        """
-        # copy paste functionality of  detect_object_4_c
-        x,y,w,h = self.bounds
-        x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
-        ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
-        if self.category.decode("utf-8") == object_to_detect and 0.9 >= w_rel >= 0.05 and (x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink == False :
-            print('Sprav znacky for ID',self.id)
-            # draw purple line on the screens it is just for visual check when call for blink
-            cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
-            self.ready_for_blink = True
-
-            # time of right blink
-            time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
-            # time of left blink
-            time_ending = time_begining + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
-            # add to trigerlist id.01, time when right blink and id.02 time left blink
-            triger = id + 0.1, time_begining, id + 0.2, time_ending
-            trigerlist.append(triger)
-            try:
-                #add to trigerlist id.01, time when right blink and id.02 time left blink to
-                qtrigerlist.put(trigerlist)
-            except:
-                print("Main thread exception occurred qtrigerlist.put(trigerlist)")
-
-
-
-
 
 def update_resutls_for_id(results):
     """
@@ -263,7 +220,7 @@ def update_resutls_for_id(results):
     # print(type(idresults), idresults
     return idresults
 
-def convert_boundin_boxes_form_Yolo_Centroid_format(results):
+def convert_bounding_boxes_form_Yolo_Centroid_format(results):
     # clean rect so it is clean an can be filled with new detection from frame\
     # later used in conversion_to_x1y1x2y2 . Conversion from yolo format to Centroid Format
     # rects are needed for centroid to work. They need to be cleared every time
@@ -312,7 +269,7 @@ def draw_yolo_output_on_screen(results):
 
 if __name__ == "__main__":
 
-    #### VARS : ####
+    ###################### VARS : ###########################
 
     # set resolution taken from webcam
     Xresolution = 1280
@@ -351,7 +308,9 @@ if __name__ == "__main__":
                    bytes("cfg/coco.data", encoding="utf-8"), )
     # net = Detector(bytes("cfg/2018_12_15_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2018_12_15_yolo-obj_2197.backup", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
     # Start loop for blinking in separate process
-    # initialize shared vars  for speed/movement x,y
+
+
+    # initialize shared vars for speed/movement x,y
     s_x = multiprocessing.Value('i', 0)
     s_y = multiprocessing.Value('i', 0)
 
@@ -359,13 +318,15 @@ if __name__ == "__main__":
     mp = Mpoint(shared_x=s_x, shared_y=s_y)
     mp.start()
 
+    # Shared queue for list with ids to blink
     qtrigerlist = multiprocessing.Queue()
     qtrigerlist.put(trigerlist)
     process1 = multiprocessing.Process(target=faster_loop_trigerlist, args=(qtrigerlist, s_x, s_y))
     process1.daemon = True
     process1.start()
 
-    # MAIN LOOP
+    ########################## MAIN LOOP ###########################
+
     while True:
         start_time = time.time()
         r, frame = cap.read()
@@ -375,20 +336,13 @@ if __name__ == "__main__":
             dark_frame = Image(frame)
             # This are the function parameters of detect:
             # Possible inputs: def detect(self, Image image, float thresh=.5, float hier_thresh=.5, float nms=.45):
+            # call Yolo34
             results = net.detect(dark_frame, thresh=.5)
             del dark_frame
-            # enable below if you want to see detections from yolo34
-            # print(type(results), results)
-            # !!!!!draw_yolo_output_on_screen(results) is not pbject oriented drawing do not use any more!!!!!
-            # draw_yolo_output_on_screen(results)
-            rects=convert_boundin_boxes_form_Yolo_Centroid_format(results)
-            # enable below if you want to see detections of jast the !!!points!!! from yolo conversed to centroid format
-            # print("rects", rects)
+            rects = convert_bounding_boxes_form_Yolo_Centroid_format(results)
             objects = ct.update(rects)
             draw_ids_on_screens(objects)
-            #!!!!!OLD_WAY!!!!!!
-            #detect_object_4_cm(update_resutls_for_id(results), margin, "cell phone")
-            #!!!!!OBJECT_ORIENTED_WAY!!!!!
+            # PUTT all detected objects with ids to idresults list
             idresults = update_resutls_for_id(results)
             for id, category, score, bounds in idresults:
                 try:
