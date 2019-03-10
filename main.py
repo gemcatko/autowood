@@ -296,20 +296,23 @@ if __name__ == "__main__":
     how_big_object_min_small = 0.05
 
     # set web cam properties width and height, working for USB for webcam
-    cap = cv2.VideoCapture(0)
+#    cap = cv2.VideoCapture(0)
+    #static video file
+    video_filename = "MOV_2426.mp4"
+    cap = cv2.VideoCapture(video_filename)
     cap.set(3, Xresolution)
     cap.set(4, Yresolution)
     triger_margin = 0.8
     object_to_detect = "cell phone"
     # initialize our centroid tracker and frame dimensions
-    ct = CentroidTracker(maxDisappeared=10)
+    ct = CentroidTracker(maxDisappeared=50)
     (H, W) = (None, None)
 
     # Optional statement to configure preferred GPU. Available only in GPU version.
     # pydarknet.set_cuda_device(0)
-    net = Detector(bytes("cfg/yolov3.cfg", encoding="utf-8"), bytes("weights/yolov3.weights", encoding="utf-8"), 0,
-                   bytes("cfg/coco.data", encoding="utf-8"), )
-    # net = Detector(bytes("cfg/2018_12_15_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2018_12_15_yolo-obj_2197.backup", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
+    #net = Detector(bytes("cfg/yolov3.cfg", encoding="utf-8"), bytes("weights/yolov3.weights", encoding="utf-8"), 0,bytes("cfg/coco.data", encoding="utf-8"), )
+    net = Detector(bytes("cfg/2019_02_11_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2019_02_11_yolo-obj_2084.weights", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
+
     # Start loop for blinking in separate process
 
 
@@ -340,7 +343,7 @@ if __name__ == "__main__":
             # This are the function parameters of detect:
             # Possible inputs: def detect(self, Image image, float thresh=.5, float hier_thresh=.5, float nms=.45):
             # call Yolo34
-            results = net.detect(dark_frame, thresh=.5)
+            results = net.detect(dark_frame, thresh=.13)
             del dark_frame
             rects = convert_bounding_boxes_form_Yolo_Centroid_format(results)
             objects = ct.update(rects)
