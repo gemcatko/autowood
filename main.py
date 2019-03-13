@@ -124,6 +124,12 @@ def count_objects_in_frame(object_to_check):
         cv2.putText(frame, str(number_of_object_to_check), (int(Xresolution - 20), int(Yresolution-20)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
     return number_of_object_to_check
 
+def show_fps(start_of_loop, end_of_loop):
+    duration_of_loop = end_time - start_time
+    FPS = round(1 / duration_of_loop, 1)
+    cv2.putText(frame, str(FPS), (int(Xresolution - 20), int(Yresolution - 40)),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 100, 255))
+    return FPS
+
 
 def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
     """
@@ -365,11 +371,9 @@ if __name__ == "__main__":
                 #TODO fix: count_objects_in_frame("cell phone")
             #TODO Here you can write yor own function which will be using class or another object oriented aproach, use !!!! 1idresults !!!! variable. You can do whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
             #TODO Detection for errors which are longer then XX(probably 15) cm
-
-            #print("idresults:",type(idresults),idresults)
-            #print("X:{} ".format(s_x.value))
-            cv2.imshow("preview", frame)
-        end_time = time.time()
+            end_time = time.time()
+            show_fps(start_time, end_time)
+        cv2.imshow("preview", frame)
         #print("Elapsed Time:",end_time-start_time)
         k = cv2.waitKey(1)
         if k == 0xFF & ord("q"):
