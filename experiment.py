@@ -58,7 +58,7 @@ for id, category, score, bounds in idresults:
     print(objekty[id].id)
 
 for k, v in objekty.items():
-    print( f"key: {k} value: {v}" )
+    print( "key: {k} value: {v}" )
 
 
 
