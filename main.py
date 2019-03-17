@@ -11,6 +11,9 @@ import numpy as np
 from mpoint.mpoint import Mpoint
 # for manual see: https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
 from pyimagesearch.centroidtracker import CentroidTracker
+#from imutils.video import WebcamVideoStream
+from pyimagesearch.webcamvideostream import WebcamVideoStream
+from imutils.video import FPS
 
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s',)
 
@@ -124,9 +127,10 @@ def count_objects_in_frame(object_to_check):
     return number_of_object_to_check
 
 def show_fps(start_of_loop, end_of_loop):
-    duration_of_loop = end_time - start_time
+    #duration_of_loop = end_time - start_time
+    duration_of_loop = end_of_loop - start_of_loop
     FPS = round(1 / duration_of_loop, 1)
-    cv2.putText(frame, str(FPS), (int(Xresolution - 20), int(Yresolution - 40)),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 100, 255))
+    cv2.putText(frame, str(FPS), (int(Xresolution - 70), int(Yresolution - 70)),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 100, 255))
     return FPS
 
 
@@ -277,8 +281,8 @@ if __name__ == "__main__":
     ###################### VARS : ###########################
 
     # set resolution taken from webcam
-    Xresolution = 1280
-    Yresolution = 720
+    Xresolution = 320
+    Yresolution = 240
     cell_phone = []
     list_chyba = []
     # Used by pLoopTrigerlist  to communicate with main loop format is [(2.1, 1551338571.7396123, 2.2, 1551338571.9881353), (3.1, 1551338578.9405866, 3.2, 1551338579.1024451), (0.1, 1551338586.2836142, 0.2, 1551338586.4773874)]
@@ -304,9 +308,9 @@ if __name__ == "__main__":
 #    cap = cv2.VideoCapture(0)
     #static video file
     video_filename = "MOV_2426.mp4"
-    cap = cv2.VideoCapture(video_filename)
-    cap.set(3, Xresolution)
-    cap.set(4, Yresolution)
+    #cap = cv2.VideoCapture(video_filename)
+    #cap.set(3, Xresolution)
+    #cap.set(4, Yresolution)
     triger_margin = 0.8
     object_to_detect = "cell phone"
     # initialize our centroid tracker and frame dimensions
@@ -315,8 +319,8 @@ if __name__ == "__main__":
 
     # Optional statement to configure preferred GPU. Available only in GPU version.
     # pydarknet.set_cuda_device(0)
-    #net = Detector(bytes("cfg/yolov3.cfg", encoding="utf-8"), bytes("weights/yolov3.weights", encoding="utf-8"), 0,bytes("cfg/coco.data", encoding="utf-8"), )
-    net = Detector(bytes("cfg/2019_02_11_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2019_03_15_yolo-obj_3200.weights", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
+    net = Detector(bytes("cfg/yolov3.cfg", encoding="utf-8"), bytes("weights/yolov3.weights", encoding="utf-8"), 0,bytes("cfg/coco.data", encoding="utf-8"), )
+    #net = Detector(bytes("cfg/2019_02_11_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2019_03_15_yolo-obj_3200.weights", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
 
     # Start loop for blinking in separate process
 
@@ -335,13 +339,16 @@ if __name__ == "__main__":
     process1 = multiprocessing.Process(target=faster_loop_trigerlist, args=(qtrigerlist, s_x, s_y))
     process1.daemon = True
     process1.start()
+    vs = WebcamVideoStream(src=0,name="webcamera",resolution = (Xresolution, Yresolution)).start()
+
 
     ########################## MAIN LOOP ###########################
 
     while True:
         start_time = time.time()
-        r, frame = cap.read()
-        if r:
+        #r, frame = cap.read()
+        frame = vs.read()
+        if True:
             # start_time = time.time()
             # Only measure the time taken by YOLO and API Call overhead
             dark_frame = Image(frame)
