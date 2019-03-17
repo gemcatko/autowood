@@ -1,7 +1,9 @@
 # import the necessary packages
-from scipy.spatial import distance as dist
 from collections import OrderedDict
+
 import numpy as np
+from scipy.spatial import distance as dist
+
 
 class CentroidTracker():
 	def __init__(self, maxDisappeared=50):
@@ -37,7 +39,9 @@ class CentroidTracker():
 		if len(rects) == 0:
 			# loop over any existing tracked objects and mark them
 			# as disappeared
-			for objectID in self.disappeared.keys():
+			#for objectID in self.disappeared.keys():
+			# below is fix of upper line found at https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/ at posts  			
+			for objectID in list(self.disappeared.keys()):
 				self.disappeared[objectID] += 1
 
 				# if we have reached a maximum number of consecutive
