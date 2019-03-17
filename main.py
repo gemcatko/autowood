@@ -1,15 +1,14 @@
-import threading
 import logging
+import multiprocessing
+import subprocess
+import threading
+import time
+from pydarknet import Detector, Image
+
 import cv2
 import numpy as np
-import time
-import os
-import shlex
-import subprocess
-import multiprocessing
-import re
+
 from mpoint.mpoint import Mpoint
-from pydarknet import Detector, Image
 # for manual see: https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
 from pyimagesearch.centroidtracker import CentroidTracker
 
@@ -317,7 +316,7 @@ if __name__ == "__main__":
     # Optional statement to configure preferred GPU. Available only in GPU version.
     # pydarknet.set_cuda_device(0)
     #net = Detector(bytes("cfg/yolov3.cfg", encoding="utf-8"), bytes("weights/yolov3.weights", encoding="utf-8"), 0,bytes("cfg/coco.data", encoding="utf-8"), )
-    net = Detector(bytes("cfg/2019_02_11_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2019_02_11_yolo-obj_2084.weights", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
+    net = Detector(bytes("cfg/2019_02_11_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2019_03_15_yolo-obj_3200.weights", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
 
     # Start loop for blinking in separate process
 
