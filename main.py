@@ -50,7 +50,6 @@ class YObject:
 
     def detect_object(self, object_to_detect,triger_margin,how_big_object_max, how_big_object_min):
         """
-
         :param object_to_detect:
         :param triger_margin:
         :return:
@@ -63,7 +62,7 @@ class YObject:
             # draw purple line on the screens it is just for visual check when call for blink
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
             self.ready_for_blink = True
-
+            #TODO separate blinking somewhere here
             # time of right blink
             time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
             # time of left blink
@@ -76,6 +75,28 @@ class YObject:
                 qtrigerlist.put(trigerlist)
             except:
                 print("Main thread exception occurred qtrigerlist.put(trigerlist)")
+
+    def detect_hrana(self, edge):
+        """
+        hrana is defined by 2 edges close enough
+        :param edge: category you would like use for hrana detection
+        :param distance_of_edges:
+        :return: true
+        """
+        if self.category.decode("utf-8") == edge:
+            x, y, w, h = self.bounds
+            x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
+            # loop over detections from yolo and check if there is another edge near by
+            for id, category, score, bounds in idresults:
+                # is it not the same object? and it is edge?
+                if id != self.id and category.decode("utf-8") == edge:
+                    xx, yy, ww, hh = bounds
+                    xx_rel, yy_rel, ww_rel, hh_rel, aarea_rel = calculate_relative_coordinates(xx, yy, ww, hh)
+                    # is second edge close enought ?
+                    if abs(x_rel - xx_rel) + abs(y_rel - yy_rel) < distance_of_second_edge:
+                        print('MAS HRANU, tu sprav daco', self.id)
+                        #TODO Finisch drawing to the screens
+                        return True
 
 class BlinkStickThread(threading.Thread):
     def run(self):
@@ -97,7 +118,6 @@ def blink_once():
     except:
         print("BlinkStickOnce exception occurred ")
     pass
-
 
 def calculate_relative_coordinates(x, y, w, h):
     """
@@ -128,7 +148,6 @@ def show_fps(start_of_loop, end_of_loop):
     FPS = round(1 / duration_of_loop, 1)
     cv2.putText(frame, str(FPS), (int(Xresolution - 20), int(Yresolution - 40)),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 100, 255))
     return FPS
-
 
 def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
     """
@@ -196,7 +215,6 @@ def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
         # need to be on the end to improve measurement
         absolut_end_time_loop = time.time()
         absolut_last_loop_duration = absolut_end_time_loop - start_time_loop
-
 
 def update_resutls_for_id(results):
     """
@@ -274,11 +292,11 @@ def draw_yolo_output_on_screen(results):
 
 if __name__ == "__main__":
 
-    ###################### VARS : ###########################
+    ###################### VARS : ######################################################################################
 
     # set resolution taken from webcam
-    Xresolution = 1280
-    Yresolution = 720
+    Xresolution = 480
+    Yresolution = 320
     cell_phone = []
     list_chyba = []
     # Used by pLoopTrigerlist  to communicate with main loop format is [(2.1, 1551338571.7396123, 2.2, 1551338571.9881353), (3.1, 1551338578.9405866, 3.2, 1551338579.1024451), (0.1, 1551338586.2836142, 0.2, 1551338586.4773874)]
@@ -299,24 +317,28 @@ if __name__ == "__main__":
     #
     how_big_object_max_small = 0.9
     how_big_object_min_small = 0.05
+    edge_to_detect = "orange"
+    distance_of_second_edge = 0.5
 
     # set web cam properties width and height, working for USB for webcam
-#    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(0)
+
     #static video file
-    video_filename = "MOV_2426.mp4"
-    cap = cv2.VideoCapture(video_filename)
+    #video_filename = "MOV_2426.mp4"
+    #cap = cv2.VideoCapture(video_filename)
     cap.set(3, Xresolution)
     cap.set(4, Yresolution)
+    # virtual position of triger relative to camera
     triger_margin = 0.8
     object_to_detect = "cell phone"
     # initialize our centroid tracker and frame dimensions
-    ct = CentroidTracker(maxDisappeared=50)
+    ct = CentroidTracker(maxDisappeared=5)
     (H, W) = (None, None)
 
     # Optional statement to configure preferred GPU. Available only in GPU version.
     # pydarknet.set_cuda_device(0)
-    #net = Detector(bytes("cfg/yolov3.cfg", encoding="utf-8"), bytes("weights/yolov3.weights", encoding="utf-8"), 0,bytes("cfg/coco.data", encoding="utf-8"), )
-    net = Detector(bytes("cfg/2019_02_11_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2019_03_15_yolo-obj_3200.weights", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
+    net = Detector(bytes("cfg/yolov3.cfg", encoding="utf-8"), bytes("weights/yolov3.weights", encoding="utf-8"), 0,bytes("cfg/coco.data", encoding="utf-8"), )
+    #net = Detector(bytes("cfg/2019_02_11_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2019_03_15_yolo-obj_3200.weights", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
 
     # Start loop for blinking in separate process
 
@@ -336,7 +358,7 @@ if __name__ == "__main__":
     process1.daemon = True
     process1.start()
 
-    ########################## MAIN LOOP ###########################
+    ########################## MAIN LOOP ###############################################################################
 
     while True:
         start_time = time.time()
@@ -348,7 +370,7 @@ if __name__ == "__main__":
             # This are the function parameters of detect:
             # Possible inputs: def detect(self, Image image, float thresh=.5, float hier_thresh=.5, float nms=.45):
             # call Yolo34
-            results = net.detect(dark_frame, thresh=.13)
+            results = net.detect(dark_frame, thresh=0.7)
             del dark_frame
             rects = convert_bounding_boxes_form_Yolo_Centroid_format(results)
             objects = ct.update(rects)
@@ -366,6 +388,8 @@ if __name__ == "__main__":
 
                 objekty[id].draw_object_and_id()
                 objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
+                objekty[id].detect_hrana(edge_to_detect)
+
 
             #TODO fix: count_objects_in_frame("cell phone")
             #TODO Here you can write yor own function which will be using class or another object oriented aproach, use !!!! 1idresults !!!! variable. You can do whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
