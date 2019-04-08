@@ -104,7 +104,6 @@ class YObject:
                         new_hrana_h = (h + hh) /2
                         new_hrana_bounds = new_hrana_x, new_hrana_y, new_hrana_w, new_hrana_h
                         #create_new_object_with_id(id, category, score, bounds)
-                        #TODO Finisch drawing to the
                         new_category_hrana = "hrana"
                         return new_hrana_id, new_category_hrana, new_hrana_score, new_hrana_bounds
 
@@ -391,8 +390,9 @@ if __name__ == "__main__":
             idresults = update_resutls_for_id(results)
             for id, category, score, bounds in idresults:
                 try:
-                    #try  if objekt is already existing
+                    # if objekt already exists, update it
                     if objekty[id].id == id:
+                        #
                         objekty[id].category = category.decode("utf-8")
                         objekty[id].score = score
                         objekty[id].bounds = bounds
@@ -401,6 +401,7 @@ if __name__ == "__main__":
                     objekty[id] = YObject(id, category.decode("utf-8"), score, bounds)
 
                 objekty[id].draw_object_and_id()
+
                 objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
                 # find hrana
                 try:
@@ -410,12 +411,13 @@ if __name__ == "__main__":
                 except Exception as ex:
                     template = "An exception of type {0} occurred. Arguments:\n{1!r}"
                     message = template.format(type(ex).__name__, ex.args)
-                    "print (message)"
+                    #"print (message)"
 
-
-
-
-
+                """    
+                for key in objekty:
+                    #print(key)
+                    objekty[key].draw_object_and_id()
+                """
 
 
             #TODO fix: count_objects_in_frame("cell phone")
