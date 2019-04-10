@@ -85,7 +85,6 @@ class YObject:
         :param distance_of_second_edge for example 0.5 fo 50% of the screen
         :return: true
         """
-        already_founded_second_edge = -1
         if self.category == edge:
             x, y, w, h = self.bounds
             x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
@@ -97,16 +96,15 @@ class YObject:
                     xx_rel, yy_rel, ww_rel, hh_rel, aarea_rel = calculate_relative_coordinates(xx, yy, ww, hh)
                     # is second edge close enought ?
                     if abs(x_rel - xx_rel) + abs(y_rel - yy_rel) < distance_of_second_edge:
-                        new_hrana_id = -1*(self.id + id)
                         new_hrana_score = (self.score + score)/2
                         new_hrana_x = (x + xx) /2
                         new_hrana_y = (y + yy) /2
-                        new_hrana_w = (w + ww) /2
-                        new_hrana_h = (h + hh) /2
+                        new_hrana_w = (w + ww)
+                        new_hrana_h = (h + hh)
                         new_hrana_bounds = new_hrana_x, new_hrana_y, new_hrana_w, new_hrana_h
                         #create_new_object_with_id(id, category, score, bounds)
                         new_category_hrana = "hrana"
-                        return new_hrana_id, new_category_hrana, new_hrana_score, new_hrana_bounds
+                        return new_category_hrana, new_hrana_score, new_hrana_bounds
                     else:
                         return False
                 else:
@@ -339,7 +337,7 @@ if __name__ == "__main__":
     how_big_object_max_small = 0.9
     how_big_object_min_small = 0.05
     object_for_hrana_detection = "orange"
-    distance_of_second_edge = 0.5
+    distance_of_second_edge = 0.6
 
     # set web cam properties width and height, working for USB for webcam
     cap = cv2.VideoCapture(0)
@@ -428,16 +426,18 @@ if __name__ == "__main__":
                         del hresults
                     # detect_hrana return True hten you need to update
                     else:
-                        do_not_use_id, hcategory, hscore, hbounds = objekty[id].detect_hrana(object_for_hrana_detection,distance_of_second_edge)
-                        # in hresults is rim stored so in can be inported to detection from Yolo in next loop
+                        hcategory, hscore, hbounds = objekty[id].detect_hrana(object_for_hrana_detection,distance_of_second_edge)
+                    # in hresults is rim stored so in can be inported to detection from Yolo in next loop
                         hresults = hcategory.encode("utf-8"), hscore, hbounds
 
                 except Exception as ex:
                     template = "An exception of type {0} occurred. Arguments:\n{1!r}"
                     message = template.format(type(ex).__name__, ex.args)
-                    #"print (message)"
+                    #print (message)
+
                 objekty[id].draw_object_and_id()
                 objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
+                #objekty[id].detect_object("hrana", triger_margin, how_big_object_max_small, how_big_object_min_small)
 
             #TODO fix: count_objects_in_frame("cell phone")
             #TODO Here you can write yor own function which will be using class or another object oriented aproach, use !!!! idresults !!!! variable. You can do whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
