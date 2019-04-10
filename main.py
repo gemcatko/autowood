@@ -32,6 +32,7 @@ class YObject:
         self.score = score
         self.bounds = bounds
         #self.x,self.y,self.w,self.h = bounds
+        self.is_on_screen = True
         self.ready_for_blink = False
 
     def draw_object_and_id(self):
@@ -106,6 +107,15 @@ class YObject:
                         #create_new_object_with_id(id, category, score, bounds)
                         new_category_hrana = "hrana"
                         return new_hrana_id, new_category_hrana, new_hrana_score, new_hrana_bounds
+                    else:
+                        return False
+                else:
+                    return False
+
+    def check_if_on_screen(self):
+        for id, category, score, bounds in idresults:
+            if id in idresults:
+                self.is_on_screen == False
 
 
 
@@ -382,6 +392,13 @@ if __name__ == "__main__":
             # Possible inputs: def detect(self, Image image, float thresh=.5, float hier_thresh=.5, float nms=.45):
             # call Yolo34
             results = net.detect(dark_frame, thresh=0.7)
+            try:
+                results.append(hresults)
+            except Exception as ex:
+                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                message = template.format(type(ex).__name__, ex.args)
+                # "print (message)"
+
             del dark_frame
             rects = convert_bounding_boxes_form_Yolo_Centroid_format(results)
             objects = ct.update(rects)
@@ -404,6 +421,7 @@ if __name__ == "__main__":
 
                 objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
                 # find hrana
+                """
                 try:
                     hid, hcategory, hscore, hbounds = objekty[id].detect_hrana(object_for_hrana_detection, distance_of_second_edge)
                     objekty[hid] = YObject(hid, hcategory, hscore, hbounds)
@@ -412,12 +430,30 @@ if __name__ == "__main__":
                     template = "An exception of type {0} occurred. Arguments:\n{1!r}"
                     message = template.format(type(ex).__name__, ex.args)
                     #"print (message)"
-
+                """
                 """    
                 for key in objekty:
                     #print(key)
                     objekty[key].draw_object_and_id()
                 """
+
+                try:
+                    # if hrana is not detected delete hresults so it will not be appended to detection from youlo in next loop
+                    if objekty[id].detect_hrana(object_for_hrana_detection, distance_of_second_edge) == False:
+                        del hresults
+                    # detect_hrana return True hten you need to update
+                    else:
+                        id, hcategory, hscore, hbounds = objekty[id].detect_hrana(object_for_hrana_detection,distance_of_second_edge)
+                        #objekty[id] = YObject(id, hcategory, hscore, hbounds)
+                    # in hresults is rim stored so in can be inported to detection from Yolo in next loop
+                        hresults = hcategory.encode("utf-8"), hscore, hbounds
+
+
+
+                except Exception as ex:
+                    template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                    message = template.format(type(ex).__name__, ex.args)
+                    "print (message)"
 
 
             #TODO fix: count_objects_in_frame("cell phone")
