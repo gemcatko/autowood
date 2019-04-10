@@ -405,6 +405,7 @@ if __name__ == "__main__":
             draw_ids_on_screens(objects)
             # PUTT all detected objects with ids to idresults list
             idresults = update_resutls_for_id(results)
+            #loop over all object and ttry
             for id, category, score, bounds in idresults:
                 try:
                     # if objekt already exists, update it
@@ -417,44 +418,26 @@ if __name__ == "__main__":
                     #create new object if not existing
                     objekty[id] = YObject(id, category.decode("utf-8"), score, bounds)
 
-                objekty[id].draw_object_and_id()
+#                objekty[id].draw_object_and_id()
+#                objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
 
-                objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
-                # find hrana
-                """
-                try:
-                    hid, hcategory, hscore, hbounds = objekty[id].detect_hrana(object_for_hrana_detection, distance_of_second_edge)
-                    objekty[hid] = YObject(hid, hcategory, hscore, hbounds)
-                    objekty[hid].draw_object_and_id()
-                except Exception as ex:
-                    template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-                    message = template.format(type(ex).__name__, ex.args)
-                    #"print (message)"
-                """
-                """    
-                for key in objekty:
-                    #print(key)
-                    objekty[key].draw_object_and_id()
-                """
-
+                # find rim and back propagate to detection from Yolo in next loop
                 try:
                     # if hrana is not detected delete hresults so it will not be appended to detection from youlo in next loop
                     if objekty[id].detect_hrana(object_for_hrana_detection, distance_of_second_edge) == False:
                         del hresults
                     # detect_hrana return True hten you need to update
                     else:
-                        id, hcategory, hscore, hbounds = objekty[id].detect_hrana(object_for_hrana_detection,distance_of_second_edge)
-                        #objekty[id] = YObject(id, hcategory, hscore, hbounds)
-                    # in hresults is rim stored so in can be inported to detection from Yolo in next loop
+                        do_not_use_id, hcategory, hscore, hbounds = objekty[id].detect_hrana(object_for_hrana_detection,distance_of_second_edge)
+                        # in hresults is rim stored so in can be inported to detection from Yolo in next loop
                         hresults = hcategory.encode("utf-8"), hscore, hbounds
-
-
 
                 except Exception as ex:
                     template = "An exception of type {0} occurred. Arguments:\n{1!r}"
                     message = template.format(type(ex).__name__, ex.args)
-                    "print (message)"
-
+                    #"print (message)"
+                objekty[id].draw_object_and_id()
+                objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
 
             #TODO fix: count_objects_in_frame("cell phone")
             #TODO Here you can write yor own function which will be using class or another object oriented aproach, use !!!! idresults !!!! variable. You can do whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
