@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-
 
 
 class YObject:
-    # z Yola ide odresult a v idrusulte su id, cat, score, bounds
+    # z Yola ide idresult a v idrusulte su id, cat, score, bounds
     # def __init__(self, centroid_id, category, score, bounds):
     def __init__(self, id, category, score, bounds):
         # centroid_id , detected_category, score, object_position_center_x ,object_position_center_y ,width w, height_h
@@ -32,6 +32,7 @@ class YObject:
         self.score = score
         self.bounds = bounds
         #self.x,self.y,self.w,self.h = bounds
+        self.is_on_screen = True
         self.ready_for_blink = False
 
     def draw_object_and_id(self):
@@ -42,7 +43,8 @@ class YObject:
         x, y, w, h = self.bounds
         cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (125, 125, 125),4)
         # draw what is name of the object
-        cv2.putText(frame, str(category.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
+        #cv2.putText(frame, str(category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
+        cv2.putText(frame, str(self.category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
         #Draw ID dot
         #TODO finish
         #Draw id number text
@@ -57,7 +59,7 @@ class YObject:
         x,y,w,h = self.bounds
         x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
         ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
-        if self.category.decode("utf-8") == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink == False :
+        if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink == False :
             print('Sprav znacky for ID',self.id)
             # draw purple line on the screens it is just for visual check when call for blink
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
@@ -76,27 +78,44 @@ class YObject:
             except:
                 print("Main thread exception occurred qtrigerlist.put(trigerlist)")
 
-    def detect_hrana(self, edge):
+    def detect_hrana(self, edge, distance_of_second_edge):
         """
         hrana is defined by 2 edges close enough
         :param edge: category you would like use for hrana detection
-        :param distance_of_edges:
+        :param distance_of_second_edge for example 0.5 fo 50% of the screen
         :return: true
         """
-        if self.category.decode("utf-8") == edge:
+        if self.category == edge:
             x, y, w, h = self.bounds
             x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
             # loop over detections from yolo and check if there is another edge near by
             for id, category, score, bounds in idresults:
                 # is it not the same object? and it is edge?
-                if id != self.id and category.decode("utf-8") == edge:
+                if id != self.id and category.decode("utf-8")  == edge:
                     xx, yy, ww, hh = bounds
                     xx_rel, yy_rel, ww_rel, hh_rel, aarea_rel = calculate_relative_coordinates(xx, yy, ww, hh)
                     # is second edge close enought ?
                     if abs(x_rel - xx_rel) + abs(y_rel - yy_rel) < distance_of_second_edge:
-                        print('MAS HRANU, tu sprav daco', self.id)
-                        #TODO Finisch drawing to the screens
-                        return True
+                        new_hrana_score = (self.score + score)/2
+                        new_hrana_x = (x + xx) /2
+                        new_hrana_y = (y + yy) /2
+                        new_hrana_w = (w + ww)
+                        new_hrana_h = (h + hh)
+                        new_hrana_bounds = new_hrana_x, new_hrana_y, new_hrana_w, new_hrana_h
+                        #create_new_object_with_id(id, category, score, bounds)
+                        new_category_hrana = "hrana"
+                        return new_category_hrana, new_hrana_score, new_hrana_bounds
+                    else:
+                        return False
+                else:
+                    return False
+
+    def check_if_on_screen(self):
+        for id, category, score, bounds in idresults:
+            if id in idresults:
+                self.is_on_screen == False
+
+
 
 class BlinkStickThread(threading.Thread):
     def run(self):
@@ -317,8 +336,8 @@ if __name__ == "__main__":
     #
     how_big_object_max_small = 0.9
     how_big_object_min_small = 0.05
-    edge_to_detect = "orange"
-    distance_of_second_edge = 0.5
+    object_for_hrana_detection = "orange"
+    distance_of_second_edge = 0.6
 
     # set web cam properties width and height, working for USB for webcam
     cap = cv2.VideoCapture(0)
@@ -371,28 +390,57 @@ if __name__ == "__main__":
             # Possible inputs: def detect(self, Image image, float thresh=.5, float hier_thresh=.5, float nms=.45):
             # call Yolo34
             results = net.detect(dark_frame, thresh=0.7)
+            try:
+                results.append(hresults)
+            except Exception as ex:
+                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                message = template.format(type(ex).__name__, ex.args)
+                # "print (message)"
+
             del dark_frame
             rects = convert_bounding_boxes_form_Yolo_Centroid_format(results)
             objects = ct.update(rects)
             draw_ids_on_screens(objects)
             # PUTT all detected objects with ids to idresults list
             idresults = update_resutls_for_id(results)
+            #loop over all object and ttry
             for id, category, score, bounds in idresults:
                 try:
+                    # if objekt already exists, update it
                     if objekty[id].id == id:
-                        objekty[id].category = category
+                        #
+                        objekty[id].category = category.decode("utf-8")
                         objekty[id].score = score
                         objekty[id].bounds = bounds
                 except:
-                    objekty[id] = YObject(id, category, score, bounds)
+                    #create new object if not existing
+                    objekty[id] = YObject(id, category.decode("utf-8"), score, bounds)
+
+#                objekty[id].draw_object_and_id()
+#                objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
+
+                # find rim and back propagate to detection from Yolo in next loop
+                try:
+                    # if hrana is not detected delete hresults so it will not be appended to detection from youlo in next loop
+                    if objekty[id].detect_hrana(object_for_hrana_detection, distance_of_second_edge) == False:
+                        del hresults
+                    # detect_hrana return True hten you need to update
+                    else:
+                        hcategory, hscore, hbounds = objekty[id].detect_hrana(object_for_hrana_detection,distance_of_second_edge)
+                    # in hresults is rim stored so in can be inported to detection from Yolo in next loop
+                        hresults = hcategory.encode("utf-8"), hscore, hbounds
+
+                except Exception as ex:
+                    template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                    message = template.format(type(ex).__name__, ex.args)
+                    #print (message)
 
                 objekty[id].draw_object_and_id()
                 objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
-                objekty[id].detect_hrana(edge_to_detect)
-
+                #objekty[id].detect_object("hrana", triger_margin, how_big_object_max_small, how_big_object_min_small)
 
             #TODO fix: count_objects_in_frame("cell phone")
-            #TODO Here you can write yor own function which will be using class or another object oriented aproach, use !!!! 1idresults !!!! variable. You can do whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
+            #TODO Here you can write yor own function which will be using class or another object oriented aproach, use !!!! idresults !!!! variable. You can do whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
             #TODO Detection for errors which are longer then XX(probably 15) cm
             end_time = time.time()
             show_fps(start_time, end_time)
