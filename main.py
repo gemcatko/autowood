@@ -17,9 +17,8 @@ logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-
 # DONE how to triger saw https://www.sick.com/es/en/registration-sensors/luminescence-sensors/lut9/lut9b-11626/p/p143229  (light? maybe) SEMI TRANSPARENT GLASS WITH WARM WHITE LED OR red light => red led
 # DONE Solve how to triger sensor from code? => https://learn.adafruit.com/adafruit-ft232h-breakout/linux-setup check if possible with python 3 => https://shop.blinkstick.com/
 # DONE give objecs uniqe ID
-# TODO calculate speed of objects integarde mpoint
+# TODO calculate speed of objects integrate mpoint
 # TODO Store image detections as thumbnails(small images) somewhere
-
 
 class YObject:
     # z Yola ide idresult a v idrusulte su id, cat, score, bounds
@@ -110,10 +109,7 @@ class YObject:
                 else:
                     return False
 
-    def check_if_on_screen(self):
-        for id, category, score, bounds in idresults:
-            if id in idresults:
-                self.is_on_screen == False
+
     def detect_rim_and_propagate_back_to_yolo_detections(self):
         """
         # find rim and back propagate to detection from Yolo in next loop
@@ -135,8 +131,6 @@ class YObject:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             # print (message)
-
-
 
 class BlinkStickThread(threading.Thread):
     def run(self):
@@ -330,6 +324,17 @@ def draw_yolo_output_on_screen(results):
         cv2.putText(frame, str(cat.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
 
 
+
+def update_objekty_if_on_screen(objekty):
+    """
+    :param objekty:
+    Is updating all objects store in objekty if is on screen or not
+    :return:
+    """
+    for YObject in objekty:
+        if objekty[YObject].id not in idresults:
+            objekty[YObject].is_on_screen = False
+
 if __name__ == "__main__":
 
     ###################### VARS : ######################################################################################
@@ -418,12 +423,11 @@ if __name__ == "__main__":
             draw_ids_on_screens(objects)
             # PUTT all detected objects with ids to idresults list
             idresults = update_resutls_for_id(results)
-            #loop over all object and try
+            #Loop over all objects which are detected by Yolo+id
             for id, category, score, bounds in idresults:
                 try:
-                    # if objekt already exists, update it
+                    # if Yobjekt with specifict id already exists, update it
                     if objekty[id].id == id:
-                        #
                         objekty[id].category = category.decode("utf-8")
                         objekty[id].score = score
                         objekty[id].bounds = bounds
@@ -434,10 +438,7 @@ if __name__ == "__main__":
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
                 objekty[id].draw_object_and_id()
                 objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
-
-            #TODO fix: count_objects_in_frame("cell phone")
-            #TODO Here you can write yor own function which will be using class or another object oriented aproach, use !!!! idresults !!!! variable. You can do whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
-            #TODO Detection for errors which are longer then XX(probably 15) cm
+            update_objekty_if_on_screen(objekty)
             end_time = time.time()
             show_fps(start_time, end_time)
         cv2.imshow("preview", frame)
