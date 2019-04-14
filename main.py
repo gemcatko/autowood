@@ -114,6 +114,27 @@ class YObject:
         for id, category, score, bounds in idresults:
             if id in idresults:
                 self.is_on_screen == False
+    def detect_rim_and_propagate_back_to_yolo_detections(self):
+        """
+        # find rim and back propagate to detection from Yolo in next loop
+        :return:
+        """
+        global hresults
+        try:
+            # if hrana is not detected delete hresults so it will not be appended to detection from youlo in next loop
+            if objekty[id].detect_hrana(object_for_hrana_detection, distance_of_second_edge) == False:
+                del hresults
+            # detect_hrana return True hten you need to update
+            else:
+                hcategory, hscore, hbounds = objekty[id].detect_hrana(object_for_hrana_detection,
+                                                                      distance_of_second_edge)
+                # in hresults is rim stored so in can be inported to detection from Yolo in next loop
+                hresults = hcategory.encode("utf-8"), hscore, hbounds
+
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            # print (message)
 
 
 
@@ -323,32 +344,26 @@ if __name__ == "__main__":
     idresults = []
     # Used by pLoopTrigerlist  to confirm object was marked  format is [(2.1, 1551338571.7396123), (2.2, 1551338571.9881353), (3.1, 1551338578.9405866), (3.2, 1551338579.1024451), (0.1, 1551338586.2836142), (0.2, 1551338586.4773874)]
     fastTrigerList = []
-    field_of_view = 0.4  # field of view in m for camera
+    field_of_view = 0.4                                                     # field of view in m for camera
     x_norm_last = 0
     y_norm_last = 0
-    speed_ms = 1  # MS Metere za Sekundu rychlost pasu pily
-    w_of_one_picture_m = 0.4  # M Meter width og on screen in meter
-    duration_1screen_s = w_of_one_picture_m / speed_ms  # time za kolko prejde jedna obrazovka pri speed_ms
-    delay = 1  # time in s to delay marking, can be use to set distance of sensing camera from BliknStick.
-    margin = 0.8  # place on screen where it is detecting objects,
+    default_saw_speed_ms = 1                                                # how fast is saw going in meter per second
+    w_of_one_picture_m = 0.4                                                # M Meter width og on screen in meter
+    duration_1screen_s = w_of_one_picture_m / default_saw_speed_ms          # time za kolko prejde jedna obrazovka pri default_saw_speed_ms
+    delay = 1                                                               # time in s to delay marking, can be use to set distance of sensing camera from BliknStick.
     speed_considered_trail_stoped = 20
-    objekty = {}
-    #
+    objekty = {}                                                            # it is storing all detection from program startup
     how_big_object_max_small = 0.9
     how_big_object_min_small = 0.05
     object_for_hrana_detection = "orange"
     distance_of_second_edge = 0.6
-
-    # set web cam properties width and height, working for USB for webcam
-    cap = cv2.VideoCapture(0)
-
-    #static video file
-    #video_filename = "MOV_2426.mp4"
+    cap = cv2.VideoCapture(0)                                               # set web cam properties width and height, working for USB for webcam
+    #video_filename = "MOV_2426.mp4"                                        # use if you want to use static video file
     #cap = cv2.VideoCapture(video_filename)
     cap.set(3, Xresolution)
     cap.set(4, Yresolution)
     # virtual position of triger relative to camera
-    triger_margin = 0.8
+    triger_margin = 0.8 # place on screen where it is detecting objects
     object_to_detect = "cell phone"
     # initialize our centroid tracker and frame dimensions
     ct = CentroidTracker(maxDisappeared=5)
@@ -389,7 +404,7 @@ if __name__ == "__main__":
             # This are the function parameters of detect:
             # Possible inputs: def detect(self, Image image, float thresh=.5, float hier_thresh=.5, float nms=.45):
             # call Yolo34
-            results = net.detect(dark_frame, thresh=0.7)
+            results = net.detect(dark_frame, thresh=0.5)
             try:
                 results.append(hresults)
             except Exception as ex:
@@ -403,7 +418,7 @@ if __name__ == "__main__":
             draw_ids_on_screens(objects)
             # PUTT all detected objects with ids to idresults list
             idresults = update_resutls_for_id(results)
-            #loop over all object and ttry
+            #loop over all object and try
             for id, category, score, bounds in idresults:
                 try:
                     # if objekt already exists, update it
@@ -416,28 +431,9 @@ if __name__ == "__main__":
                     #create new object if not existing
                     objekty[id] = YObject(id, category.decode("utf-8"), score, bounds)
 
-#                objekty[id].draw_object_and_id()
-#                objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
-
-                # find rim and back propagate to detection from Yolo in next loop
-                try:
-                    # if hrana is not detected delete hresults so it will not be appended to detection from youlo in next loop
-                    if objekty[id].detect_hrana(object_for_hrana_detection, distance_of_second_edge) == False:
-                        del hresults
-                    # detect_hrana return True hten you need to update
-                    else:
-                        hcategory, hscore, hbounds = objekty[id].detect_hrana(object_for_hrana_detection,distance_of_second_edge)
-                    # in hresults is rim stored so in can be inported to detection from Yolo in next loop
-                        hresults = hcategory.encode("utf-8"), hscore, hbounds
-
-                except Exception as ex:
-                    template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-                    message = template.format(type(ex).__name__, ex.args)
-                    #print (message)
-
+                objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
                 objekty[id].draw_object_and_id()
                 objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
-                #objekty[id].detect_object("hrana", triger_margin, how_big_object_max_small, how_big_object_min_small)
 
             #TODO fix: count_objects_in_frame("cell phone")
             #TODO Here you can write yor own function which will be using class or another object oriented aproach, use !!!! idresults !!!! variable. You can do whatever you like just do not change existing code. make Class when it see "Apple it give back true use idresults: "
