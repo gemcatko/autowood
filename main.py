@@ -14,23 +14,18 @@ from pyimagesearch.centroidtracker import CentroidTracker
 
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s',)
 
-# DONE how to triger saw https://www.sick.com/es/en/registration-sensors/luminescence-sensors/lut9/lut9b-11626/p/p143229  (light? maybe) SEMI TRANSPARENT GLASS WITH WARM WHITE LED OR red light => red led
-# DONE Solve how to triger sensor from code? => https://learn.adafruit.com/adafruit-ft232h-breakout/linux-setup check if possible with python 3 => https://shop.blinkstick.com/
-# DONE give objecs uniqe ID
 # TODO calculate speed of objects integrate mpoint
 # TODO Store image detections as thumbnails(small images) somewhere
 
 class YObject:
-    # z Yola ide idresult a v idrusulte su id, cat, score, bounds
+    # use for creating objects from Yolo.
     # def __init__(self, centroid_id, category, score, bounds):
     def __init__(self, id, category, score, bounds):
-        # centroid_id , detected_category, score, object_position_center_x ,object_position_center_y ,width w, height_h
         # copy paste functionality of  detect_object_4_c
         self.id = id
         self.category = category
         self.score = score
         self.bounds = bounds
-        #self.x,self.y,self.w,self.h = bounds
         self.is_on_screen = True
         self.ready_for_blink = False
 
@@ -177,7 +172,7 @@ def count_objects_in_frame(object_to_check):
         cv2.putText(frame, str(number_of_object_to_check), (int(Xresolution - 20), int(Yresolution-20)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
     return number_of_object_to_check
 
-def show_fps(start_of_loop, end_of_loop):
+def show_fps(start_time, end_time):
     duration_of_loop = end_time - start_time
     FPS = round(1 / duration_of_loop, 1)
     cv2.putText(frame, str(FPS), (int(Xresolution - 20), int(Yresolution - 40)),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 100, 255))
@@ -378,10 +373,7 @@ if __name__ == "__main__":
     # pydarknet.set_cuda_device(0)
     net = Detector(bytes("cfg/yolov3.cfg", encoding="utf-8"), bytes("weights/yolov3.weights", encoding="utf-8"), 0,bytes("cfg/coco.data", encoding="utf-8"), )
     #net = Detector(bytes("cfg/2019_02_11_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2019_03_15_yolo-obj_3200.weights", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
-
     # Start loop for blinking in separate process
-
-
     # initialize shared vars for speed/movement x,y
     s_x = multiprocessing.Value('i', 0)
     s_y = multiprocessing.Value('i', 0)
