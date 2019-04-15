@@ -72,10 +72,10 @@ class YObject:
             except:
                 print("Main thread exception occurred qtrigerlist.put(trigerlist)")
 
-    def detect_hrana(self, edge, distance_of_second_edge):
+    def detect_rim(self, edge, distance_of_second_edge):
         """
-        hrana is defined by 2 edges close enough
-        :param edge: category you would like use for hrana detection
+        rim is defined by 2 edges close enough
+        :param edge: category you would like use for rim detection
         :param distance_of_second_edge for example 0.5 fo 50% of the screen
         :return: true
         """
@@ -88,17 +88,20 @@ class YObject:
                 if id != self.id and category.decode("utf-8")  == edge:
                     xx, yy, ww, hh = bounds
                     xx_rel, yy_rel, ww_rel, hh_rel, aarea_rel = calculate_relative_coordinates(xx, yy, ww, hh)
-                    # is second edge close enought ?
-                    if abs(x_rel - xx_rel) + abs(y_rel - yy_rel) < distance_of_second_edge:
-                        new_hrana_score = (self.score + score)/2
-                        new_hrana_x = (x + xx) /2
-                        new_hrana_y = (y + yy) /2
-                        new_hrana_w = (w + ww)
-                        new_hrana_h = (h + hh)
-                        new_hrana_bounds = new_hrana_x, new_hrana_y, new_hrana_w, new_hrana_h
+                    # is second edge close enought ?)
+                    if (((x_rel - xx_rel)**2) + ((y_rel - yy_rel)**2))**(0.5) < distance_of_second_edge:
+                        #calculate rim properties
+                        new_rim_score = (self.score + score)/2
+                        new_rim_x = (x + xx) /2
+                        new_rim_y = (y + yy) /2
+                        #new_rim_w = (w + ww)
+                        #new_rim_h = (h + hh)
+                        new_rim_w = abs(x - xx)
+                        new_rim_h = abs(y - yy)
+                        new_rim_bounds = new_rim_x, new_rim_y, new_rim_w, new_rim_h
                         #create_new_object_with_id(id, category, score, bounds)
-                        new_category_hrana = "hrana"
-                        return new_category_hrana, new_hrana_score, new_hrana_bounds
+                        new_category_rim = "rim"
+                        return new_category_rim, new_rim_score, new_rim_bounds
                     else:
                         return False
                 else:
@@ -112,12 +115,12 @@ class YObject:
         """
         global hresults
         try:
-            # if hrana is not detected delete hresults so it will not be appended to detection from youlo in next loop
-            if objekty[id].detect_hrana(object_for_hrana_detection, distance_of_second_edge) == False:
+            # if rim is not detected delete hresults so it will not be appended to detection from youlo in next loop
+            if objekty[id].detect_rim(object_for_rim_detection, distance_of_second_edge) == False:
                 del hresults
-            # detect_hrana return True hten you need to update
+            # detect_rim return True hten you need to update
             else:
-                hcategory, hscore, hbounds = objekty[id].detect_hrana(object_for_hrana_detection,
+                hcategory, hscore, hbounds = objekty[id].detect_rim(object_for_rim_detection,
                                                                       distance_of_second_edge)
                 # in hresults is rim stored so in can be inported to detection from Yolo in next loop
                 hresults = hcategory.encode("utf-8"), hscore, hbounds
@@ -334,9 +337,9 @@ if __name__ == "__main__":
 
     ###################### VARS : ######################################################################################
 
-    # set resolution taken from webcam
-    Xresolution = 480
-    Yresolution = 320
+    # set resolution taken from webcam it need to match reality!or relative calculations will not work
+    Xresolution = 640
+    Yresolution = 480
     cell_phone = []
     list_chyba = []
     # Used by pLoopTrigerlist  to communicate with main loop format is [(2.1, 1551338571.7396123, 2.2, 1551338571.9881353), (3.1, 1551338578.9405866, 3.2, 1551338579.1024451), (0.1, 1551338586.2836142, 0.2, 1551338586.4773874)]
@@ -355,8 +358,8 @@ if __name__ == "__main__":
     objekty = {}                                                            # it is storing all detection from program startup
     how_big_object_max_small = 0.9
     how_big_object_min_small = 0.05
-    object_for_hrana_detection = "orange"
-    distance_of_second_edge = 0.6
+    object_for_rim_detection = "orange"
+    distance_of_second_edge = 0.4
     cap = cv2.VideoCapture(0)                                               # set web cam properties width and height, working for USB for webcam
     #video_filename = "MOV_2426.mp4"                                        # use if you want to use static video file
     #cap = cv2.VideoCapture(video_filename)
