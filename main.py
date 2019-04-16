@@ -4,13 +4,12 @@ import subprocess
 import threading
 import time
 from pydarknet import Detector, Image
-
 import cv2
 import numpy as np
-
 from mpoint.mpoint import Mpoint
 # for manual see: https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
 from pyimagesearch.centroidtracker import CentroidTracker
+from dev_env_vars import *
 
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s',)
 
@@ -178,7 +177,7 @@ def count_objects_in_frame(object_to_check):
 def show_fps(start_time, end_time):
     duration_of_loop = end_time - start_time
     FPS = round(1 / duration_of_loop, 1)
-    cv2.putText(frame, str(FPS), (int(Xresolution - 20), int(Yresolution - 40)),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 100, 255))
+    cv2.putText(frame, str(FPS), (int(Xresolution - 80), int(Yresolution - 40)),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 100, 255))
     return FPS
 
 def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
@@ -321,8 +320,6 @@ def draw_yolo_output_on_screen(results):
         cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 0))
         cv2.putText(frame, str(cat.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
 
-
-
 def update_objekty_if_on_screen(objekty):
     """
     :param objekty:
@@ -335,47 +332,22 @@ def update_objekty_if_on_screen(objekty):
 
 if __name__ == "__main__":
 
-    ###################### VARS : ######################################################################################
-
-    # set resolution taken from webcam it need to match reality!or relative calculations will not work
-    Xresolution = 640
-    Yresolution = 480
-    cell_phone = []
-    list_chyba = []
-    # Used by pLoopTrigerlist  to communicate with main loop format is [(2.1, 1551338571.7396123, 2.2, 1551338571.9881353), (3.1, 1551338578.9405866, 3.2, 1551338579.1024451), (0.1, 1551338586.2836142, 0.2, 1551338586.4773874)]
-    trigerlist = []
-    idresults = []
-    # Used by pLoopTrigerlist  to confirm object was marked  format is [(2.1, 1551338571.7396123), (2.2, 1551338571.9881353), (3.1, 1551338578.9405866), (3.2, 1551338579.1024451), (0.1, 1551338586.2836142), (0.2, 1551338586.4773874)]
-    fastTrigerList = []
-    field_of_view = 0.4                                                     # field of view in m for camera
-    x_norm_last = 0
-    y_norm_last = 0
-    default_saw_speed_ms = 1                                                # how fast is saw going in meter per second
-    w_of_one_picture_m = 0.4                                                # M Meter width og on screen in meter
-    duration_1screen_s = w_of_one_picture_m / default_saw_speed_ms          # time za kolko prejde jedna obrazovka pri default_saw_speed_ms
-    delay = 1                                                               # time in s to delay marking, can be use to set distance of sensing camera from BliknStick.
-    speed_considered_trail_stoped = 20
-    objekty = {}                                                            # it is storing all detection from program startup
-    how_big_object_max_small = 0.9
-    how_big_object_min_small = 0.05
-    object_for_rim_detection = "orange"
-    distance_of_second_edge = 0.4
-    cap = cv2.VideoCapture(0)                                               # set web cam properties width and height, working for USB for webcam
-    #video_filename = "MOV_2426.mp4"                                        # use if you want to use static video file
-    #cap = cv2.VideoCapture(video_filename)
+    ################################ SETUP #############################################################################
+    """"""
+    cap = cv2.VideoCapture(0)  # set web cam properties width and height, working for USB for webcam
+    # video_filename = "MOV_2426.mp4"                                        # use if you want to use static video file
+    # cap = cv2.VideoCapture(video_filename)
     cap.set(3, Xresolution)
     cap.set(4, Yresolution)
-    # virtual position of triger relative to camera
-    triger_margin = 0.8 # place on screen where it is detecting objects
-    object_to_detect = "cell phone"
+
     # initialize our centroid tracker and frame dimensions
     ct = CentroidTracker(maxDisappeared=5)
-    (H, W) = (None, None)
+    #(H, W) = (None, None)
 
     # Optional statement to configure preferred GPU. Available only in GPU version.
     # pydarknet.set_cuda_device(0)
-    net = Detector(bytes("cfg/yolov3.cfg", encoding="utf-8"), bytes("weights/yolov3.weights", encoding="utf-8"), 0,bytes("cfg/coco.data", encoding="utf-8"), )
-    #net = Detector(bytes("cfg/2019_02_11_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2019_03_15_yolo-obj_3200.weights", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
+    net = Detector(bytes(yolov3_cfg, encoding=cat_encoding), bytes(yolov_weights, encoding=cat_encoding), 0,
+                   bytes(obj_data, encoding=cat_encoding), )
     # Start loop for blinking in separate process
     # initialize shared vars for speed/movement x,y
     s_x = multiprocessing.Value('i', 0)
@@ -388,9 +360,11 @@ if __name__ == "__main__":
     # Shared queue for list with ids to blink
     qtrigerlist = multiprocessing.Queue()
     qtrigerlist.put(trigerlist)
+    # Start faster_loop_trigerlist in separate process and processor so it is not delayed by main process
     process1 = multiprocessing.Process(target=faster_loop_trigerlist, args=(qtrigerlist, s_x, s_y))
     process1.daemon = True
     process1.start()
+
 
     ########################## MAIN LOOP ###############################################################################
 
