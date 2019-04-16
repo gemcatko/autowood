@@ -4,33 +4,27 @@ import subprocess
 import threading
 import time
 from pydarknet import Detector, Image
-
 import cv2
 import numpy as np
-
 from mpoint.mpoint import Mpoint
 # for manual see: https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
 from pyimagesearch.centroidtracker import CentroidTracker
+from dev_env_vars import *
 
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s',)
 
-# DONE how to triger saw https://www.sick.com/es/en/registration-sensors/luminescence-sensors/lut9/lut9b-11626/p/p143229  (light? maybe) SEMI TRANSPARENT GLASS WITH WARM WHITE LED OR red light => red led
-# DONE Solve how to triger sensor from code? => https://learn.adafruit.com/adafruit-ft232h-breakout/linux-setup check if possible with python 3 => https://shop.blinkstick.com/
-# DONE give objecs uniqe ID
 # TODO calculate speed of objects integrate mpoint
 # TODO Store image detections as thumbnails(small images) somewhere
 
 class YObject:
-    # z Yola ide idresult a v idrusulte su id, cat, score, bounds
+    # use for creating objects from Yolo.
     # def __init__(self, centroid_id, category, score, bounds):
     def __init__(self, id, category, score, bounds):
-        # centroid_id , detected_category, score, object_position_center_x ,object_position_center_y ,width w, height_h
         # copy paste functionality of  detect_object_4_c
         self.id = id
         self.category = category
         self.score = score
         self.bounds = bounds
-        #self.x,self.y,self.w,self.h = bounds
         self.is_on_screen = True
         self.ready_for_blink = False
 
@@ -77,10 +71,10 @@ class YObject:
             except:
                 print("Main thread exception occurred qtrigerlist.put(trigerlist)")
 
-    def detect_hrana(self, edge, distance_of_second_edge):
+    def detect_rim(self, edge, distance_of_second_edge):
         """
-        hrana is defined by 2 edges close enough
-        :param edge: category you would like use for hrana detection
+        rim is defined by 2 edges close enough
+        :param edge: category you would like use for rim detection
         :param distance_of_second_edge for example 0.5 fo 50% of the screen
         :return: true
         """
@@ -93,17 +87,20 @@ class YObject:
                 if id != self.id and category.decode("utf-8")  == edge:
                     xx, yy, ww, hh = bounds
                     xx_rel, yy_rel, ww_rel, hh_rel, aarea_rel = calculate_relative_coordinates(xx, yy, ww, hh)
-                    # is second edge close enought ?
-                    if abs(x_rel - xx_rel) + abs(y_rel - yy_rel) < distance_of_second_edge:
-                        new_hrana_score = (self.score + score)/2
-                        new_hrana_x = (x + xx) /2
-                        new_hrana_y = (y + yy) /2
-                        new_hrana_w = (w + ww)
-                        new_hrana_h = (h + hh)
-                        new_hrana_bounds = new_hrana_x, new_hrana_y, new_hrana_w, new_hrana_h
+                    # is second edge close enought ?)
+                    if (((x_rel - xx_rel)**2) + ((y_rel - yy_rel)**2))**(0.5) < distance_of_second_edge:
+                        #calculate rim properties
+                        new_rim_score = (self.score + score)/2
+                        new_rim_x = (x + xx) /2
+                        new_rim_y = (y + yy) /2
+                        #new_rim_w = (w + ww)
+                        #new_rim_h = (h + hh)
+                        new_rim_w = abs(x - xx)
+                        new_rim_h = abs(y - yy)
+                        new_rim_bounds = new_rim_x, new_rim_y, new_rim_w, new_rim_h
                         #create_new_object_with_id(id, category, score, bounds)
-                        new_category_hrana = "hrana"
-                        return new_category_hrana, new_hrana_score, new_hrana_bounds
+                        new_category_rim = "rim"
+                        return new_category_rim, new_rim_score, new_rim_bounds
                     else:
                         return False
                 else:
@@ -117,12 +114,12 @@ class YObject:
         """
         global hresults
         try:
-            # if hrana is not detected delete hresults so it will not be appended to detection from youlo in next loop
-            if objekty[id].detect_hrana(object_for_hrana_detection, distance_of_second_edge) == False:
+            # if rim is not detected delete hresults so it will not be appended to detection from youlo in next loop
+            if objekty[id].detect_rim(object_for_rim_detection, distance_of_second_edge) == False:
                 del hresults
-            # detect_hrana return True hten you need to update
+            # detect_rim return True hten you need to update
             else:
-                hcategory, hscore, hbounds = objekty[id].detect_hrana(object_for_hrana_detection,
+                hcategory, hscore, hbounds = objekty[id].detect_rim(object_for_rim_detection,
                                                                       distance_of_second_edge)
                 # in hresults is rim stored so in can be inported to detection from Yolo in next loop
                 hresults = hcategory.encode("utf-8"), hscore, hbounds
@@ -177,10 +174,10 @@ def count_objects_in_frame(object_to_check):
         cv2.putText(frame, str(number_of_object_to_check), (int(Xresolution - 20), int(Yresolution-20)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
     return number_of_object_to_check
 
-def show_fps(start_of_loop, end_of_loop):
+def show_fps(start_time, end_time):
     duration_of_loop = end_time - start_time
     FPS = round(1 / duration_of_loop, 1)
-    cv2.putText(frame, str(FPS), (int(Xresolution - 20), int(Yresolution - 40)),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 100, 255))
+    cv2.putText(frame, str(FPS), (int(Xresolution - 80), int(Yresolution - 40)),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 100, 255))
     return FPS
 
 def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
@@ -323,8 +320,6 @@ def draw_yolo_output_on_screen(results):
         cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 0))
         cv2.putText(frame, str(cat.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
 
-
-
 def update_objekty_if_on_screen(objekty):
     """
     :param objekty:
@@ -337,51 +332,23 @@ def update_objekty_if_on_screen(objekty):
 
 if __name__ == "__main__":
 
-    ###################### VARS : ######################################################################################
-
-    # set resolution taken from webcam
-    Xresolution = 480
-    Yresolution = 320
-    cell_phone = []
-    list_chyba = []
-    # Used by pLoopTrigerlist  to communicate with main loop format is [(2.1, 1551338571.7396123, 2.2, 1551338571.9881353), (3.1, 1551338578.9405866, 3.2, 1551338579.1024451), (0.1, 1551338586.2836142, 0.2, 1551338586.4773874)]
-    trigerlist = []
-    idresults = []
-    # Used by pLoopTrigerlist  to confirm object was marked  format is [(2.1, 1551338571.7396123), (2.2, 1551338571.9881353), (3.1, 1551338578.9405866), (3.2, 1551338579.1024451), (0.1, 1551338586.2836142), (0.2, 1551338586.4773874)]
-    fastTrigerList = []
-    field_of_view = 0.4                                                     # field of view in m for camera
-    x_norm_last = 0
-    y_norm_last = 0
-    default_saw_speed_ms = 1                                                # how fast is saw going in meter per second
-    w_of_one_picture_m = 0.4                                                # M Meter width og on screen in meter
-    duration_1screen_s = w_of_one_picture_m / default_saw_speed_ms          # time za kolko prejde jedna obrazovka pri default_saw_speed_ms
-    delay = 1                                                               # time in s to delay marking, can be use to set distance of sensing camera from BliknStick.
-    speed_considered_trail_stoped = 20
-    objekty = {}                                                            # it is storing all detection from program startup
-    how_big_object_max_small = 0.9
-    how_big_object_min_small = 0.05
-    object_for_hrana_detection = "orange"
-    distance_of_second_edge = 0.6
-    cap = cv2.VideoCapture(0)                                               # set web cam properties width and height, working for USB for webcam
-    #video_filename = "MOV_2426.mp4"                                        # use if you want to use static video file
-    #cap = cv2.VideoCapture(video_filename)
+    ################################ SETUP #############################################################################
+    """"""
+    cap = cv2.VideoCapture(0)  # set web cam properties width and height, working for USB for webcam
+    # video_filename = "MOV_2426.mp4"                                        # use if you want to use static video file
+    # cap = cv2.VideoCapture(video_filename)
     cap.set(3, Xresolution)
     cap.set(4, Yresolution)
-    # virtual position of triger relative to camera
-    triger_margin = 0.8 # place on screen where it is detecting objects
-    object_to_detect = "cell phone"
+
     # initialize our centroid tracker and frame dimensions
     ct = CentroidTracker(maxDisappeared=5)
-    (H, W) = (None, None)
+    #(H, W) = (None, None)
 
     # Optional statement to configure preferred GPU. Available only in GPU version.
     # pydarknet.set_cuda_device(0)
-    net = Detector(bytes("cfg/yolov3.cfg", encoding="utf-8"), bytes("weights/yolov3.weights", encoding="utf-8"), 0,bytes("cfg/coco.data", encoding="utf-8"), )
-    #net = Detector(bytes("cfg/2019_02_11_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2019_03_15_yolo-obj_3200.weights", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
-
+    net = Detector(bytes(yolov3_cfg, encoding=cat_encoding), bytes(yolov_weights, encoding=cat_encoding), 0,
+                   bytes(obj_data, encoding=cat_encoding), )
     # Start loop for blinking in separate process
-
-
     # initialize shared vars for speed/movement x,y
     s_x = multiprocessing.Value('i', 0)
     s_y = multiprocessing.Value('i', 0)
@@ -393,9 +360,11 @@ if __name__ == "__main__":
     # Shared queue for list with ids to blink
     qtrigerlist = multiprocessing.Queue()
     qtrigerlist.put(trigerlist)
+    # Start faster_loop_trigerlist in separate process and processor so it is not delayed by main process
     process1 = multiprocessing.Process(target=faster_loop_trigerlist, args=(qtrigerlist, s_x, s_y))
     process1.daemon = True
     process1.start()
+
 
     ########################## MAIN LOOP ###############################################################################
 
