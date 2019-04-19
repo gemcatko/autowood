@@ -10,7 +10,7 @@ list_chyba = []
 trigerlist = []
 idresults = []
 # Used by pLoopTrigerlist  to confirm object was marked  format is [(2.1, 1551338571.7396123), (2.2, 1551338571.9881353), (3.1, 1551338578.9405866), (3.2, 1551338579.1024451), (0.1, 1551338586.2836142), (0.2, 1551338586.4773874)]
-fastTrigerList = []
+#fastTrigerList = []
 field_of_view = 0.4  # field of view in m for camera
 x_norm_last = 0
 y_norm_last = 0
@@ -18,7 +18,7 @@ default_saw_speed_ms = 1  # how fast is saw going in meter per second
 w_of_one_picture_m = 0.4  # M Meter width og on screen in meter
 duration_1screen_s = w_of_one_picture_m / default_saw_speed_ms  # time za kolko prejde jedna obrazovka pri default_saw_speed_ms
 delay = 1  # time in s to delay marking, can be use to set distance of sensing camera from BliknStick.
-speed_considered_trail_stoped = 20
+#speed_considered_trail_stoped = 20
 objekty = {}  # it is storing all detection from program startup
 how_big_object_max_small = 0.9
 how_big_object_min_small = 0.05
