@@ -7,6 +7,7 @@ from pydarknet import Detector, Image
 import cv2
 import numpy as np
 from mpoint.mpoint import Mpoint
+from fltlist.fltlist import *
 # for manual see: https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
 from pyimagesearch.centroidtracker import CentroidTracker
 from dev_env_vars import *
@@ -243,6 +244,7 @@ def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
         last_loop_duration = end_time_loop - start_time_loop
         if (last_loop_duration) > 0.010:
             logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
+        #print(translate(shared_y.value, leftMin, leftMax, rightMin, rightMax))
         # need to be on the end to improve measurement
         absolut_end_time_loop = time.time()
         absolut_last_loop_duration = absolut_end_time_loop - start_time_loop
@@ -330,6 +332,17 @@ def update_objekty_if_on_screen(objekty):
         if objekty[YObject].id not in idresults:
             objekty[YObject].is_on_screen = False
 
+def translate(value, leftMin, leftMax, rightMin, rightMax):
+    # Figure out how 'wide' each range is
+    leftSpan = leftMax - leftMin
+    rightSpan = rightMax - rightMin
+
+    # Convert the left range into a 0-1 range (float)
+    valueScaled = float(value - leftMin) / float(leftSpan)
+
+    # Convert the 0-1 range into a value in the right range.
+    return rightMin + (valueScaled * rightSpan)
+
 if __name__ == "__main__":
 
     ################################ SETUP #############################################################################
@@ -353,7 +366,7 @@ if __name__ == "__main__":
     s_x = multiprocessing.Value('i', 0)
     s_y = multiprocessing.Value('i', 0)
 
-    # create instance of Process subclass Mpoint and pass shared values vars
+    # create instance of Process subclass Mpoint and pass shared values vars with relative movement
     mp = Mpoint(shared_x=s_x, shared_y=s_y)
     mp.start()
 
@@ -364,6 +377,9 @@ if __name__ == "__main__":
     process1 = multiprocessing.Process(target=faster_loop_trigerlist, args=(qtrigerlist, s_x, s_y))
     process1.daemon = True
     process1.start()
+
+    mp2 = fltlist(values_to_triger=qtrigerlist)
+    mp2.start()
 
 
     ########################## MAIN LOOP ###############################################################################
@@ -407,6 +423,7 @@ if __name__ == "__main__":
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
                 objekty[id].draw_object_and_id()
                 objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
+                #print(translate(s_y.value,leftMin, leftMax, rightMin, rightMax))
             update_objekty_if_on_screen(objekty)
             end_time = time.time()
             show_fps(start_time, end_time)
