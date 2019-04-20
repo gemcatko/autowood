@@ -352,16 +352,17 @@ if __name__ == "__main__":
     # initialize shared vars for speed/movement x,y
     s_x = multiprocessing.Value('i', 0)
     s_y = multiprocessing.Value('i', 0)
+    s_d_y = multiprocessing.Value('i', 0)
 
     # create instance of Process subclass Mpoint and pass shared values vars
-    mp = Mpoint(shared_x=s_x, shared_y=s_y)
+    mp = Mpoint(shared_x=s_x, shared_y=s_y, shared_d_y=s_d_y)
     mp.start()
 
     # Shared queue for list with ids to blink
     qtrigerlist = multiprocessing.Queue()
     qtrigerlist.put(trigerlist)
     # Start faster_loop_trigerlist in separate process and processor so it is not delayed by main process
-    process1 = multiprocessing.Process(target=faster_loop_trigerlist, args=(qtrigerlist, s_x, s_y))
+    process1 = multiprocessing.Process(target=faster_loop_trigerlist, args=(qtrigerlist, s_x, s_y, ))
     process1.daemon = True
     process1.start()
 
@@ -410,6 +411,8 @@ if __name__ == "__main__":
             update_objekty_if_on_screen(objekty)
             end_time = time.time()
             show_fps(start_time, end_time)
+
+        #print("s_x, s_y, s_d:", s_x, s_y, s_d_y)
         cv2.imshow("preview", frame)
         #print("Elapsed Time:",end_time-start_time)
         k = cv2.waitKey(1)
