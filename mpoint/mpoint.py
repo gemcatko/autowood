@@ -41,4 +41,14 @@ class Mpoint(Process):
             # print("X: {} Y: {}".format(self.delta_x.value, self.delta_y.value))
             #print("mpoint_distance y", self.get_distance_y().value)
             time.sleep(self.measurement_delay)
-
+            
+if __name__ == '__main__':
+    #initialize shared vars  for speed/movement x,y
+    s_x = multiprocessing.Value('i', 0)
+    s_y = multiprocessing.Value('i', 0)
+    #create instance of Process subclass Mpoint and pass shared values vars
+    mp = Mpoint(shared_x=s_x, shared_y=s_y)
+    mp.start()
+    # for i in range(10):
+    #      print("X:{} ".format(s_x.value))
+    #      time.sleep(1)
