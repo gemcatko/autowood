@@ -22,20 +22,26 @@ speed_considered_trail_stoped = 20
 objekty = {}  # it is storing all detection from program startup
 how_big_object_max_small = 0.9
 how_big_object_min_small = 0.05
-object_for_rim_detection = "orange"
 distance_of_second_edge = 0.4
 # virtual position of triger relative to camera
 triger_margin = 0.8  # place on screen where it is detecting objects
+
+#Yolo configuration for net
+object_for_rim_detection = "orange"
 object_to_detect = "cell phone"
 yolov3_cfg = "cfg/yolov3.cfg"
 cat_encoding = "utf-8"
 yolov_weights = "weights/yolov3.weights"
 obj_data = "cfg/coco.data"
+detection_treshold = 0.5
+
 """
-Alternative configuration for net
-# net = Detector(bytes("cfg/2019_02_11_yolo-obj.cfg", encoding="utf-8"), bytes("weights/2019_03_15_yolo-obj_3200.weights", encoding="utf-8"), 0, bytes("cfg/obj.data", encoding="utf-8"), )
-yolov3_cfg = "cfg/2019_02_11_yolo-obj.cfg"
+#Alternative configuration for net
+object_for_rim_detection = "edge"
+object_to_detect = "error"
+yolov3_cfg = "cfg/2019_03_31_yolo-obj_v3.cfg"
 cat_encoding = "utf-8"
-yolov_weights = "weights/2019_03_15_yolo-obj_3200.weights"
+yolov_weights = "weights/2019_03_31_yolo-obj_v3_7000.weights"
 obj_data = "cfg/obj.data"
+detection_treshold = 0.15
 """

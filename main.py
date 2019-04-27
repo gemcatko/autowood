@@ -192,7 +192,7 @@ def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
         try:
             #needed because qtrigerlist is not always having object inside
             trigerlist = qtrigerlist.get_nowait()
-            logging.debug("trigerlist%s",trigerlist)
+            logging.debug("trigerlist%s", trigerlist)
 
         except:
             # is setting speed of the loop in case 0.0005 it is 2000 times per second
@@ -346,8 +346,7 @@ if __name__ == "__main__":
 
     # Optional statement to configure preferred GPU. Available only in GPU version.
     # pydarknet.set_cuda_device(0)
-    net = Detector(bytes(yolov3_cfg, encoding=cat_encoding), bytes(yolov_weights, encoding=cat_encoding), 0,
-                   bytes(obj_data, encoding=cat_encoding), )
+    net = Detector(bytes(yolov3_cfg, encoding=cat_encoding), bytes(yolov_weights, encoding=cat_encoding), 0, bytes(obj_data, encoding=cat_encoding), )
     # Start loop for blinking in separate process
     # initialize shared vars for speed/movement x,y
     s_x = multiprocessing.Value('i', 0)
@@ -379,7 +378,7 @@ if __name__ == "__main__":
             # This are the function parameters of detect:
             # Possible inputs: def detect(self, Image image, float thresh=.5, float hier_thresh=.5, float nms=.45):
             # call Yolo34
-            results = net.detect(dark_frame, thresh=0.5)
+            results = net.detect(dark_frame, thresh=detection_treshold)
             try:
                 results.append(hresults)
             except Exception as ex:
