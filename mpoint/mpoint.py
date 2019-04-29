@@ -66,15 +66,17 @@ if __name__ == '__main__':
     s_queue = Queue()
     
     #create process to feed queue
-    p = Process(target=feed_queue, args=(s_queue, "/dev/input/mouse2"))
+    p = Process(target=feed_queue, args=(s_queue, "/dev/input/mice"))
     p.start()
 
     #create instance of Process subclass Mpoint and pass shared values vars
-    m_point = Mpoint(shared_x=s_x, shared_y=s_y, shared_d_x=s_distance_x, shared_d_y=s_distance_y, shared_queue=s_queue, loop_delay=0.01, filename="/dev/input/mouse1" )
+    m_point = Mpoint(shared_x=s_x, shared_y=s_y, shared_d_x=s_distance_x, shared_d_y=s_distance_y, shared_queue=s_queue, loop_delay=0.01, filename="/dev/input/mice" )
     m_point.start()
 
     while True:
-        print("X: {} Y: {} D_x: {} D_y: {}".format(
-                s_x.value, s_y.value, s_distance_x.value, s_distance_y.value))
+        # print("X: {} Y: {} D_x: {} D_y: {}".format(
+        #         s_x.value, s_y.value, s_distance_x.value, s_distance_y.value))
+
+        print("Distance {}".format(m_point.get_distance()))
         time.sleep(0.01)   
  

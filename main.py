@@ -6,11 +6,12 @@ import time
 from pydarknet import Detector, Image
 import cv2
 import numpy as np
-from mpoint.mpoint import Mpoint
+from mpoint.mpoint import Mpoint, feed_queue
+#import Mpoint from mpoint.mpoint
 # for manual see: https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
 from pyimagesearch.centroidtracker import CentroidTracker
 from dev_env_vars import *
-
+from multiprocessing import Process, Value, Queue
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s',)
 
 # TODO calculate speed of objects integrate mpoint
@@ -347,15 +348,24 @@ if __name__ == "__main__":
     # Optional statement to configure preferred GPU. Available only in GPU version.
     # pydarknet.set_cuda_device(0)
     net = Detector(bytes(yolov3_cfg, encoding=cat_encoding), bytes(yolov_weights, encoding=cat_encoding), 0, bytes(obj_data, encoding=cat_encoding), )
+
     # Start loop for blinking in separate process
+
     # initialize shared vars for speed/movement x,y
-    s_x = multiprocessing.Value('i', 0)
-    s_y = multiprocessing.Value('i', 0)
-    s_d_y = multiprocessing.Value('i', 0)
+    s_x = Value('i', 0)
+    s_y = Value('i', 0)
+    s_distance_x = Value('l', 0)
+    s_distance_y = Value('l', 0)
+    s_queue = Queue()
+
+    # create process to feed queue
+    p = Process(target=feed_queue, args=(s_queue, "/dev/input/mice"))
+    p.start()
 
     # create instance of Process subclass Mpoint and pass shared values vars
-    mp = Mpoint(shared_x=s_x, shared_y=s_y, shared_d_y=s_d_y)
-    mp.start()
+    m_point = Mpoint(shared_x=s_x, shared_y=s_y, shared_d_x=s_distance_x, shared_d_y=s_distance_y, shared_queue=s_queue,
+                     loop_delay=0.01, filename="/dev/input/mice")
+    m_point.start()
 
     # Shared queue for list with ids to blink
     qtrigerlist = multiprocessing.Queue()
@@ -410,8 +420,7 @@ if __name__ == "__main__":
             update_objekty_if_on_screen(objekty)
             end_time = time.time()
             show_fps(start_time, end_time)
-
-        #print("s_x, s_y, s_d:", s_x, s_y, s_d_y)
+        #print("Distance {}".format(m_point.get_distance()))
         cv2.imshow("preview", frame)
         #print("Elapsed Time:",end_time-start_time)
         k = cv2.waitKey(1)
