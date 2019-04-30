@@ -25,7 +25,7 @@ how_big_object_min_small = 0.05
 distance_of_second_edge = 0.4
 # virtual position of triger relative to camera
 triger_margin = 0.8  # place on screen where it is detecting objects
-
+"""
 #Yolo configuration for net
 object_for_rim_detection = "orange"
 object_to_detect = "cell phone"
@@ -34,8 +34,8 @@ cat_encoding = "utf-8"
 yolov_weights = "weights/yolov3.weights"
 obj_data = "cfg/coco.data"
 detection_treshold = 0.5
-
 """
+
 #Alternative configuration for net
 object_for_rim_detection = "edge"
 object_to_detect = "error"
@@ -44,4 +44,4 @@ cat_encoding = "utf-8"
 yolov_weights = "weights/2019_03_31_yolo-obj_v3_7000.weights"
 obj_data = "cfg/obj.data"
 detection_treshold = 0.15
-"""
+
