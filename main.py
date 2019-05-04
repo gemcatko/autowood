@@ -61,10 +61,15 @@ class YObject:
             #TODO separate blinking somewhere here
             # time of right blink
             time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
+            position_indpi_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * size_of_one_screen_in_dpi)
             # time of left blink
-            time_ending = time_begining + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
+            time_ending = time_begining + delay + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
+            position_indpi_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * size_of_one_screen_in_dpi)
+            distance_begining = m_point.get_distance()
             # add to trigerlist id.01, time when right blink and id.02 time left blink
-            triger = id + 0.1, time_begining, id + 0.2, time_ending
+            # triger = id + 0.1, time_begining, id + 0.2, time_ending
+            triger = id + 0.1, position_indpi_begining, id + 0.2, distance_begining
+
             trigerlist.append(triger)
             try:
                 #add to trigerlist id.01, time when right blink and id.02 time left blink to
@@ -247,6 +252,25 @@ def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
         # need to be on the end to improve measurement
         absolut_end_time_loop = time.time()
         absolut_last_loop_duration = absolut_end_time_loop - start_time_loop
+def faster_loop_trigerlist_distance(qtrigerlist):
+    """
+    Loop for trigering small error in another process running faster then main loop in separate process it is interconnected with main process with trigerlist and shared_x, shared_y
+    :param qtrigerlist, shared_x, shared_y:
+    :return:nothing
+
+    """
+    while True:
+        start_time_loop = time.time()
+        print("Distance {}".format(m_point.get_distance()))
+
+
+
+
+        end_time_loop = time.time()
+        #check for how long took execution the loop and log if it is too long
+        last_loop_duration = end_time_loop - start_time_loop
+        if (last_loop_duration) > 0.010:
+            logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
 
 def update_resutls_for_id(results):
     """
@@ -364,14 +388,15 @@ if __name__ == "__main__":
 
     # create instance of Process subclass Mpoint and pass shared values vars
     m_point = Mpoint(shared_x=s_x, shared_y=s_y, shared_d_x=s_distance_x, shared_d_y=s_distance_y, shared_queue=s_queue,
-                     loop_delay=0.01, filename="/dev/input/mice")
+                     loop_delay=0.001, filename="/dev/input/mice")
     m_point.start()
 
     # Shared queue for list with ids to blink
     qtrigerlist = multiprocessing.Queue()
     qtrigerlist.put(trigerlist)
     # Start faster_loop_trigerlist in separate process and processor so it is not delayed by main process
-    process1 = multiprocessing.Process(target=faster_loop_trigerlist, args=(qtrigerlist, s_x, s_y, ))
+    #process1 = multiprocessing.Process(target=faster_loop_trigerlist, args=(qtrigerlist, s_x, s_y, ))
+    process1 = multiprocessing.Process(target=faster_loop_trigerlist_distance, args=(qtrigerlist,))
     process1.daemon = True
     process1.start()
 
@@ -418,6 +443,9 @@ if __name__ == "__main__":
                 objekty[id].draw_object_and_id()
                 objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
             update_objekty_if_on_screen(objekty)
+            # show disance of the mouse
+            cv2.putText(frame, str(m_point.get_distance()), (int(Xresolution - 200), int(Yresolution - 80)),
+                        cv2.FONT_HERSHEY_COMPLEX, 1, (255, 100, 100))
             end_time = time.time()
             show_fps(start_time, end_time)
         #print("Distance {}".format(m_point.get_distance()))

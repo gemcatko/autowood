@@ -79,4 +79,3 @@ if __name__ == '__main__':
 
         print("Distance {}".format(m_point.get_distance()))
         time.sleep(0.01)   
- 

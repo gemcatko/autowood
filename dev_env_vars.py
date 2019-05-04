@@ -17,6 +17,7 @@ y_norm_last = 0
 default_saw_speed_ms = 1  # how fast is saw going in meter per second
 w_of_one_picture_m = 0.4  # M Meter width og on screen in meter
 duration_1screen_s = w_of_one_picture_m / default_saw_speed_ms  # time za kolko prejde jedna obrazovka pri default_saw_speed_ms
+size_of_one_screen_in_dpi = 200
 delay = 1  # time in s to delay marking, can be use to set distance of sensing camera from BliknStick.
 speed_considered_trail_stoped = 20
 objekty = {}  # it is storing all detection from program startup
