@@ -59,16 +59,18 @@ class YObject:
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
             self.ready_for_blink = True
             #TODO separate blinking somewhere here
+
             # time of right blink
-            time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
-            position_indpi_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * size_of_one_screen_in_dpi)
+            #time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
+            dis_x,dis_y = m_point.get_distance()
+            position_indpi_begin = dis_y + saw_offset + ((1 - (x_rel + (w_rel / 2))) * size_of_one_screen_in_dpi)
             # time of left blink
-            time_ending = time_begining + delay + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
-            position_indpi_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * size_of_one_screen_in_dpi)
-            distance_begining = m_point.get_distance()
+            #time_ending = time_begining + delay + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
+            position_indpi_end = dis_y + saw_offset + ((1 - (x_rel - (w_rel / 2))) * size_of_one_screen_in_dpi)
+
             # add to trigerlist id.01, time when right blink and id.02 time left blink
             # triger = id + 0.1, time_begining, id + 0.2, time_ending
-            triger = id + 0.1, position_indpi_begining, id + 0.2, distance_begining
+            triger = id + 0.1, position_indpi_begin, id + 0.2, position_indpi_end
 
             trigerlist.append(triger)
             try:
@@ -216,7 +218,7 @@ def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
                     logging.debug('Trail is running left direction')
                     #do some action if needed
 
-                # is trail running right direction ? using only Y
+                # is trail running right direction ? using only  if yes then update when it should blink
                 if  shared_y.value < speed_considered_trail_stoped:
                     new_time_begining = time_begining + absolut_last_loop_duration
                     new_time_ending = time_ending + absolut_last_loop_duration
@@ -252,6 +254,8 @@ def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
         # need to be on the end to improve measurement
         absolut_end_time_loop = time.time()
         absolut_last_loop_duration = absolut_end_time_loop - start_time_loop
+
+
 def faster_loop_trigerlist_distance(qtrigerlist):
     """
     Loop for trigering small error in another process running faster then main loop in separate process it is interconnected with main process with trigerlist and shared_x, shared_y
@@ -261,8 +265,31 @@ def faster_loop_trigerlist_distance(qtrigerlist):
     """
     while True:
         start_time_loop = time.time()
-        print("Distance {}".format(m_point.get_distance()))
+        try:
+            #needed because qtrigerlist is not always having object inside
+            trigerlist = qtrigerlist.get_nowait()
+            logging.debug("trigerlist%s", trigerlist)
 
+        except:
+            # is setting speed of the loop in case 0.0005 it is 2000 times per second
+            # except is not executed if qtrigerlist is have data
+            time.sleep(0.0005)
+        #print("Distance {}".format(m_point.get_distance()))
+        dis_x, dis_y = m_point.get_distance()
+        for id_begining, begin_distance, id_ending, end_distance in trigerlist:
+            if begin_distance >= abs(dis_y) and not (any(id_begining in sublist for sublist in alreadyBlinkedList)):
+                alreadyBlinkedTriger = id_begining, begin_distance
+                blink_once()
+                # needed thus the function know which object was already blinked and which not
+                alreadyBlinkedList.append(alreadyBlinkedTriger)
+                logging.debug('id_begining blink_once() called for blink fastTrigerlist:%s', alreadyBlinkedList)
+
+            if  end_distance >= abs(dis_y) and not (any(id_begining in sublist for sublist in alreadyBlinkedList)):
+                alreadyBlinkedTriger = id_ending, end_distance
+                # needed thus the function know which object was already blinked and which not
+                alreadyBlinkedList.append(alreadyBlinkedTriger)
+                blink_once()
+                logging.debug('id_ending blink_once() called for blink fastTrigerlist:%s', alreadyBlinkedList)
 
 
 
@@ -366,7 +393,7 @@ if __name__ == "__main__":
     cap.set(4, Yresolution)
 
     # initialize our centroid tracker and frame dimensions
-    ct = CentroidTracker(maxDisappeared=5)
+    ct = CentroidTracker(maxDisappeared=20)
     #(H, W) = (None, None)
 
     # Optional statement to configure preferred GPU. Available only in GPU version.
@@ -443,9 +470,9 @@ if __name__ == "__main__":
                 objekty[id].draw_object_and_id()
                 objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
             update_objekty_if_on_screen(objekty)
-            # show disance of the mouse
+            # show distance of mouse sensor on screen
             cv2.putText(frame, str(m_point.get_distance()), (int(Xresolution - 200), int(Yresolution - 80)),
-                        cv2.FONT_HERSHEY_COMPLEX, 1, (255, 100, 100))
+                        cv2.FONT_HERSHEY_COMPLEX, 1, (255, 50, 255))
             end_time = time.time()
             show_fps(start_time, end_time)
         #print("Distance {}".format(m_point.get_distance()))
