@@ -63,15 +63,15 @@ class YObject:
             # time of right blink
             #time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
             dis_x,dis_y = m_point.get_distance()
-            position_indpi_begin = dis_y + saw_offset + ((1 - (x_rel + (w_rel / 2))) * size_of_one_screen_in_dpi)
+            position_indpi_begin = dis_y + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
             # time of left blink
             #time_ending = time_begining + delay + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
-            position_indpi_end = dis_y + saw_offset + ((1 - (x_rel - (w_rel / 2))) * size_of_one_screen_in_dpi)
+            position_indpi_end = dis_y + saw_offset + ((x_rel - (w_rel / 2)) * size_of_one_screen_in_dpi)
 
             # add to trigerlist id.01, time when right blink and id.02 time left blink
             # triger = id + 0.1, time_begining, id + 0.2, time_ending
             triger = id + 0.1, position_indpi_begin, id + 0.2, position_indpi_end
-
+            logging.debug("triger%s", triger)
             trigerlist.append(triger)
             try:
                 #add to trigerlist id.01, time when right blink and id.02 time left blink to
@@ -277,19 +277,20 @@ def faster_loop_trigerlist_distance(qtrigerlist):
         #print("Distance {}".format(m_point.get_distance()))
         dis_x, dis_y = m_point.get_distance()
         for id_begining, begin_distance, id_ending, end_distance in trigerlist:
-            if begin_distance >= abs(dis_y) and not (any(id_begining in sublist for sublist in alreadyBlinkedList)):
+            if begin_distance <= abs(dis_y) and not (any(id_begining in sublist for sublist in alreadyBlinkedList)):
                 alreadyBlinkedTriger = id_begining, begin_distance
+                alreadyBlinkedList.append(alreadyBlinkedTriger)
                 blink_once()
                 # needed thus the function know which object was already blinked and which not
-                alreadyBlinkedList.append(alreadyBlinkedTriger)
-                logging.debug('id_begining blink_once() called for blink fastTrigerlist:%s', alreadyBlinkedList)
 
-            if  end_distance >= abs(dis_y) and not (any(id_begining in sublist for sublist in alreadyBlinkedList)):
+                logging.debug('id_begining blink_once() called for blink, alreadyBlinkedList:%s', alreadyBlinkedList)
+
+            if  end_distance <= abs(dis_y) and not (any(id_ending in sublist for sublist in alreadyBlinkedList)):
                 alreadyBlinkedTriger = id_ending, end_distance
                 # needed thus the function know which object was already blinked and which not
                 alreadyBlinkedList.append(alreadyBlinkedTriger)
                 blink_once()
-                logging.debug('id_ending blink_once() called for blink fastTrigerlist:%s', alreadyBlinkedList)
+                logging.debug('id_ending blink_once() called for blink alreadyBlinkedList:%s', alreadyBlinkedList)
 
 
 

@@ -12,6 +12,7 @@ idresults = []
 # Used by pLoopTrigerlist  to confirm object was marked  format is [(2.1, 1551338571.7396123), (2.2, 1551338571.9881353), (3.1, 1551338578.9405866), (3.2, 1551338579.1024451), (0.1, 1551338586.2836142), (0.2, 1551338586.4773874)]
 #fastTrigerList shall be deleted in future releases
 fastTrigerList = []
+alreadyBlinkedTriger =[]
 alreadyBlinkedList = []
 field_of_view = 0.4  # field of view in m for camera
 x_norm_last = 0
