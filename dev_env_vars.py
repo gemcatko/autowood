@@ -13,16 +13,17 @@ idresults = []
 #fastTrigerList shall be deleted in future releases
 alreadyBlinkedTriger =[]
 alreadyBlinkedList = []
-field_of_view = 0.3  # field of view in m for camera
-x_norm_last = 0
-y_norm_last = 0
+#field_of_view = 0.3  # field of view in m for camera
+#x_norm_last = 0
+#y_norm_last = 0
 size_of_one_screen_in_dpi = 150
 delay = 1  # time in s to delay marking, can be use to set distance of sensing camera from BliknStick.
 saw_offset = 150
 objekty = {}  # it is storing all detection from program startup
-how_big_object_max_small = 0.9
-how_big_object_min_small = 0.05
-distance_of_second_edge = 0.4
+
+how_big_object_max_small = 0.9  # detect object from how_big_object_min_small to how_big_object_max_small size of screen
+how_big_object_min_small = 0.05 # detect object from how_big_object_min_small to how_big_object_max_small size of screen
+distance_of_second_edge = 0.4 # max distance of second edge to create rim object
 # virtual position of triger relative to camera
 triger_margin = 0.8  # place on screen where it is detecting objects
 """

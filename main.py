@@ -13,7 +13,7 @@ from pyimagesearch.centroidtracker import CentroidTracker
 from dev_env_vars import *
 from multiprocessing import Process, Value, Queue
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s',)
-
+import datetime
 # TODO calculate speed of objects integrate mpoint
 # TODO Store image detections as thumbnails(small images) somewhere
 
@@ -70,7 +70,8 @@ class YObject:
 
             # add to trigerlist id.01, time when right blink and id.02 time left blink
             # triger = id + 0.1, time_begining, id + 0.2, time_ending
-            triger = id + 0.1, position_indpi_begin, id + 0.2, position_indpi_end
+            triger = id + 0.1, position_indpi_begin, id + 0.2,position_indpi_end
+            cv2.imwrite(get_filename_datetime("detected_errors"), frame)
             logging.debug("triger%s", triger)
             trigerlist.append(triger)
             try:
@@ -143,6 +144,10 @@ class BlinkStickThread(threading.Thread):
         subprocess.Popen(["python2", "BlinkStick.py"])
         pass
 
+def get_filename_datetime(folder_name):
+    # Use current date to get a text file name.
+    return folder_name + "/" + str(datetime.datetime.now()) + ".jpg"
+
 def blink_once():
     """
     Is using threading for blinking once, create tread for BlinkStick.py (python2.7)
@@ -174,7 +179,7 @@ def calculate_relative_coordinates(x, y, w, h):
     area_rel = w_rel * h_rel
     return x_rel, y_rel, w_rel, h_rel, area_rel
 
-def count_objects_in_frame(object_to_check):
+def show_count_of_objects_in_frame(object_to_check):
     number_of_object_to_check = 0
     for cat, score, bounds in results:
         if cat.decode("utf-8") == object_to_check:
@@ -406,6 +411,7 @@ if __name__ == "__main__":
             # show distance of mouse sensor on screen
             cv2.putText(frame, str(m_point.get_distance()), (int(Xresolution - 200), int(Yresolution - 80)),
                         cv2.FONT_HERSHEY_COMPLEX, 1, (255, 50, 255))
+            show_count_of_objects_in_frame("error")
             end_time = time.time()
             show_fps(start_time, end_time)
         #print("Distance {}".format(m_point.get_distance()))
