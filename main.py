@@ -71,7 +71,7 @@ class YObject:
             # add to trigerlist id.01, time when right blink and id.02 time left blink
             # triger = id + 0.1, time_begining, id + 0.2, time_ending
             triger = id + 0.1, position_indpi_begin, id + 0.2,position_indpi_end
-            cv2.imwrite(get_filename_datetime("detected_errors"), frame)
+            save_picture_to_file("detected_errors")
             logging.debug("triger%s", triger)
             trigerlist.append(triger)
             try:
@@ -143,10 +143,6 @@ class BlinkStickThread(threading.Thread):
         '''Starting blinkStick to blink once in Separate Thread'''
         subprocess.Popen(["python2", "BlinkStick.py"])
         pass
-
-def get_filename_datetime(folder_name):
-    # Use current date to get a text file name.
-    return folder_name + "/" + str(datetime.datetime.now()) + ".jpg"
 
 def blink_once():
     """
@@ -319,6 +315,14 @@ def update_objekty_if_on_screen(objekty):
     for YObject in objekty:
         if objekty[YObject].id not in idresults:
             objekty[YObject].is_on_screen = False
+
+def get_path_filename_datetime(folder_name):
+    # Use current date to get a text file name.
+    return folder_name + "/" + str(datetime.datetime.now()) + ".jpg"
+
+def save_picture_to_file(folder_name):
+    rr, oneframe = cap.read()
+    cv2.imwrite(get_path_filename_datetime(folder_name), oneframe)
 
 if __name__ == "__main__":
 
