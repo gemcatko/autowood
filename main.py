@@ -13,7 +13,7 @@ from pyimagesearch.centroidtracker import CentroidTracker
 from dev_env_vars import *
 from multiprocessing import Process, Value, Queue
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s',)
-
+import datetime
 # TODO calculate speed of objects integrate mpoint
 # TODO Store image detections as thumbnails(small images) somewhere
 
@@ -59,12 +59,20 @@ class YObject:
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
             self.ready_for_blink = True
             #TODO separate blinking somewhere here
+
             # time of right blink
-            time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
+            #time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
+            dis_x,dis_y = m_point.get_distance()
+            position_indpi_begin = dis_y + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
             # time of left blink
-            time_ending = time_begining + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
+            #time_ending = time_begining + delay + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
+            position_indpi_end = dis_y + saw_offset + ((x_rel - (w_rel / 2)) * size_of_one_screen_in_dpi)
+
             # add to trigerlist id.01, time when right blink and id.02 time left blink
-            triger = id + 0.1, time_begining, id + 0.2, time_ending
+            # triger = id + 0.1, time_begining, id + 0.2, time_ending
+            triger = id + 0.1, position_indpi_begin, id + 0.2,position_indpi_end
+            save_picture_to_file("detected_errors")
+            logging.debug("triger%s", triger)
             trigerlist.append(triger)
             try:
                 #add to trigerlist id.01, time when right blink and id.02 time left blink to
@@ -167,7 +175,7 @@ def calculate_relative_coordinates(x, y, w, h):
     area_rel = w_rel * h_rel
     return x_rel, y_rel, w_rel, h_rel, area_rel
 
-def count_objects_in_frame(object_to_check):
+def show_count_of_objects_in_frame(object_to_check):
     number_of_object_to_check = 0
     for cat, score, bounds in results:
         if cat.decode("utf-8") == object_to_check:
@@ -181,7 +189,7 @@ def show_fps(start_time, end_time):
     cv2.putText(frame, str(FPS), (int(Xresolution - 80), int(Yresolution - 40)),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 100, 255))
     return FPS
 
-def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
+def faster_loop_trigerlist_distance(qtrigerlist):
     """
     Loop for trigering small error in another process running faster then main loop in separate process it is interconnected with main process with trigerlist and shared_x, shared_y
     :param qtrigerlist, shared_x, shared_y:
@@ -199,54 +207,31 @@ def faster_loop_trigerlist(qtrigerlist, shared_x, shared_y):
             # is setting speed of the loop in case 0.0005 it is 2000 times per second
             # except is not executed if qtrigerlist is have data
             time.sleep(0.0005)
-        #Data format: id + 0.1, time_begining, id + 0.2, time_ending
-        #trigerlist[(4.1, 1551555880.4178755, 4.2, 1551555880.576961), (11.1, 1551555884.1779869, 11.2, 1551555884.252769), (5.1, 1551555885.0371258, 5.2, 1551555885.2632303)]
-        #fastTrigerlist:[(4.1, 1551555880.4184797), (4.2, 1551555880.577546), (11.1, 1551555884.1785562), (11.2, 1551555884.2533839), (5.1, 1551555885.0377772)]
-        #
-        #check for every object in trigerList
-        #TODO osetrit vstup nemozu is velmi rychlo po sebe dve rozne chybi
-        for id_begining, time_begining, id_ending, time_ending in trigerlist:
-                # is trail running left direction ? using only Y
-                if  shared_y.value < (speed_considered_trail_stoped*-1):
-                    logging.debug('Trail is running left direction')
-                    #do some action if needed
+        #print("Distance {}".format(m_point.get_distance()))
+        dis_x, dis_y = m_point.get_distance()
+        for id_begining, begin_distance, id_ending, end_distance in trigerlist:
+            if begin_distance <= abs(dis_y) and not (any(id_begining in sublist for sublist in alreadyBlinkedList)):
+                alreadyBlinkedTriger = id_begining, begin_distance
+                alreadyBlinkedList.append(alreadyBlinkedTriger)
+                blink_once()
+                # needed thus the function know which object was already blinked and which not
 
-                # is trail running right direction ? using only Y
-                if  shared_y.value < speed_considered_trail_stoped:
-                    new_time_begining = time_begining + absolut_last_loop_duration
-                    new_time_ending = time_ending + absolut_last_loop_duration
-                    # get index of actual tuple in list
-                    index_trigerlist = trigerlist.index((id_begining, time_begining, id_ending, time_ending))
-                    # update trigerlist with newly calculated new_time_begining  new_time_ending
-                    trigerlist[index_trigerlist] = id_begining, new_time_begining, id_ending, new_time_ending
-                    #return updated values to current loop
-                    time_begining,time_ending = new_time_begining, new_time_ending
+                logging.debug('id_begining blink_once() called for blink, alreadyBlinkedList:%s', alreadyBlinkedList)
+
+            if  end_distance <= abs(dis_y) and not (any(id_ending in sublist for sublist in alreadyBlinkedList)):
+                alreadyBlinkedTriger = id_ending, end_distance
+                # needed thus the function know which object was already blinked and which not
+                alreadyBlinkedList.append(alreadyBlinkedTriger)
+                blink_once()
+                logging.debug('id_ending blink_once() called for blink alreadyBlinkedList:%s', alreadyBlinkedList)
 
 
-                # if time for blink  of beginning of object (time.time() - time_begining) passed and object is not blinked yet (any(id_begining in sublist for sublist in fastTrigerList)) do:
-                if time.time() - time_begining >= 0 and not (any(id_begining in sublist for sublist in fastTrigerList)):
-                    fastTriger = id_begining, time_begining
-                    # needed thus the function know which object was already blinked and which not
-                    fastTrigerList.append(fastTriger)
-                    blink_once()
-                    logging.debug('id_begining blink_once() called for blink fastTrigerlist:%s', fastTrigerList)
-                # if time for blink of beginning of object (time.time() - time_ending)  passed and object is not blinked yet (any(id_ending in sublist for sublist in fastTrigerList)) do:
-                if time.time() - time_ending >= 0 and not (any(id_ending in sublist for sublist in fastTrigerList)):
-                    fastTriger = id_ending, time_ending
-                    # needed thus the function know which object was already blinked and which not
-                    fastTrigerList.append(fastTriger)
-                    blink_once()
-                    logging.debug('id_ending blink_once() called for blink fastTrigerlist:%s', fastTrigerList)
-                #TODO implement cleaning-deleting old objects from beginning offastTrigerList and trigerlist (the one which is inside this function )
 
         end_time_loop = time.time()
         #check for how long took execution the loop and log if it is too long
         last_loop_duration = end_time_loop - start_time_loop
         if (last_loop_duration) > 0.010:
             logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
-        # need to be on the end to improve measurement
-        absolut_end_time_loop = time.time()
-        absolut_last_loop_duration = absolut_end_time_loop - start_time_loop
 
 def update_resutls_for_id(results):
     """
@@ -331,6 +316,14 @@ def update_objekty_if_on_screen(objekty):
         if objekty[YObject].id not in idresults:
             objekty[YObject].is_on_screen = False
 
+def get_path_filename_datetime(folder_name):
+    # Use current date to get a text file name.
+    return folder_name + "/" + str(datetime.datetime.now()) + ".jpg"
+
+def save_picture_to_file(folder_name):
+    rr, oneframe = cap.read()
+    cv2.imwrite(get_path_filename_datetime(folder_name), oneframe)
+
 if __name__ == "__main__":
 
     ################################ SETUP #############################################################################
@@ -342,7 +335,7 @@ if __name__ == "__main__":
     cap.set(4, Yresolution)
 
     # initialize our centroid tracker and frame dimensions
-    ct = CentroidTracker(maxDisappeared=5)
+    ct = CentroidTracker(maxDisappeared=20)
     #(H, W) = (None, None)
 
     # Optional statement to configure preferred GPU. Available only in GPU version.
@@ -364,14 +357,15 @@ if __name__ == "__main__":
 
     # create instance of Process subclass Mpoint and pass shared values vars
     m_point = Mpoint(shared_x=s_x, shared_y=s_y, shared_d_x=s_distance_x, shared_d_y=s_distance_y, shared_queue=s_queue,
-                     loop_delay=0.01, filename="/dev/input/mice")
+                     loop_delay=0.001, filename="/dev/input/mice")
     m_point.start()
 
     # Shared queue for list with ids to blink
     qtrigerlist = multiprocessing.Queue()
     qtrigerlist.put(trigerlist)
     # Start faster_loop_trigerlist in separate process and processor so it is not delayed by main process
-    process1 = multiprocessing.Process(target=faster_loop_trigerlist, args=(qtrigerlist, s_x, s_y, ))
+    #process1 = multiprocessing.Process(target=faster_loop_trigerlist, args=(qtrigerlist, s_x, s_y, ))
+    process1 = multiprocessing.Process(target=faster_loop_trigerlist_distance, args=(qtrigerlist,))
     process1.daemon = True
     process1.start()
 
@@ -418,6 +412,10 @@ if __name__ == "__main__":
                 objekty[id].draw_object_and_id()
                 objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
             update_objekty_if_on_screen(objekty)
+            # show distance of mouse sensor on screen
+            cv2.putText(frame, str(m_point.get_distance()), (int(Xresolution - 200), int(Yresolution - 80)),
+                        cv2.FONT_HERSHEY_COMPLEX, 1, (255, 50, 255))
+            show_count_of_objects_in_frame("error")
             end_time = time.time()
             show_fps(start_time, end_time)
         #print("Distance {}".format(m_point.get_distance()))
