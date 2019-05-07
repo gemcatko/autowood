@@ -7,13 +7,16 @@ from pydarknet import Detector, Image
 import cv2
 import numpy as np
 from mpoint.mpoint import Mpoint, feed_queue
-#import Mpoint from mpoint.mpoint
+# import Mpoint from mpoint.mpoint
 # for manual see: https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
 from pyimagesearch.centroidtracker import CentroidTracker
 from dev_env_vars import *
 from multiprocessing import Process, Value, Queue
-logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s',)
+
+logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s', )
 import datetime
+
+
 # TODO calculate speed of objects integrate mpoint
 # TODO Store image detections as thumbnails(small images) somewhere
 
@@ -27,6 +30,7 @@ class YObject:
         self.score = score
         self.bounds = bounds
         self.is_on_screen = True
+        self.is_picture_saved = False
         self.ready_for_blink = False
 
     def draw_object_and_id(self):
@@ -35,47 +39,48 @@ class YObject:
         :return: none
         """
         x, y, w, h = self.bounds
-        cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (125, 125, 125),4)
+        cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (125, 125, 125), 4)
         # draw what is name of the object
-        #cv2.putText(frame, str(category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
+        # cv2.putText(frame, str(category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
         cv2.putText(frame, str(self.category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
-        #Draw ID dot
-        #TODO finish
-        #Draw id number text
-        #TODO finish
+        # Draw ID dot
+        # TODO finish
+        # Draw id number text
+        # TODO finish
 
-    def detect_object(self, object_to_detect,triger_margin,how_big_object_max, how_big_object_min):
+    def detect_object(self, object_to_detect, triger_margin, how_big_object_max, how_big_object_min):
         """
         :param object_to_detect:
         :param triger_margin:
         :return:
         """
-        x,y,w,h = self.bounds
+        x, y, w, h = self.bounds
         x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
         ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
-        if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink == False :
-            print('Sprav znacky for ID',self.id)
+        if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (
+                x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink == False:
+            print('Sprav znacky for ID', self.id)
             # draw purple line on the screens it is just for visual check when call for blink
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
             self.ready_for_blink = True
-            #TODO separate blinking somewhere here
+            # TODO separate blinking somewhere here
 
             # time of right blink
-            #time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
-            dis_x,dis_y = m_point.get_distance()
+            # time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
+            dis_x, dis_y = m_point.get_distance()
             position_indpi_begin = dis_y + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
             # time of left blink
-            #time_ending = time_begining + delay + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
+            # time_ending = time_begining + delay + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
             position_indpi_end = dis_y + saw_offset + ((x_rel - (w_rel / 2)) * size_of_one_screen_in_dpi)
 
             # add to trigerlist id.01, time when right blink and id.02 time left blink
             # triger = id + 0.1, time_begining, id + 0.2, time_ending
-            triger = id + 0.1, position_indpi_begin, id + 0.2,position_indpi_end
+            triger = id + 0.1, position_indpi_begin, id + 0.2, position_indpi_end
             save_picture_to_file("detected_errors")
             logging.debug("triger%s", triger)
             trigerlist.append(triger)
             try:
-                #add to trigerlist id.01, time when right blink and id.02 time left blink to
+                # add to trigerlist id.01, time when right blink and id.02 time left blink to
                 qtrigerlist.put(trigerlist)
             except:
                 print("Main thread exception occurred qtrigerlist.put(trigerlist)")
@@ -93,28 +98,27 @@ class YObject:
             # loop over detections from yolo and check if there is another edge near by
             for id, category, score, bounds in idresults:
                 # is it not the same object? and it is edge?
-                if id != self.id and category.decode("utf-8")  == edge:
+                if id != self.id and category.decode("utf-8") == edge:
                     xx, yy, ww, hh = bounds
                     xx_rel, yy_rel, ww_rel, hh_rel, aarea_rel = calculate_relative_coordinates(xx, yy, ww, hh)
                     # is second edge close enought ?)
-                    if (((x_rel - xx_rel)**2) + ((y_rel - yy_rel)**2))**(0.5) < distance_of_second_edge:
-                        #calculate rim properties
-                        new_rim_score = (self.score + score)/2
-                        new_rim_x = (x + xx) /2
-                        new_rim_y = (y + yy) /2
-                        #new_rim_w = (w + ww)
-                        #new_rim_h = (h + hh)
+                    if (((x_rel - xx_rel) ** 2) + ((y_rel - yy_rel) ** 2)) ** (0.5) < distance_of_second_edge:
+                        # calculate rim properties
+                        new_rim_score = (self.score + score) / 2
+                        new_rim_x = (x + xx) / 2
+                        new_rim_y = (y + yy) / 2
+                        # new_rim_w = (w + ww)
+                        # new_rim_h = (h + hh)
                         new_rim_w = abs(x - xx)
                         new_rim_h = abs(y - yy)
                         new_rim_bounds = new_rim_x, new_rim_y, new_rim_w, new_rim_h
-                        #create_new_object_with_id(id, category, score, bounds)
+                        # create_new_object_with_id(id, category, score, bounds)
                         new_category_rim = "rim"
                         return new_category_rim, new_rim_score, new_rim_bounds
                     else:
                         return False
                 else:
                     return False
-
 
     def detect_rim_and_propagate_back_to_yolo_detections(self):
         """
@@ -129,7 +133,7 @@ class YObject:
             # detect_rim return True hten you need to update
             else:
                 hcategory, hscore, hbounds = objekty[id].detect_rim(object_for_rim_detection,
-                                                                      distance_of_second_edge)
+                                                                    distance_of_second_edge)
                 # in hresults is rim stored so in can be inported to detection from Yolo in next loop
                 hresults = hcategory.encode("utf-8"), hscore, hbounds
 
@@ -138,11 +142,17 @@ class YObject:
             message = template.format(type(ex).__name__, ex.args)
             # print (message)
 
+    def save_picure_of_object(self,file_name="detected_objects"):
+        if self.is_picture_saved == False:
+            save_picture_to_file(file_name)
+            self.is_picture_saved = True
+
 class BlinkStickThread(threading.Thread):
     def run(self):
         '''Starting blinkStick to blink once in Separate Thread'''
         subprocess.Popen(["python2", "BlinkStick.py"])
         pass
+
 
 def blink_once():
     """
@@ -158,6 +168,7 @@ def blink_once():
     except:
         print("BlinkStickOnce exception occurred ")
     pass
+
 
 def calculate_relative_coordinates(x, y, w, h):
     """
@@ -175,19 +186,24 @@ def calculate_relative_coordinates(x, y, w, h):
     area_rel = w_rel * h_rel
     return x_rel, y_rel, w_rel, h_rel, area_rel
 
+
 def show_count_of_objects_in_frame(object_to_check):
     number_of_object_to_check = 0
     for cat, score, bounds in results:
         if cat.decode("utf-8") == object_to_check:
             number_of_object_to_check = number_of_object_to_check + 1
-        cv2.putText(frame, str(number_of_object_to_check), (int(Xresolution - 20), int(Yresolution-20)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
+        cv2.putText(frame, str(number_of_object_to_check), (int(Xresolution - 20), int(Yresolution - 20)),
+                    cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
     return number_of_object_to_check
+
 
 def show_fps(start_time, end_time):
     duration_of_loop = end_time - start_time
     FPS = round(1 / duration_of_loop, 1)
-    cv2.putText(frame, str(FPS), (int(Xresolution - 80), int(Yresolution - 40)),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 100, 255))
+    cv2.putText(frame, str(FPS), (int(Xresolution - 80), int(Yresolution - 40)), cv2.FONT_HERSHEY_COMPLEX, 1,
+                (255, 100, 255))
     return FPS
+
 
 def faster_loop_trigerlist_distance(qtrigerlist):
     """
@@ -199,7 +215,7 @@ def faster_loop_trigerlist_distance(qtrigerlist):
     while True:
         start_time_loop = time.time()
         try:
-            #needed because qtrigerlist is not always having object inside
+            # needed because qtrigerlist is not always having object inside
             trigerlist = qtrigerlist.get_nowait()
             logging.debug("trigerlist%s", trigerlist)
 
@@ -207,7 +223,7 @@ def faster_loop_trigerlist_distance(qtrigerlist):
             # is setting speed of the loop in case 0.0005 it is 2000 times per second
             # except is not executed if qtrigerlist is have data
             time.sleep(0.0005)
-        #print("Distance {}".format(m_point.get_distance()))
+        # print("Distance {}".format(m_point.get_distance()))
         dis_x, dis_y = m_point.get_distance()
         for id_begining, begin_distance, id_ending, end_distance in trigerlist:
             if begin_distance <= abs(dis_y) and not (any(id_begining in sublist for sublist in alreadyBlinkedList)):
@@ -218,20 +234,19 @@ def faster_loop_trigerlist_distance(qtrigerlist):
 
                 logging.debug('id_begining blink_once() called for blink, alreadyBlinkedList:%s', alreadyBlinkedList)
 
-            if  end_distance <= abs(dis_y) and not (any(id_ending in sublist for sublist in alreadyBlinkedList)):
+            if end_distance <= abs(dis_y) and not (any(id_ending in sublist for sublist in alreadyBlinkedList)):
                 alreadyBlinkedTriger = id_ending, end_distance
                 # needed thus the function know which object was already blinked and which not
                 alreadyBlinkedList.append(alreadyBlinkedTriger)
                 blink_once()
                 logging.debug('id_ending blink_once() called for blink alreadyBlinkedList:%s', alreadyBlinkedList)
 
-
-
         end_time_loop = time.time()
-        #check for how long took execution the loop and log if it is too long
+        # check for how long took execution the loop and log if it is too long
         last_loop_duration = end_time_loop - start_time_loop
         if (last_loop_duration) > 0.010:
             logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
+
 
 def update_resutls_for_id(results):
     """
@@ -260,6 +275,7 @@ def update_resutls_for_id(results):
     # print(type(idresults), idresults
     return idresults
 
+
 def convert_bounding_boxes_form_Yolo_Centroid_format(results):
     # clean rect so it is clean an can be filled with new detection from frame\
     # later used in conversion_to_x1y1x2y2 . Conversion from yolo format to Centroid Format
@@ -280,6 +296,7 @@ def convert_bounding_boxes_form_Yolo_Centroid_format(results):
         rects.append(box.astype("int"))
     return rects
 
+
 def draw_ids_on_screens(objects):
     """
 
@@ -294,6 +311,7 @@ def draw_ids_on_screens(objects):
         cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
         cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
 
+
 def draw_yolo_output_on_screen(results):
     """
 
@@ -306,6 +324,7 @@ def draw_yolo_output_on_screen(results):
         cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 0))
         cv2.putText(frame, str(cat.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
 
+
 def update_objekty_if_on_screen(objekty):
     """
     :param objekty:
@@ -316,13 +335,16 @@ def update_objekty_if_on_screen(objekty):
         if objekty[YObject].id not in idresults:
             objekty[YObject].is_on_screen = False
 
+
 def get_path_filename_datetime(folder_name):
     # Use current date to get a text file name.
     return folder_name + "/" + str(datetime.datetime.now()) + ".jpg"
 
+
 def save_picture_to_file(folder_name):
     rr, oneframe = cap.read()
     cv2.imwrite(get_path_filename_datetime(folder_name), oneframe)
+
 
 if __name__ == "__main__":
 
@@ -336,11 +358,12 @@ if __name__ == "__main__":
 
     # initialize our centroid tracker and frame dimensions
     ct = CentroidTracker(maxDisappeared=20)
-    #(H, W) = (None, None)
+    # (H, W) = (None, None)
 
     # Optional statement to configure preferred GPU. Available only in GPU version.
     # pydarknet.set_cuda_device(0)
-    net = Detector(bytes(yolov3_cfg, encoding=cat_encoding), bytes(yolov_weights, encoding=cat_encoding), 0, bytes(obj_data, encoding=cat_encoding), )
+    net = Detector(bytes(yolov3_cfg, encoding=cat_encoding), bytes(yolov_weights, encoding=cat_encoding), 0,
+                   bytes(obj_data, encoding=cat_encoding), )
 
     # Start loop for blinking in separate process
 
@@ -364,11 +387,10 @@ if __name__ == "__main__":
     qtrigerlist = multiprocessing.Queue()
     qtrigerlist.put(trigerlist)
     # Start faster_loop_trigerlist in separate process and processor so it is not delayed by main process
-    #process1 = multiprocessing.Process(target=faster_loop_trigerlist, args=(qtrigerlist, s_x, s_y, ))
+    # process1 = multiprocessing.Process(target=faster_loop_trigerlist, args=(qtrigerlist, s_x, s_y, ))
     process1 = multiprocessing.Process(target=faster_loop_trigerlist_distance, args=(qtrigerlist,))
     process1.daemon = True
     process1.start()
-
 
     ########################## MAIN LOOP ###############################################################################
 
@@ -396,7 +418,7 @@ if __name__ == "__main__":
             draw_ids_on_screens(objects)
             # PUTT all detected objects with ids to idresults list
             idresults = update_resutls_for_id(results)
-            #Loop over all objects which are detected by Yolo+id
+            # Loop over all objects which are detected by Yolo+id
             for id, category, score, bounds in idresults:
                 try:
                     # if Yobjekt with specifict id already exists, update it
@@ -405,12 +427,14 @@ if __name__ == "__main__":
                         objekty[id].score = score
                         objekty[id].bounds = bounds
                 except:
-                    #create new object if not existing
+                    # create new object if not existing
                     objekty[id] = YObject(id, category.decode("utf-8"), score, bounds)
 
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
                 objekty[id].draw_object_and_id()
-                objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small, how_big_object_min_small)
+                objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small,
+                                          how_big_object_min_small)
+                objekty[id].save_picure_of_object()
             update_objekty_if_on_screen(objekty)
             # show distance of mouse sensor on screen
             cv2.putText(frame, str(m_point.get_distance()), (int(Xresolution - 200), int(Yresolution - 80)),
@@ -418,9 +442,9 @@ if __name__ == "__main__":
             show_count_of_objects_in_frame("error")
             end_time = time.time()
             show_fps(start_time, end_time)
-        #print("Distance {}".format(m_point.get_distance()))
+        # print("Distance {}".format(m_point.get_distance()))
         cv2.imshow("preview", frame)
-        #print("Elapsed Time:",end_time-start_time)
+        # print("Elapsed Time:",end_time-start_time)
         k = cv2.waitKey(1)
         if k == 0xFF & ord("q"):
             break
