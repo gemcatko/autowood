@@ -31,7 +31,8 @@ class YObject:
         self.bounds = bounds
         self.is_on_screen = True
         self.is_picture_saved = False
-        self.ready_for_blink = False
+        self.ready_for_blink_start = False
+        self.ready_for_blink_end = False
 
     def draw_object_and_id(self):
         """
@@ -57,33 +58,44 @@ class YObject:
         x, y, w, h = self.bounds
         x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
         ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
-        if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (
-                x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink == False:
-            print('Sprav znacky for ID', self.id)
+        if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink_start == False:
+            print('Sprav znacky for zaciatok ID', self.id)
             # draw purple line on the screens it is just for visual check when call for blink
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
-            self.ready_for_blink = True
-            # TODO separate blinking somewhere here
-
-            # time of right blink
-            # time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
+            self.ready_for_blink_start = True
+            # position of begin blink
             dis_x, dis_y = m_point.get_distance()
             position_indpi_begin = dis_y + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
-            # time of left blink
-            # time_ending = time_begining + delay + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
-            position_indpi_end = dis_y + saw_offset + ((x_rel - (w_rel / 2)) * size_of_one_screen_in_dpi)
-
-            # add to trigerlist id.01, time when right blink and id.02 time left blink
-            # triger = id + 0.1, time_begining, id + 0.2, time_ending
-            triger = id + 0.1, position_indpi_begin, id + 0.2, position_indpi_end
-            save_picture_to_file("detected_errors")
-            logging.debug("triger%s", triger)
+            triger = id + 0.1, position_indpi_begin
+            #save_picture_to_file("detected_errors")
+            logging.debug("triger_slow_loop%s", triger)
             trigerlist.append(triger)
             try:
                 # add to trigerlist id.01, time when right blink and id.02 time left blink to
                 qtrigerlist.put(trigerlist)
             except:
                 print("Main thread exception occurred qtrigerlist.put(trigerlist)")
+
+        if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (x_rel - (w_rel / 2)) > triger_margin and self.ready_for_blink_end == False:
+            print('Sprav znacky for end ID', self.id)
+            # draw purple line on the screens it is just for visual check when call for blink
+            cv2.line(frame, (int(x - w / 2), int(y - h / 2)), (int(x - w / 2), int(y + h / 2)), (255, 0, 255), 10)
+            self.ready_for_blink_end = True
+            # position of end blink
+            dis_x, dis_y = m_point.get_distance()
+            position_indpi_end = dis_y + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
+            # add to trigerlist id.02 time end blink
+            triger = id + 0.2, position_indpi_end
+            # save_picture_to_file("detected_errors")
+            logging.debug("triger_slow_loop%s", triger)
+            trigerlist.append(triger)
+            try:
+                # add to trigerlist id.01, time when right blink and id.02 time left blink to
+                qtrigerlist.put(trigerlist)
+            except:
+                print("Main thread exception occurred qtrigerlist.put(trigerlist)")
+
+
 
     def detect_rim(self, edge, distance_of_second_edge):
         """
@@ -142,7 +154,7 @@ class YObject:
             message = template.format(type(ex).__name__, ex.args)
             # print (message)
 
-    def save_picure_of_object(self,file_name="detected_objects"):
+    def save_picure_of_every_detected_object(self, file_name="detected_objects"):
         if self.is_picture_saved == False:
             save_picture_to_file(file_name)
             self.is_picture_saved = True
@@ -225,7 +237,8 @@ def faster_loop_trigerlist_distance(qtrigerlist):
             time.sleep(0.0005)
         # print("Distance {}".format(m_point.get_distance()))
         dis_x, dis_y = m_point.get_distance()
-        for id_begining, begin_distance, id_ending, end_distance in trigerlist:
+        #for id_begining, begin_distance, id_ending, end_distance in trigerlist:
+        for id_begining, begin_distance in trigerlist:
             if begin_distance <= abs(dis_y) and not (any(id_begining in sublist for sublist in alreadyBlinkedList)):
                 alreadyBlinkedTriger = id_begining, begin_distance
                 alreadyBlinkedList.append(alreadyBlinkedTriger)
@@ -233,14 +246,14 @@ def faster_loop_trigerlist_distance(qtrigerlist):
                 # needed thus the function know which object was already blinked and which not
 
                 logging.debug('id_begining blink_once() called for blink, alreadyBlinkedList:%s', alreadyBlinkedList)
-
+            """
             if end_distance <= abs(dis_y) and not (any(id_ending in sublist for sublist in alreadyBlinkedList)):
                 alreadyBlinkedTriger = id_ending, end_distance
                 # needed thus the function know which object was already blinked and which not
                 alreadyBlinkedList.append(alreadyBlinkedTriger)
                 blink_once()
                 logging.debug('id_ending blink_once() called for blink alreadyBlinkedList:%s', alreadyBlinkedList)
-
+            """
         end_time_loop = time.time()
         # check for how long took execution the loop and log if it is too long
         last_loop_duration = end_time_loop - start_time_loop
@@ -434,7 +447,7 @@ if __name__ == "__main__":
                 objekty[id].draw_object_and_id()
                 objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small,
                                           how_big_object_min_small)
-                objekty[id].save_picure_of_object()
+                objekty[id].save_picure_of_every_detected_object()
             update_objekty_if_on_screen(objekty)
             # show distance of mouse sensor on screen
             cv2.putText(frame, str(m_point.get_distance()), (int(Xresolution - 200), int(Yresolution - 80)),

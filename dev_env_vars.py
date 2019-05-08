@@ -25,7 +25,7 @@ how_big_object_max_small = 0.9  # detect object from how_big_object_min_small to
 how_big_object_min_small = 0.05 # detect object from how_big_object_min_small to how_big_object_max_small size of screen
 distance_of_second_edge = 0.4 # max distance of second edge to create rim object
 # virtual position of triger relative to camera
-triger_margin = 0.8  # place on screen where it is detecting objects
+triger_margin = 0.6  # place on screen where it is detecting objects
 """
 #Yolo configuration for net
 object_for_rim_detection = "orange"
