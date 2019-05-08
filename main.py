@@ -65,16 +65,12 @@ class YObject:
             self.ready_for_blink = True
             # TODO separate blinking somewhere here
 
-            # time of right blink
-            # time_begining = time.time() + delay + ((1 - (x_rel + (w_rel / 2))) * duration_1screen_s)
+            # position of right blink
             dis_x, dis_y = m_point.get_distance()
             position_indpi_begin = dis_y + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
-            # time of left blink
-            # time_ending = time_begining + delay + ((1 - (x_rel - (w_rel / 2))) * duration_1screen_s)
+            # position of left blink
             position_indpi_end = dis_y + saw_offset + ((x_rel - (w_rel / 2)) * size_of_one_screen_in_dpi)
-
             # add to trigerlist id.01, time when right blink and id.02 time left blink
-            # triger = id + 0.1, time_begining, id + 0.2, time_ending
             triger = id + 0.1, position_indpi_begin, id + 0.2, position_indpi_end
             save_picture_to_file("detected_errors")
             logging.debug("triger%s", triger)
