@@ -3,3 +3,8 @@ data/
 weights/
 .idea/
 .git/
+#ignore screenshots
+detected_errors/
+detected_objects/
+#ignore python generated files
+*.pyc
