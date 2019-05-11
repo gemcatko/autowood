@@ -44,5 +44,5 @@ yolov3_cfg = "cfg/2019_03_31_yolo-obj_v3.cfg"
 cat_encoding = "utf-8"
 yolov_weights = "weights/2019_03_31_yolo-obj_v3_7000.weights"
 obj_data = "cfg/obj.data"
-detection_treshold = 0.25
+detection_treshold = 0.15
 

@@ -167,7 +167,7 @@ class BlinkStickThread(threading.Thread):
         pass
 
 
-def convert_from_xywh_to_x1x2y1y2_format(bounds):
+def convert_from_xywh_to_xAyAxByB_format(bounds):
     """
 
     :param bounds: bounds of in format xywh
@@ -182,12 +182,12 @@ def convert_from_xywh_to_x1x2y1y2_format(bounds):
 def bb_intersection_over_union(boxA, boxB):
     """
 
-    :param boundsA: in yolo format
-    :param boundsB: in yolo format
+    :param boundsA: in yolo format -> in format xywh
+    :param boundsB: in yolo format -> in format xywh
     :return: IoU
     """
 
-    boxA, boxB = convert_from_xywh_to_x1x2y1y2_format(boxA),convert_from_xywh_to_x1x2y1y2_format(boxB)
+    boxA, boxB = convert_from_xywh_to_xAyAxByB_format(boxA), convert_from_xywh_to_xAyAxByB_format(boxB)
 
     # determine the (x, y)-coordinates of the intersection rectangle
     xA = max(boxA[0], boxB[0])
@@ -210,6 +210,22 @@ def bb_intersection_over_union(boxA, boxB):
     # [x - w / 2, y - h / 2, x + w / 2, y + h / 2]
     # return the intersection over union value
     return iou
+
+
+def get_bounding_box_around_area_ower_union(boxA, boxB):
+    """
+
+    :param boxA: xywhA
+    :param boxB: xywhB
+    :return: xAyAxByB
+    """
+    boxA, boxB = convert_from_xywh_to_xAyAxByB_format(boxA), convert_from_xywh_to_xAyAxByB_format(boxB)
+    xA = min(boxA[0], boxB[0])
+    yA = min(boxA[1], boxB[1])
+    xB = max(boxA[2], boxB[2])
+    yB = max(boxA[3], boxB[3])
+    bounding_box_of_area_ower_union = [xA, yA, xB, yB]
+    return bounding_box_of_area_ower_union
 
 
 def blink_once():
