@@ -165,7 +165,18 @@ class BlinkStickThread(threading.Thread):
         pass
 
 
-def bb_intersection_over_union(boxA, boxB):
+
+def bb_intersection_over_union(boundsA,boundsB):
+    """
+
+    :param boundsA: in yolo format
+    :param boundsB: in yolo format
+    :return: IoU
+    """
+    xA,yA,wA,hA = boundsA
+    xB, yB, wB, hB = boundsB
+    boxA = [xA - wA / 2, yA - hA / 2, xA + wA / 2, yA + hA / 2]
+    boxB = [xB - wB / 2, yB - hB / 2, xB + wB / 2, yB + hB / 2]
     # determine the (x, y)-coordinates of the intersection rectangle
     xA = max(boxA[0], boxB[0])
     yA = max(boxA[1], boxB[1])
