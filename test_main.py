@@ -1,17 +1,17 @@
 import pytest
 import main
 
-def test_bb_intersection_over_union_prekrivaju():
+def test_bb_intersection_over_union_one_on_one():
     boundsA = [50.0, 50.0, 50.0, 50.0]
     boundsB = [50.0, 50.0, 50.0, 50.0]
     assert round(main.bb_intersection_over_union(boundsA,boundsB), 2) == 1
 
-def test_bb_intersection_over_union_prekrivaju_vecsi_v_mensom():
+def test_bb_intersection_over_union_bigger_in_smaller():
     boundsA = [50.0, 50.0, 50.0, 50.0]
     boundsB = [50.0, 50.0, 100.0, 100.0]
     assert round(main.bb_intersection_over_union(boundsA,boundsB), 2) == 0.25
 
-def test_bb_intersection_over_union_next_to_50_p_owerlap():
+def test_bb_intersection_over_union_next_to_33_p_owerlap():
     boundsA = [50.0, 50.0, 50.0, 50.0]
     boundsB = [75.0, 50.0, 50.0, 50.0]
     assert round(main.bb_intersection_over_union(boundsA,boundsB), 2) == 0.34

@@ -58,7 +58,8 @@ class YObject:
         x, y, w, h = self.bounds
         x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
         ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
-        if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink_start == False:
+        if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (
+                x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink_start == False:
             print('Sprav znacky for zaciatok ID', self.id)
             # draw purple line on the screens it is just for visual check when call for blink
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
@@ -67,7 +68,7 @@ class YObject:
             dis_x, dis_y = m_point.get_distance()
             position_indpi_begin = dis_y + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
             triger = id + 0.1, position_indpi_begin
-            #save_picture_to_file("detected_errors")
+            # save_picture_to_file("detected_errors")
             logging.debug("triger_slow_loop%s", triger)
             trigerlist.append(triger)
             try:
@@ -76,7 +77,8 @@ class YObject:
             except:
                 print("Main thread exception occurred qtrigerlist.put(trigerlist)")
 
-        if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (x_rel - (w_rel / 2)) > triger_margin and self.ready_for_blink_end == False:
+        if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (
+                x_rel - (w_rel / 2)) > triger_margin and self.ready_for_blink_end == False:
             print('Sprav znacky for end ID', self.id)
             # draw purple line on the screens it is just for visual check when call for blink
             cv2.line(frame, (int(x - w / 2), int(y - h / 2)), (int(x - w / 2), int(y + h / 2)), (255, 0, 255), 10)
@@ -165,24 +167,33 @@ class BlinkStickThread(threading.Thread):
         pass
 
 
+def convert_from_xywh_to_x1x2y1y2_format(bounds):
+    """
 
-def bb_intersection_over_union(boundsA,boundsB):
+    :param bounds: bounds of in format xywh
+    :return: return x1x2y1y2  format
+    """
+
+    x, y, w, h = bounds
+    box = [x - w / 2, y - h / 2, x + w / 2, y + h / 2]
+    return box
+
+
+def bb_intersection_over_union(boxA, boxB):
     """
 
     :param boundsA: in yolo format
     :param boundsB: in yolo format
     :return: IoU
     """
-    xA,yA,wA,hA = boundsA
-    xB, yB, wB, hB = boundsB
-    boxA = [xA - wA / 2, yA - hA / 2, xA + wA / 2, yA + hA / 2]
-    boxB = [xB - wB / 2, yB - hB / 2, xB + wB / 2, yB + hB / 2]
+
+    boxA, boxB = convert_from_xywh_to_x1x2y1y2_format(boxA),convert_from_xywh_to_x1x2y1y2_format(boxB)
+
     # determine the (x, y)-coordinates of the intersection rectangle
     xA = max(boxA[0], boxB[0])
     yA = max(boxA[1], boxB[1])
     xB = min(boxA[2], boxB[2])
     yB = min(boxA[3], boxB[3])
-
 
     # compute the area of intersection rectangle
     interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
@@ -196,9 +207,10 @@ def bb_intersection_over_union(boundsA,boundsB):
     # area and dividing it by the sum of prediction + ground-truth
     # areas - the interesection area
     iou = interArea / float(boxAArea + boxBArea - interArea)
-    #[x - w / 2, y - h / 2, x + w / 2, y + h / 2]
+    # [x - w / 2, y - h / 2, x + w / 2, y + h / 2]
     # return the intersection over union value
     return iou
+
 
 def blink_once():
     """
@@ -271,7 +283,7 @@ def faster_loop_trigerlist_distance(qtrigerlist):
             time.sleep(0.0005)
         # print("Distance {}".format(m_point.get_distance()))
         dis_x, dis_y = m_point.get_distance()
-        #for id_begining, begin_distance, id_ending, end_distance in trigerlist:
+        # for id_begining, begin_distance, id_ending, end_distance in trigerlist:
         for id_begining, begin_distance in trigerlist:
             if begin_distance <= abs(dis_y) and not (any(id_begining in sublist for sublist in alreadyBlinkedList)):
                 alreadyBlinkedTriger = id_begining, begin_distance
