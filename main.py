@@ -3,6 +3,8 @@ import multiprocessing
 import subprocess
 import threading
 import time
+from typing import List, Any, Union
+
 from pydarknet import Detector, Image
 import cv2
 import numpy as np
@@ -138,17 +140,17 @@ class YObject:
         # find rim and back propagate to detection from Yolo in next loop
         :return:
         """
-        global hresults
+        global rim_results
         try:
-            # if rim is not detected delete hresults so it will not be appended to detection from youlo in next loop
+            # if rim is not detected delete rim_results so it will not be appended to detection from youlo in next loop
             if objekty[id].detect_rim(object_for_rim_detection, distance_of_second_edge) == False:
-                del hresults
+                del rim_results
             # detect_rim return True hten you need to update
             else:
                 hcategory, hscore, hbounds = objekty[id].detect_rim(object_for_rim_detection,
                                                                     distance_of_second_edge)
-                # in hresults is rim stored so in can be inported to detection from Yolo in next loop
-                hresults = hcategory.encode("utf-8"), hscore, hbounds
+                # in rim_results is rim stored so in can be inported to detection from Yolo in next loop
+                rim_results = hcategory.encode("utf-8"), hscore, hbounds
 
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
@@ -159,6 +161,24 @@ class YObject:
         if self.is_picture_saved == False:
             save_picture_to_file(file_name)
             self.is_picture_saved = True
+
+    def ignore_error_in_error_and_create_new_object(self):
+        global aou_results
+        if self.category == "error":
+            boxA = self.bounds
+            for id, category, score, bounds in idresults:
+                if category == "error":
+                    boxB = bounds
+                    if get_bounding_box_around_area_ower_union(boxA, boxB):
+                        bounding_box_around_area_ower_union = get_bounding_box_around_area_ower_union(boxA, boxB)
+                        score_bounding_box_around_area_ower_union = (self.score + score)/2
+                        category_bounding_box_around_area_ower_union = "bounding_box_around_AOU"
+                        self.ignore = True
+                        aou_results  =category_bounding_box_around_area_ower_union, score_bounding_box_around_area_ower_union, bounding_box_around_area_ower_union
+                        return aou_results
+
+
+
 
 
 class BlinkStickThread(threading.Thread):
@@ -178,6 +198,16 @@ def convert_from_xywh_to_xAyAxByB_format(bounds):
     x, y, w, h = bounds
     box = [x - w / 2, y - h / 2, x + w / 2, y + h / 2]
     return box
+
+
+def convert_from_xAyAxByB_to_xywh_format(bounds):
+    xA, yA, xB, yB = bounds
+    x=(xA+xB)/2
+    y=(yA+yB)/2
+    w= abs(xA-xB)
+    h= abs(yA-yB)
+    xywhBox = [x,y,w,h]  # type: List[Union[float, Any]]
+    return xywhBox
 
 
 def bb_intersection_over_union(boxA, boxB):
@@ -214,13 +244,14 @@ def bb_intersection_over_union(boxA, boxB):
 
 
 def get_bounding_box_around_area_ower_union(boxA, boxB):
+    """
+
+    :param boxA: xywhA
+    :param boxB: xywhB
+    :return: xAyAxByB
+    """
+    #bb_intersection_over_union need to bigger as 0 thats how you know objects overlap each other
     if bb_intersection_over_union(boxA, boxB) > 0:
-        """
-    
-        :param boxA: xywhA
-        :param boxB: xywhB
-        :return: xAyAxByB
-        """
         boxA, boxB = convert_from_xywh_to_xAyAxByB_format(boxA), convert_from_xywh_to_xAyAxByB_format(boxB)
         xA = min(boxA[0], boxB[0])
         yA = min(boxA[1], boxB[1])
@@ -425,6 +456,8 @@ def save_picture_to_file(folder_name):
     cv2.imwrite(get_path_filename_datetime(folder_name), oneframe)
 
 
+
+
 if __name__ == "__main__":
 
     ################################ SETUP #############################################################################
@@ -485,7 +518,9 @@ if __name__ == "__main__":
             # call Yolo34
             results = net.detect(dark_frame, thresh=detection_treshold)
             try:
-                results.append(hresults)
+                #update results for rim if founded in previous picture
+                results.append(rim_results)
+                results.append(aou_results)
             except Exception as ex:
                 template = "An exception of type {0} occurred. Arguments:\n{1!r}"
                 message = template.format(type(ex).__name__, ex.args)
@@ -510,6 +545,7 @@ if __name__ == "__main__":
                     objekty[id] = YObject(id, category.decode("utf-8"), score, bounds)
 
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
+                objekty[id].ignore_error_in_error_and_create_new_object()
                 objekty[id].draw_object_and_id()
                 objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small,
                                           how_big_object_min_small)

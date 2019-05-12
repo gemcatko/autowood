@@ -83,6 +83,10 @@ def test_get_bounding_box_of_area_ower_union_not_owerlap():
     boundsB = [30.0, 10.0, 10.0, 10.0]
     assert main.get_bounding_box_around_area_ower_union(boundsB, boundsA) == False
 
+def test_convert_from_xAyAxByB_to_xywh_format():
+    bounds = [350.0, 150.0, 450.0, 50.0]
+    assert main.convert_from_xAyAxByB_to_xywh_format(bounds) == [400,100,100,100]
+
 
 
 
