@@ -30,6 +30,7 @@ class YObject:
         self.score = score
         self.bounds = bounds
         self.is_on_screen = True
+        self.ignore = False
         self.is_picture_saved = False
         self.ready_for_blink_start = False
         self.ready_for_blink_end = False
@@ -182,8 +183,8 @@ def convert_from_xywh_to_xAyAxByB_format(bounds):
 def bb_intersection_over_union(boxA, boxB):
     """
 
-    :param boundsA: in yolo format -> in format xywh
-    :param boundsB: in yolo format -> in format xywh
+    :param boundsA: in yolo format(xywh)
+    :param boundsB: in yolo format(xywh)
     :return: IoU
     """
 
@@ -213,19 +214,22 @@ def bb_intersection_over_union(boxA, boxB):
 
 
 def get_bounding_box_around_area_ower_union(boxA, boxB):
-    """
-
-    :param boxA: xywhA
-    :param boxB: xywhB
-    :return: xAyAxByB
-    """
-    boxA, boxB = convert_from_xywh_to_xAyAxByB_format(boxA), convert_from_xywh_to_xAyAxByB_format(boxB)
-    xA = min(boxA[0], boxB[0])
-    yA = min(boxA[1], boxB[1])
-    xB = max(boxA[2], boxB[2])
-    yB = max(boxA[3], boxB[3])
-    bounding_box_of_area_ower_union = [xA, yA, xB, yB]
-    return bounding_box_of_area_ower_union
+    if bb_intersection_over_union(boxA, boxB) > 0:
+        """
+    
+        :param boxA: xywhA
+        :param boxB: xywhB
+        :return: xAyAxByB
+        """
+        boxA, boxB = convert_from_xywh_to_xAyAxByB_format(boxA), convert_from_xywh_to_xAyAxByB_format(boxB)
+        xA = min(boxA[0], boxB[0])
+        yA = min(boxA[1], boxB[1])
+        xB = max(boxA[2], boxB[2])
+        yB = max(boxA[3], boxB[3])
+        bounding_box_of_area_ower_union = [xA, yA, xB, yB]
+        return bounding_box_of_area_ower_union
+    else:
+        return False
 
 
 def blink_once():
