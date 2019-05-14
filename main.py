@@ -18,10 +18,6 @@ from multiprocessing import Process, Value, Queue
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s', )
 import datetime
 
-
-# TODO calculate speed of objects integrate mpoint
-# TODO Store image detections as thumbnails(small images) somewhere
-
 class YObject:
     # use for creating objects from Yolo.
     # def __init__(self, centroid_id, category, score, bounds):
@@ -313,6 +309,10 @@ def show_fps(start_time, end_time):
                 (255, 100, 255))
     return FPS
 
+def show_m_point_distance():
+    cv2.putText(frame, str(m_point.get_distance()), (int(Xresolution - 250), int(Yresolution - 80)),
+                cv2.FONT_HERSHEY_COMPLEX, 1, (255, 50, 255))
+
 
 def faster_loop_trigerlist_distance(qtrigerlist):
     """
@@ -508,7 +508,7 @@ if __name__ == "__main__":
 
     while True:
         start_time = time.time()
-        r, frame = cap.read()
+        r, frame = cap.read(0)
         if r:
             # start_time = time.time()
             # Only measure the time taken by YOLO and API Call overhead
@@ -535,7 +535,7 @@ if __name__ == "__main__":
             # Loop over all objects which are detected by Yolo+id
             for id, category, score, bounds in idresults:
                 try:
-                    # if Yobjekt with specifict id already exists, update it
+                    # if Yobjekt with specific id already exists, update it
                     if objekty[id].id == id:
                         objekty[id].category = category.decode("utf-8")
                         objekty[id].score = score
@@ -545,15 +545,15 @@ if __name__ == "__main__":
                     objekty[id] = YObject(id, category.decode("utf-8"), score, bounds)
 
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
-                objekty[id].ignore_error_in_error_and_create_new_object()
+                #TODO #Figure out if ignore_error_in_error_and_create_new_object() is working
+                #objekty[id].ignore_error_in_error_and_create_new_object()
                 objekty[id].draw_object_and_id()
                 objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small,
                                           how_big_object_min_small)
-                objekty[id].save_picure_of_every_detected_object()
+                #objekty[id].save_picure_of_every_detected_object()
             update_objekty_if_on_screen(objekty)
             # show distance of mouse sensor on screen
-            cv2.putText(frame, str(m_point.get_distance()), (int(Xresolution - 200), int(Yresolution - 80)),
-                        cv2.FONT_HERSHEY_COMPLEX, 1, (255, 50, 255))
+            show_m_point_distance()
             show_count_of_objects_in_frame("error")
             end_time = time.time()
             show_fps(start_time, end_time)
