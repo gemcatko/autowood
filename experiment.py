@@ -1,4 +1,5 @@
 #####Prerequzities
+#sudo mkdir /mnt/ramdisk
 #sudo mount -t tmpfs -o rw,size=500M tmpfs /mnt/ramdisk
 
 from dev_env_vars import *
@@ -14,6 +15,8 @@ import os
 import logging
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s', )
 
+number_of_folders =  2
+
 def show_fps(start_time, end_time):
     duration_of_loop = end_time - start_time
     FPS = round(1 / duration_of_loop, 1)
@@ -22,19 +25,20 @@ def show_fps(start_time, end_time):
     return FPS
 
 
-def darknet(yolov3_cfg, yolov_weights, cat_encoding, obj_data, ):
+def darknet(proces_no, yolov3_cfg, yolov_weights, cat_encoding, obj_data, ):
 
     net = Detector(bytes(yolov3_cfg, encoding=cat_encoding), bytes(yolov_weights, encoding=cat_encoding), 0,
                    bytes(obj_data, encoding=cat_encoding), )
+    path_to_picture= "/mnt/ramdisk/"+str(proces_no)+"/"
     while True:
-        if check_if_image_complete("/mnt/ramdisk/","frame.jpg"):
-            read_frame = cv2.imread("/mnt/ramdisk/frame.jpg")
+        if check_if_image_complete(proces_no,path_to_picture,"frame.jpg"):
+            read_frame = cv2.imread(path_to_picture+"/frame.jpg")
             dark_frame = Image(read_frame)
             results = net.detect(dark_frame, thresh=detection_treshold)
-            print("Results:", results)
+            print("Results:",proces_no, results)
             del dark_frame
 
-
+"""
 def check_handle(path_file_to_check):
     f = path_file_to_check
     if os.path.exists(f):
@@ -45,19 +49,33 @@ def check_handle(path_file_to_check):
         except OSError as e:
             print('Access-error on file "' + f + '"! \n' + str(e))
             return False
+"""
 
-def check_if_image_complete(path,file):
-    path = path
-    file = file
+def check_if_image_complete(proces_no,path,file):
+    #path = path
+    #file = file
 
     with open(os.path.join(path, file), 'rb') as f:
         check_chars = f.read()[-2:]
     if check_chars != b'\xff\xd9':
-        print('Not complete image')
+        print('Not complete image for proces:',proces_no)
         return False
     else:
         #imrgb = cv2.imread(os.path.join(path, file), 1)
         return True
+
+def safe_picture_in_rotation(frame):
+    global number_of_folders
+    if number_of_folders == 1:
+        cv2.imwrite("/mnt/ramdisk/1/frame.jpg", frame)
+        number_of_folders = 2
+
+    if number_of_folders == 2:
+        cv2.imwrite("/mnt/ramdisk/2/frame.jpg", frame)
+        number_of_folders = 1
+
+
+
 
 
 
@@ -75,10 +93,12 @@ if __name__ == "__main__":
     # pydarknet.set_cuda_device(0)
     #net = Detector(bytes(yolov3_cfg, encoding=cat_encoding), bytes(yolov_weights, encoding=cat_encoding), 0, bytes(obj_data, encoding=cat_encoding), )
 
-    q_picture = multiprocessing.Queue()
     q_results = multiprocessing.Queue()
-    p = Process(target=darknet, args=(yolov3_cfg, yolov_weights, cat_encoding, obj_data,))
+    p = Process(target=darknet, args=(1,yolov3_cfg, yolov_weights, cat_encoding, obj_data,))
     p.start()
+    time.sleep(0.10)
+    #p2 = Process(target=darknet, args=(2,yolov3_cfg, yolov_weights, cat_encoding, obj_data,))
+    #p2.start()
     ########################## MAIN LOOP ###############################################################################
 
     while True:
@@ -87,7 +107,9 @@ if __name__ == "__main__":
         if r:
             # start_time = time.time()
             # Only measure the time taken by YOLO and API Call overhead
-            cv2.imwrite("/mnt/ramdisk/frame.jpg", frame)
+            #cv2.imwrite("/mnt/ramdisk/frame.jpg", frame)
+            safe_picture_in_rotation(frame)
+
             ##read_frame = cv2.imread("/mnt/ramdisk/frame.jpg")
             ##dark_frame = Image(read_frame)
             # This are the function parameters of detect:
