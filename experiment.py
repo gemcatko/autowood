@@ -8,6 +8,8 @@ from dev_env_vars import *
 import time
 import multiprocessing
 from multiprocessing import Process, Value, Queue
+import os
+
 
 import logging
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s', )
@@ -25,14 +27,37 @@ def darknet(yolov3_cfg, yolov_weights, cat_encoding, obj_data, ):
     net = Detector(bytes(yolov3_cfg, encoding=cat_encoding), bytes(yolov_weights, encoding=cat_encoding), 0,
                    bytes(obj_data, encoding=cat_encoding), )
     while True:
+        if check_if_image_complete("/mnt/ramdisk/","frame.jpg"):
+            read_frame = cv2.imread("/mnt/ramdisk/frame.jpg")
+            dark_frame = Image(read_frame)
+            results = net.detect(dark_frame, thresh=detection_treshold)
+            print("Results:", results)
+            del dark_frame
 
-        read_frame = cv2.imread("/mnt/ramdisk/frame.jpg")
-        dark_frame = Image(read_frame)
-        results = net.detect(dark_frame, thresh=detection_treshold)
-        print("Results:", results)
-        del dark_frame
 
+def check_handle(path_file_to_check):
+    f = path_file_to_check
+    if os.path.exists(f):
+        try:
+            os.rename(f, f)
+            print('Access on file "' + f + '" is available!')
+            return True
+        except OSError as e:
+            print('Access-error on file "' + f + '"! \n' + str(e))
+            return False
 
+def check_if_image_complete(path,file):
+    path = path
+    file = file
+
+    with open(os.path.join(path, file), 'rb') as f:
+        check_chars = f.read()[-2:]
+    if check_chars != b'\xff\xd9':
+        print('Not complete image')
+        return False
+    else:
+        #imrgb = cv2.imread(os.path.join(path, file), 1)
+        return True
 
 
 
