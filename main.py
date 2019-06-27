@@ -465,8 +465,17 @@ if __name__ == "__main__":
     cap = cv2.VideoCapture(0)  # set web cam properties width and height, working for USB for webcam
     # video_filename = "MOV_2426.mp4"                                        # use if you want to use static video file
     # cap = cv2.VideoCapture(video_filename)
-    cap.set(3, Xresolution)
-    cap.set(4, Yresolution)
+    #cap.set(3, Xresolution)
+    #cap.set(4, Yresolution)
+
+    codec = cv2.VideoWriter_fourcc("M", "J", "P", "G")
+    cap.set(cv2.CAP_PROP_FPS, 120)  # FPS60FPS
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, Xresolution)  # set resolutionx of webcam
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Yresolution)  # set resolutiony of webcam
+    cap.set(cv2.CAP_PROP_FOURCC, codec)
+    print(cap.get(cv2.CAP_PROP_FPS))
+    print(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    print(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     # initialize our centroid tracker and frame dimensions
     ct = CentroidTracker(maxDisappeared=20)
