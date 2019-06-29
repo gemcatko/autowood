@@ -1,64 +1,140 @@
-#https://www.pyimagesearch.com/2017/02/06/faster-video-file-fps-with-cv2-videocapture-and-opencv/
-#https: // www.pyimagesearch.com / 2015 / 12 / 21 / increasing - webcam - fps -with-python - and -opencv /
-# import the necessary packages
+#####Prerequzities
+#sudo mkdir /mnt/ramdisk
+#sudo mount -t tmpfs -o rw,size=500M tmpfs /mnt/ramdisk
+
+from dev_env_vars import *
+from pydarknet import Detector, Image
+import cv2
+from dev_env_vars import *
+import time
+import multiprocessing
+from multiprocessing import Process, Value, Queue
+import os
+
+
 import logging
-logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s',)
+logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s', )
 
-class YObject:
-    # z Yola ide odresult a v idrusulte su id, cat, score, bounds
-    # def __init__(self, centroid_id, category, score, bounds):
-    def __init__(self, id, category, score, bounds):
-        # co vychadza z jola [(1, b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (4, b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
+number_of_folders =  2
 
-        # centroid_id , detected_category, score, object_position_center_x ,object_position_center_y ,width w, height_h
-        # copy paste functionality of  detect_object_4_c
-        self.id = id
-        self.category = category
-        self.score = score
-        self.bounds = bounds
-    def show_objects(self):
-        print("bounds:",self.id, self.category, self.score, self.bounds)
+def show_fps(start_time, end_time):
+    duration_of_loop = end_time - start_time
+    FPS = round(1 / duration_of_loop, 1)
+    cv2.putText(frame, str(FPS), (int(Xresolution - 80), int(Yresolution - 40)), cv2.FONT_HERSHEY_COMPLEX, 1,
+                (255, 100, 255))
+    return FPS
 
-    def detect_object_4_cm(self, object_to_detect):
 
-        ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
-        if self.category.decode("utf-8") == object_to_detect:
-            print("object_to_detect:",object_to_detect)
-            logging.debug('mas tam pesonu')
+def darknet(proces_no, yolov3_cfg, yolov_weights, cat_encoding, obj_data, ):
 
-trigerlist = [(4.1, 1551555880.4178755, 4.2, 1551555880.576961), (11.1, 1551555884.1779869, 11.2, 1551555884.252769), (5.1, 1551555885.0371258, 5.2, 1551555885.2632303)]
+    net = Detector(bytes(yolov3_cfg, encoding=cat_encoding), bytes(yolov_weights, encoding=cat_encoding), 0,
+                   bytes(obj_data, encoding=cat_encoding), )
+    path_to_picture= "/mnt/ramdisk/"+str(proces_no)+"/"
+    while True:
+        if check_if_image_complete(proces_no,path_to_picture,"frame.jpg"):
+            read_frame = cv2.imread(path_to_picture+"/frame.jpg")
+            dark_frame = Image(read_frame)
+            results = net.detect(dark_frame, thresh=detection_treshold)
+            print("Results:",proces_no, results)
+            del dark_frame
 
-idresults= [(1, b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (4, b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422)),(5, b'notebook', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
 """
-id_begining = 11.1
-time_begining = 1551555884.1779869
-id_ending = 11.2
-time_ending = 1551555884.252769
-new_time_begining = 1.111111
-new_time_ending = 1.99999
-
-print(trigerlist[1])
-trigerlist[1] = id_begining, new_time_begining, id_ending, new_time_ending
-print(trigerlist[1])
-print(trigerlist.index((id_begining, new_time_begining, id_ending, new_time_ending)))
+def check_handle(path_file_to_check):
+    f = path_file_to_check
+    if os.path.exists(f):
+        try:
+            os.rename(f, f)
+            print('Access on file "' + f + '" is available!')
+            return True
+        except OSError as e:
+            print('Access-error on file "' + f + '"! \n' + str(e))
+            return False
 """
-object_to_detect = "person"
-objekty = {}
-for id, category, score, bounds in idresults:
-    objekty[id] = YObject(id, category, score, bounds)
-    objekty[id].show_objects()
+
+def check_if_image_complete(proces_no,path,file):
+    #path = path
+    #file = file
+
+    with open(os.path.join(path, file), 'rb') as f:
+        check_chars = f.read()[-2:]
+    if check_chars != b'\xff\xd9':
+        print('Not complete image for proces:',proces_no)
+        return False
+    else:
+        #imrgb = cv2.imread(os.path.join(path, file), 1)
+        return True
+
+def safe_picture_in_rotation(frame):
+    global number_of_folders
+    if number_of_folders == 1:
+        cv2.imwrite("/mnt/ramdisk/1/frame.jpg", frame)
+        number_of_folders = 2
+
+    if number_of_folders == 2:
+        cv2.imwrite("/mnt/ramdisk/2/frame.jpg", frame)
+        number_of_folders = 1
 
 
-idresults= [(1, b'person', 0.11111, (111.4600219726562, 1111.1628112792969, 1111.6322021484375, 111.4992065429688)), (4, b'bottle', 0.44444, (44444.3851318359375, 4444.22744750976562, 444.9032287597656, 444.8708953857422)),(5, b'notebook', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
-for id, category, score, bounds in idresults:
-    objekty[id] = YObject(id, category, score, bounds)
-    objekty[id].show_objects()
-    objekty[id].detect_object_4_cm(object_to_detect)
 
-    print(objekty[id].id)
 
-for k, v in objekty.items():
-    print( "key: {k} value: {v}" )
 
+
+if __name__ == "__main__":
+
+    ################################ SETUP #############################################################################
+    """"""
+    cap = cv2.VideoCapture(0)  # set web cam properties width and height, working for USB for webcam
+    # video_filename = "MOV_2426.mp4"                                        # use if you want to use static video file
+    # cap = cv2.VideoCapture(video_filename)
+    cap.set(3, Xresolution)
+    cap.set(4, Yresolution)
+
+    # Optional statement to configure preferred GPU. Available only in GPU version.
+    # pydarknet.set_cuda_device(0)
+    #net = Detector(bytes(yolov3_cfg, encoding=cat_encoding), bytes(yolov_weights, encoding=cat_encoding), 0, bytes(obj_data, encoding=cat_encoding), )
+
+    q_results = multiprocessing.Queue()
+    p = Process(target=darknet, args=(1,yolov3_cfg, yolov_weights, cat_encoding, obj_data,))
+    p.start()
+    time.sleep(0.10)
+    #p2 = Process(target=darknet, args=(2,yolov3_cfg, yolov_weights, cat_encoding, obj_data,))
+    #p2.start()
+    ########################## MAIN LOOP ###############################################################################
+
+    while True:
+        start_time=time.time()
+        r, frame = cap.read(0)
+        if r:
+            # start_time = time.time()
+            # Only measure the time taken by YOLO and API Call overhead
+            #cv2.imwrite("/mnt/ramdisk/frame.jpg", frame)
+            safe_picture_in_rotation(frame)
+
+            ##read_frame = cv2.imread("/mnt/ramdisk/frame.jpg")
+            ##dark_frame = Image(read_frame)
+            # This are the function parameters of detect:
+            # Possible inputs: def detect(self, Image image, float thresh=.5, float hier_thresh=.5, float nms=.45):
+            # call Yolo34
+            ##results = net.detect(dark_frame, thresh=detection_treshold)
+            ##print("Results:",results)
+            """
+
+            try:
+                print("q_results:",q_results.get_nowait())
+            except:
+                time.sleep(0.01)
+                print("exeption in main tread ecored")
+
+            ##del dark_frame
+            """
+        #cv2.imshow("preview", frame)
+        # print("Elapsed Time:",end_time-start_time)
+
+        k = cv2.waitKey(1)
+        end_time=time.time()
+        show_fps(start_time,end_time)
+        cv2.imshow("preview", frame)
+        if k == 0xFF & ord("q"):
+            break
 
 

@@ -3,6 +3,8 @@ import multiprocessing
 import subprocess
 import threading
 import time
+from typing import List, Any, Union
+
 from pydarknet import Detector, Image
 import cv2
 import numpy as np
@@ -16,10 +18,6 @@ from multiprocessing import Process, Value, Queue
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s', )
 import datetime
 
-
-# TODO calculate speed of objects integrate mpoint
-# TODO Store image detections as thumbnails(small images) somewhere
-
 class YObject:
     # use for creating objects from Yolo.
     # def __init__(self, centroid_id, category, score, bounds):
@@ -30,6 +28,7 @@ class YObject:
         self.score = score
         self.bounds = bounds
         self.is_on_screen = True
+        self.ignore = False
         self.is_picture_saved = False
         self.ready_for_blink_start = False
         self.ready_for_blink_end = False
@@ -58,7 +57,8 @@ class YObject:
         x, y, w, h = self.bounds
         x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
         ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
-        if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink_start == False:
+        if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (
+                x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink_start == False:
             print('Sprav znacky for zaciatok ID', self.id)
             # draw purple line on the screens it is just for visual check when call for blink
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
@@ -67,7 +67,7 @@ class YObject:
             dis_x, dis_y = m_point.get_distance()
             position_indpi_begin = dis_y + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
             triger = id + 0.1, position_indpi_begin
-            #save_picture_to_file("detected_errors")
+            # save_picture_to_file("detected_errors")
             logging.debug("triger_slow_loop%s", triger)
             trigerlist.append(triger)
             try:
@@ -76,7 +76,8 @@ class YObject:
             except:
                 print("Main thread exception occurred qtrigerlist.put(trigerlist)")
 
-        if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (x_rel - (w_rel / 2)) > triger_margin and self.ready_for_blink_end == False:
+        if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (
+                x_rel - (w_rel / 2)) > triger_margin and self.ready_for_blink_end == False:
             print('Sprav znacky for end ID', self.id)
             # draw purple line on the screens it is just for visual check when call for blink
             cv2.line(frame, (int(x - w / 2), int(y - h / 2)), (int(x - w / 2), int(y + h / 2)), (255, 0, 255), 10)
@@ -94,8 +95,6 @@ class YObject:
                 qtrigerlist.put(trigerlist)
             except:
                 print("Main thread exception occurred qtrigerlist.put(trigerlist)")
-
-
 
     def detect_rim(self, edge, distance_of_second_edge):
         """
@@ -137,17 +136,17 @@ class YObject:
         # find rim and back propagate to detection from Yolo in next loop
         :return:
         """
-        global hresults
+        global rim_results
         try:
-            # if rim is not detected delete hresults so it will not be appended to detection from youlo in next loop
+            # if rim is not detected delete rim_results so it will not be appended to detection from youlo in next loop
             if objekty[id].detect_rim(object_for_rim_detection, distance_of_second_edge) == False:
-                del hresults
+                del rim_results
             # detect_rim return True hten you need to update
             else:
                 hcategory, hscore, hbounds = objekty[id].detect_rim(object_for_rim_detection,
                                                                     distance_of_second_edge)
-                # in hresults is rim stored so in can be inported to detection from Yolo in next loop
-                hresults = hcategory.encode("utf-8"), hscore, hbounds
+                # in rim_results is rim stored so in can be inported to detection from Yolo in next loop
+                rim_results = hcategory.encode("utf-8"), hscore, hbounds
 
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
@@ -159,11 +158,105 @@ class YObject:
             save_picture_to_file(file_name)
             self.is_picture_saved = True
 
+    def ignore_error_in_error_and_create_new_object(self):
+        global aou_results
+        if self.category == "error":
+            boxA = self.bounds
+            for id, category, score, bounds in idresults:
+                if category == "error":
+                    boxB = bounds
+                    if get_bounding_box_around_area_ower_union(boxA, boxB):
+                        bounding_box_around_area_ower_union = get_bounding_box_around_area_ower_union(boxA, boxB)
+                        score_bounding_box_around_area_ower_union = (self.score + score)/2
+                        category_bounding_box_around_area_ower_union = "bounding_box_around_AOU"
+                        self.ignore = True
+                        aou_results  =category_bounding_box_around_area_ower_union, score_bounding_box_around_area_ower_union, bounding_box_around_area_ower_union
+                        return aou_results
+
+
+
+
+
 class BlinkStickThread(threading.Thread):
     def run(self):
         '''Starting blinkStick to blink once in Separate Thread'''
         subprocess.Popen(["python2", "BlinkStick.py"])
         pass
+
+
+def convert_from_xywh_to_xAyAxByB_format(bounds):
+    """
+
+    :param bounds: bounds of in format xywh
+    :return: return x1x2y1y2  format
+    """
+
+    x, y, w, h = bounds
+    box = [x - w / 2, y - h / 2, x + w / 2, y + h / 2]
+    return box
+
+
+def convert_from_xAyAxByB_to_xywh_format(bounds):
+    xA, yA, xB, yB = bounds
+    x=(xA+xB)/2
+    y=(yA+yB)/2
+    w= abs(xA-xB)
+    h= abs(yA-yB)
+    xywhBox = [x,y,w,h]  # type: List[Union[float, Any]]
+    return xywhBox
+
+
+def bb_intersection_over_union(boxA, boxB):
+    """
+
+    :param boundsA: in yolo format(xywh)
+    :param boundsB: in yolo format(xywh)
+    :return: IoU
+    """
+
+    boxA, boxB = convert_from_xywh_to_xAyAxByB_format(boxA), convert_from_xywh_to_xAyAxByB_format(boxB)
+
+    # determine the (x, y)-coordinates of the intersection rectangle
+    xA = max(boxA[0], boxB[0])
+    yA = max(boxA[1], boxB[1])
+    xB = min(boxA[2], boxB[2])
+    yB = min(boxA[3], boxB[3])
+
+    # compute the area of intersection rectangle
+    interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+
+    # compute the area of both the prediction and ground-truth
+    # rectangles
+    boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
+    boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
+
+    # compute the intersection over union by taking the intersection
+    # area and dividing it by the sum of prediction + ground-truth
+    # areas - the interesection area
+    iou = interArea / float(boxAArea + boxBArea - interArea)
+    # [x - w / 2, y - h / 2, x + w / 2, y + h / 2]
+    # return the intersection over union value
+    return iou
+
+
+def get_bounding_box_around_area_ower_union(boxA, boxB):
+    """
+
+    :param boxA: xywhA
+    :param boxB: xywhB
+    :return: xAyAxByB
+    """
+    #bb_intersection_over_union need to bigger as 0 thats how you know objects overlap each other
+    if bb_intersection_over_union(boxA, boxB) > 0:
+        boxA, boxB = convert_from_xywh_to_xAyAxByB_format(boxA), convert_from_xywh_to_xAyAxByB_format(boxB)
+        xA = min(boxA[0], boxB[0])
+        yA = min(boxA[1], boxB[1])
+        xB = max(boxA[2], boxB[2])
+        yB = max(boxA[3], boxB[3])
+        bounding_box_of_area_ower_union = [xA, yA, xB, yB]
+        return bounding_box_of_area_ower_union
+    else:
+        return False
 
 
 def blink_once():
@@ -216,6 +309,10 @@ def show_fps(start_time, end_time):
                 (255, 100, 255))
     return FPS
 
+def show_m_point_distance():
+    cv2.putText(frame, str(m_point.get_distance()), (int(Xresolution - 250), int(Yresolution - 80)),
+                cv2.FONT_HERSHEY_COMPLEX, 1, (255, 50, 255))
+
 
 def faster_loop_trigerlist_distance(qtrigerlist):
     """
@@ -237,7 +334,7 @@ def faster_loop_trigerlist_distance(qtrigerlist):
             time.sleep(0.0005)
         # print("Distance {}".format(m_point.get_distance()))
         dis_x, dis_y = m_point.get_distance()
-        #for id_begining, begin_distance, id_ending, end_distance in trigerlist:
+        # for id_begining, begin_distance, id_ending, end_distance in trigerlist:
         for id_begining, begin_distance in trigerlist:
             if begin_distance <= abs(dis_y) and not (any(id_begining in sublist for sublist in alreadyBlinkedList)):
                 alreadyBlinkedTriger = id_begining, begin_distance
@@ -359,6 +456,8 @@ def save_picture_to_file(folder_name):
     cv2.imwrite(get_path_filename_datetime(folder_name), oneframe)
 
 
+
+
 if __name__ == "__main__":
 
     ################################ SETUP #############################################################################
@@ -366,8 +465,17 @@ if __name__ == "__main__":
     cap = cv2.VideoCapture(0)  # set web cam properties width and height, working for USB for webcam
     # video_filename = "MOV_2426.mp4"                                        # use if you want to use static video file
     # cap = cv2.VideoCapture(video_filename)
-    cap.set(3, Xresolution)
-    cap.set(4, Yresolution)
+    #cap.set(3, Xresolution)
+    #cap.set(4, Yresolution)
+
+    codec = cv2.VideoWriter_fourcc("M", "J", "P", "G")
+    cap.set(cv2.CAP_PROP_FPS, 120)  # FPS60FPS
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, Xresolution)  # set resolutionx of webcam
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Yresolution)  # set resolutiony of webcam
+    cap.set(cv2.CAP_PROP_FOURCC, codec)
+    print(cap.get(cv2.CAP_PROP_FPS))
+    print(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    print(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     # initialize our centroid tracker and frame dimensions
     ct = CentroidTracker(maxDisappeared=20)
@@ -409,7 +517,7 @@ if __name__ == "__main__":
 
     while True:
         start_time = time.time()
-        r, frame = cap.read()
+        r, frame = cap.read(0)
         if r:
             # start_time = time.time()
             # Only measure the time taken by YOLO and API Call overhead
@@ -419,7 +527,9 @@ if __name__ == "__main__":
             # call Yolo34
             results = net.detect(dark_frame, thresh=detection_treshold)
             try:
-                results.append(hresults)
+                #update results for rim if founded in previous picture
+                results.append(rim_results)
+                results.append(aou_results)
             except Exception as ex:
                 template = "An exception of type {0} occurred. Arguments:\n{1!r}"
                 message = template.format(type(ex).__name__, ex.args)
@@ -434,7 +544,7 @@ if __name__ == "__main__":
             # Loop over all objects which are detected by Yolo+id
             for id, category, score, bounds in idresults:
                 try:
-                    # if Yobjekt with specifict id already exists, update it
+                    # if Yobjekt with specific id already exists, update it
                     if objekty[id].id == id:
                         objekty[id].category = category.decode("utf-8")
                         objekty[id].score = score
@@ -444,14 +554,15 @@ if __name__ == "__main__":
                     objekty[id] = YObject(id, category.decode("utf-8"), score, bounds)
 
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
+                #TODO #Figure out if ignore_error_in_error_and_create_new_object() is working
+                #objekty[id].ignore_error_in_error_and_create_new_object()
                 objekty[id].draw_object_and_id()
                 objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small,
                                           how_big_object_min_small)
-                objekty[id].save_picure_of_every_detected_object()
+                #objekty[id].save_picure_of_every_detected_object()
             update_objekty_if_on_screen(objekty)
             # show distance of mouse sensor on screen
-            cv2.putText(frame, str(m_point.get_distance()), (int(Xresolution - 200), int(Yresolution - 80)),
-                        cv2.FONT_HERSHEY_COMPLEX, 1, (255, 50, 255))
+            show_m_point_distance()
             show_count_of_objects_in_frame("error")
             end_time = time.time()
             show_fps(start_time, end_time)
