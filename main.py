@@ -8,8 +8,7 @@ from typing import List, Any, Union
 from pydarknet import Detector, Image
 import cv2
 import numpy as np
-from mpoint.mpoint import Mpoint, feed_queue
-# import Mpoint from mpoint.mpoint
+
 # for manual see: https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
 from pyimagesearch.centroidtracker import CentroidTracker
 from dev_env_vars import *
@@ -17,7 +16,10 @@ from multiprocessing import Process, Value, Queue
 
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s', )
 import datetime
+from magneto import Magneto
 
+### Imports end here
+### Class definitions
 class YObject:
     # use for creating objects from Yolo.
     # def __init__(self, centroid_id, category, score, bounds):
@@ -174,9 +176,6 @@ class YObject:
                         return aou_results
 
 
-
-
-
 class BlinkStickThread(threading.Thread):
     def run(self):
         '''Starting blinkStick to blink once in Separate Thread'''
@@ -184,6 +183,7 @@ class BlinkStickThread(threading.Thread):
         pass
 
 
+### Funktions
 def convert_from_xywh_to_xAyAxByB_format(bounds):
     """
 
@@ -309,8 +309,14 @@ def show_fps(start_time, end_time):
                 (255, 100, 255))
     return FPS
 
-def show_m_point_distance():
-    cv2.putText(frame, str(m_point.get_distance()), (int(Xresolution - 250), int(Yresolution - 80)),
+
+def show_magneto_distance():
+    """
+    IT is using s_distance.value which is actual sum of angles from magneto
+    The funktion need to be called every frame you want to sho something
+    :return:
+    """
+    cv2.putText(frame, str(s_distance.value), (int(Xresolution - 250), int(Yresolution - 80)),
                 cv2.FONT_HERSHEY_COMPLEX, 1, (255, 50, 255))
 
 
@@ -333,7 +339,8 @@ def faster_loop_trigerlist_distance(qtrigerlist):
             # except is not executed if qtrigerlist is have data
             time.sleep(0.0005)
         # print("Distance {}".format(m_point.get_distance()))
-        dis_x, dis_y = m_point.get_distance()
+        #dis_x, dis_y = m_point.get_distance()
+        dis_x = s_distance.value
         # for id_begining, begin_distance, id_ending, end_distance in trigerlist:
         for id_begining, begin_distance in trigerlist:
             if begin_distance <= abs(dis_y) and not (any(id_begining in sublist for sublist in alreadyBlinkedList)):
@@ -456,13 +463,11 @@ def save_picture_to_file(folder_name):
     cv2.imwrite(get_path_filename_datetime(folder_name), oneframe)
 
 
-
-
 if __name__ == "__main__":
 
     ################################ SETUP #############################################################################
-
-    video_filename = "/home/automateit/Videos/my_video-19.mkv"                                        # use if you want to use static video file
+    # use if you want to use static video file
+    video_filename = "/home/automateit/Videos/my_video-19.mkv"
     cap = cv2.VideoCapture(video_filename)
 
     #USE webcam
@@ -491,13 +496,14 @@ if __name__ == "__main__":
 
     # Start loop for blinking in separate process
 
+    """
     # initialize shared vars for speed/movement x,y
     s_x = Value('i', 0)
     s_y = Value('i', 0)
     s_distance_x = Value('l', 0)
     s_distance_y = Value('l', 0)
     s_queue = Queue()
-
+    
     # create process to feed queue
     p = Process(target=feed_queue, args=(s_queue, "/dev/input/mice"))
     p.start()
@@ -505,7 +511,16 @@ if __name__ == "__main__":
     # create instance of Process subclass Mpoint and pass shared values vars
     m_point = Mpoint(shared_x=s_x, shared_y=s_y, shared_d_x=s_distance_x, shared_d_y=s_distance_y, shared_queue=s_queue,
                      loop_delay=0.001, filename="/dev/input/mice")
-    m_point.start()
+    m_point.start(
+    """
+
+
+    # initialize shared var for distance for magneto
+    # sudo chmod 666 /dev/ttyUSB0
+    s_distance = Value('l', 0)
+    # create instance of Process subclass Magneto and pass shared value var
+    sensor_process = Magneto(shared_distance=s_distance)
+    sensor_process.start()
 
     # Shared queue for list with ids to blink
     qtrigerlist = multiprocessing.Queue()
@@ -565,11 +580,12 @@ if __name__ == "__main__":
                 #objekty[id].save_picure_of_every_detected_object()
             update_objekty_if_on_screen(objekty)
             # show distance of mouse sensor on screen
-            show_m_point_distance()
+            show_magneto_distance()
             show_count_of_objects_in_frame("error")
+            # used for counting the show_fps
             end_time = time.time()
             show_fps(start_time, end_time)
-        # print("Distance {}".format(m_point.get_distance()))
+
         cv2.imshow("preview", frame)
         # print("Elapsed Time:",end_time-start_time)
         k = cv2.waitKey(1)
