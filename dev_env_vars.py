@@ -6,6 +6,7 @@
 
 Xresolution = 640
 Yresolution = 480
+video_filename = "/home/automateit/Videos/2019-07-08 07:07:37.017054_test_video_5-10minute.avi"
 
 cell_phone = []
 list_chyba = []

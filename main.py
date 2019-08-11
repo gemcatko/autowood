@@ -466,11 +466,10 @@ def save_picture_to_file(folder_name):
 if __name__ == "__main__":
 
     ################################ SETUP #############################################################################
-    # use if you want to use static video file
-    video_filename = "/home/automateit/Videos/my_video-19.mkv"
+    #USE if video from file. video_filename  fefinition is located in  dev_env_vars.py
     cap = cv2.VideoCapture(video_filename)
 
-    #USE webcam
+    #USE if  webcam
     """
         cap = cv2.VideoCapture(0)  # set web cam properties width and height, working for USB for webcam
         cap.set(3, Xresolution)
