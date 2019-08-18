@@ -61,12 +61,12 @@ class YObject:
         ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
         if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (
                 x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink_start == False:
-            print('Sprav znacky for zaciatok ID', self.id)
+            print('Sprav znacky for zaciatok ID .2', self.id)
             # draw purple line on the screens it is just for visual check when call for blink
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
             self.ready_for_blink_start = True
             # position of begin blink
-            dis_x, dis_y = m_point.get_distance()
+            dis_y = s_distance.value # this is from magneto the apsolut distance
             position_indpi_begin = dis_y + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
             triger = id + 0.1, position_indpi_begin
             # save_picture_to_file("detected_errors")
@@ -80,12 +80,12 @@ class YObject:
 
         if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (
                 x_rel - (w_rel / 2)) > triger_margin and self.ready_for_blink_end == False:
-            print('Sprav znacky for end ID', self.id)
+            print('Sprav znacky for end .2 ID', self.id)
             # draw purple line on the screens it is just for visual check when call for blink
             cv2.line(frame, (int(x - w / 2), int(y - h / 2)), (int(x - w / 2), int(y + h / 2)), (255, 0, 255), 10)
             self.ready_for_blink_end = True
             # position of end blink
-            dis_x, dis_y = m_point.get_distance()
+            dis_y =s_distance.value # this is from magneto the apsolut distance
             position_indpi_end = dis_y + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
             # add to trigerlist id.02 time end blink
             triger = id + 0.2, position_indpi_end
@@ -339,11 +339,11 @@ def faster_loop_trigerlist_distance(qtrigerlist):
             # except is not executed if qtrigerlist is have data
             time.sleep(0.0005)
         # print("Distance {}".format(m_point.get_distance()))
-        #dis_x, dis_y = m_point.get_distance()
-        dis_x = s_distance.value
+
+        distance = s_distance.value
         # for id_begining, begin_distance, id_ending, end_distance in trigerlist:
         for id_begining, begin_distance in trigerlist:
-            if begin_distance <= abs(dis_y) and not (any(id_begining in sublist for sublist in alreadyBlinkedList)):
+            if begin_distance <= abs(distance) and not (any(id_begining in sublist for sublist in alreadyBlinkedList)):
                 alreadyBlinkedTriger = id_begining, begin_distance
                 alreadyBlinkedList.append(alreadyBlinkedTriger)
                 blink_once()
@@ -351,7 +351,7 @@ def faster_loop_trigerlist_distance(qtrigerlist):
 
                 logging.debug('id_begining blink_once() called for blink, alreadyBlinkedList:%s', alreadyBlinkedList)
             """
-            if end_distance <= abs(dis_y) and not (any(id_ending in sublist for sublist in alreadyBlinkedList)):
+            if end_distance <= abs(distance) and not (any(id_ending in sublist for sublist in alreadyBlinkedList)):
                 alreadyBlinkedTriger = id_ending, end_distance
                 # needed thus the function know which object was already blinked and which not
                 alreadyBlinkedList.append(alreadyBlinkedTriger)
@@ -467,23 +467,23 @@ if __name__ == "__main__":
 
     ################################ SETUP #############################################################################
     #USE if video from file. video_filename  fefinition is located in  dev_env_vars.py
-    cap = cv2.VideoCapture(video_filename)
+    #cap = cv2.VideoCapture(video_filename)
 
     #USE if  webcam
-    """
-        cap = cv2.VideoCapture(0)  # set web cam properties width and height, working for USB for webcam
-        cap.set(3, Xresolution)
-        cap.set(4, Yresolution)
-        ##Use webcam with high frame rate
-        codec = cv2.VideoWriter_fourcc("M", "J", "P", "G")
-        cap.set(cv2.CAP_PROP_FPS, 120)  # FPS60FPS
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, Xresolution)  # set resolutionx of webcam
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Yresolution)  # set resolutiony of webcam
-        cap.set(cv2.CAP_PROP_FOURCC, codec)
-        print(cap.get(cv2.CAP_PROP_FPS))
-        print(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        print(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    """
+
+    cap = cv2.VideoCapture(0)  # set web cam properties width and height, working for USB for webcam
+    cap.set(3, Xresolution)
+    cap.set(4, Yresolution)
+    ##Use webcam with high frame rate
+    codec = cv2.VideoWriter_fourcc("M", "J", "P", "G")
+    cap.set(cv2.CAP_PROP_FPS, 120)  # FPS60FPS
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, Xresolution)  # set resolutionx of webcam
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Yresolution)  # set resolutiony of webcam
+    cap.set(cv2.CAP_PROP_FOURCC, codec)
+    print(cap.get(cv2.CAP_PROP_FPS))
+    print(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    print(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
     # initialize our centroid tracker and frame dimensions
     ct = CentroidTracker(maxDisappeared=20)
     # (H, W) = (None, None)
