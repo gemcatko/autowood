@@ -66,8 +66,8 @@ class YObject:
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
             self.ready_for_blink_start = True
             # position of begin blink
-            dis_y = s_distance.value # this is from magneto the apsolut distance
-            position_indpi_begin = dis_y + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
+            position_indpi_begin = s_distance.value # this is from magneto the apsolut distance
+            position_indpi_begin = position_indpi_begin + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
             triger = id + 0.1, position_indpi_begin
             # save_picture_to_file("detected_errors")
             logging.debug("triger_slow_loop%s", triger)
@@ -85,8 +85,8 @@ class YObject:
             cv2.line(frame, (int(x - w / 2), int(y - h / 2)), (int(x - w / 2), int(y + h / 2)), (255, 0, 255), 10)
             self.ready_for_blink_end = True
             # position of end blink
-            dis_y =s_distance.value # this is from magneto the apsolut distance
-            position_indpi_end = dis_y + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
+            position_indpi_end =s_distance.value # this is from magneto the apsolut distance
+            position_indpi_end = position_indpi_end + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
             # add to trigerlist id.02 time end blink
             triger = id + 0.2, position_indpi_end
             # save_picture_to_file("detected_errors")
