@@ -16,6 +16,8 @@ from multiprocessing import Process, Value, Queue
 
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s', )
 import datetime
+#subprocess.Popen(['sudo', 'chmod', '666', '/dev/ttyUSB0'])
+
 from magneto import Magneto
 
 ### Imports end here
@@ -50,7 +52,7 @@ class YObject:
         # Draw id number text
         # TODO finish
 
-    def detect_object(self, object_to_detect, triger_margin, how_big_object_max, how_big_object_min):
+    def do_not_use_detect_object(self, object_to_detect, triger_margin, how_big_object_max, how_big_object_min):
         """
         :param object_to_detect:
         :param triger_margin:
@@ -61,7 +63,7 @@ class YObject:
         ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
         if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (
                 x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink_start == False:
-            print('Sprav znacky for zaciatok ID .2', self.id)
+            print('Sprav znacky for zaciatok ID .1', self.id)
             # draw purple line on the screens it is just for visual check when call for blink
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
             self.ready_for_blink_start = True
@@ -98,11 +100,11 @@ class YObject:
             except:
                 print("Main thread exception occurred qtrigerlist.put(trigerlist)")
 
-    def detect_rim(self, edge, distance_of_second_edge):
+    def detect_rim(self, edge, max_dist_of_2nd_edge):
         """
         rim is defined by 2 edges close enough
         :param edge: category you would like use for rim detection
-        :param distance_of_second_edge for example 0.5 fo 50% of the screen
+        :param max_dist_of_2nd_edge for example 0.5 fo 50% of the screen
         :return: true
         """
         if self.category == edge:
@@ -115,7 +117,7 @@ class YObject:
                     xx, yy, ww, hh = bounds
                     xx_rel, yy_rel, ww_rel, hh_rel, aarea_rel = calculate_relative_coordinates(xx, yy, ww, hh)
                     # is second edge close enought ?)
-                    if (((x_rel - xx_rel) ** 2) + ((y_rel - yy_rel) ** 2)) ** (0.5) < distance_of_second_edge:
+                    if (((x_rel - xx_rel) ** 2) + ((y_rel - yy_rel) ** 2)) ** (0.5) < max_dist_of_2nd_edge:
                         # calculate rim properties
                         new_rim_score = (self.score + score) / 2
                         new_rim_x = (x + xx) / 2
@@ -172,8 +174,18 @@ class YObject:
                         score_bounding_box_around_area_ower_union = (self.score + score)/2
                         category_bounding_box_around_area_ower_union = "bounding_box_around_AOU"
                         self.ignore = True
-                        aou_results  =category_bounding_box_around_area_ower_union, score_bounding_box_around_area_ower_union, bounding_box_around_area_ower_union
+                        aou_results  = category_bounding_box_around_area_ower_union, score_bounding_box_around_area_ower_union, bounding_box_around_area_ower_union
                         return aou_results
+
+    def stamp(self, object_to_stamp):
+        x, y, w, h = self.bounds
+        x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
+        if self.category == object_to_stamp:
+            #position_indpi_begin = s_distance.value + (((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
+            #position_indpi_end = s_distance.value + (((x_rel - (w_rel / 2)) * size_of_one_screen_in_dpi)
+
+
+            stamplist.append(stamp)
 
 
 class BlinkStickThread(threading.Thread):
@@ -476,7 +488,7 @@ if __name__ == "__main__":
     cap.set(4, Yresolution)
     ##Use webcam with high frame rate
     codec = cv2.VideoWriter_fourcc("M", "J", "P", "G")
-    cap.set(cv2.CAP_PROP_FPS, 120)  # FPS60FPS
+    cap.set(cv2.CAP_PROP_FPS, 50)  # FPS60FPS
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, Xresolution)  # set resolutionx of webcam
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Yresolution)  # set resolutiony of webcam
     cap.set(cv2.CAP_PROP_FOURCC, codec)
@@ -572,10 +584,10 @@ if __name__ == "__main__":
 
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
                 #TODO #Figure out if ignore_error_in_error_and_create_new_object() is working
-                #objekty[id].ignore_error_in_error_and_create_new_object()
+                objekty[id].ignore_error_in_error_and_create_new_object()
                 objekty[id].draw_object_and_id()
-                objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small,
-                                          how_big_object_min_small)
+                #objekty[id].do_not_use_detect_object(object_to_detect, triger_margin, how_big_object_max_small,how_big_object_min_small)
+
                 #objekty[id].save_picure_of_every_detected_object()
             update_objekty_if_on_screen(objekty)
             # show distance of mouse sensor on screen

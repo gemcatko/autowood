@@ -3,6 +3,7 @@ import math
 from multiprocessing import Process, Value, Queue
 
 
+
 class Magneto(Process):    
     """
     Magneto A1332 CE odometer.

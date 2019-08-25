@@ -1,11 +1,13 @@
 ###################### VARS : ######################################################################################
 
 # set resolution taken from webcam it need to match reality!or relative calculations will not work
-#Xresolution = 640
-#Yresolution = 480
-
 Xresolution = 640
 Yresolution = 480
+
+#Xresolution = 1280
+#Yresolution = 720
+
+
 video_filename = "/home/automateit/Videos/2019-07-08 07:07:37.017054_test_video_5-10minute.avi"
 
 cell_phone = []
@@ -27,7 +29,7 @@ objekty = {}  # it is storing all detection from program startup
 
 how_big_object_max_small = 0.9  # detect object from how_big_object_min_small to how_big_object_max_small size of screen
 how_big_object_min_small = 0.05 # detect object from how_big_object_min_small to how_big_object_max_small size of screen
-distance_of_second_edge = 0.4 # max distance of second edge to create rim object
+max_dist_of_2nd_edge = 0.4 # max distance of second edge to create rim object
 # virtual position of triger relative to camera
 triger_margin = 0.6  # place on screen where it is detecting objects
 
@@ -39,7 +41,7 @@ yolov3_cfg = "cfg/yolov3.cfg"
 cat_encoding = "utf-8"
 yolov_weights = "weights/yolov3.weights"
 obj_data = "cfg/coco.data"
-detection_treshold = 0.5
+detection_treshold = 0.15
 """
 
 #Alternative configuration for net
@@ -47,7 +49,12 @@ object_for_rim_detection = "edge"
 object_to_detect = "error"
 yolov3_cfg = "cfg/2019_03_31_yolo-obj_v3.cfg"
 cat_encoding = "utf-8"
+#yolov_weights = "weights/2019_03_31_yolo-obj_v3_900.weights"
+#yolov_weights = "weights/2019_03_31_yolo-obj_v3_2300.weights"
+#yolov_weights = "weights/2019_03_31_yolo-obj_v3_4327.weights"
 yolov_weights = "weights/2019_03_31_yolo-obj_v3_6904.weights"
+#yolov_weights = "weights/2019_03_31_yolo-obj_v3_10000.weights"
+
 obj_data = "cfg/obj.data"
-detection_treshold = 0.2
+detection_treshold = 0.15
 
