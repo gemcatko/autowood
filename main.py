@@ -31,6 +31,7 @@ class YObject:
         self.category = category
         self.score = score
         self.bounds = bounds
+        self.position_on_trail = s_distance.value
         self.is_on_screen = True
         self.ignore = False
         self.is_picture_saved = False
@@ -62,7 +63,12 @@ class YObject:
 
     def draw_object_id(self):
         x, y, w, h = self.bounds
-        cv2.putText(frame, str(self.id), (int(x - 40), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1,(255, 255, 0))
+        cv2.putText(frame, str(self.id), (int(x - 30), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1,(255, 255, 0))
+
+    def draw_object_position_on_trail(self):
+        x, y, w, h = self.bounds
+        cv2.putText(frame, str(self.position_on_trail), (int(x), int(y+25)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
+
 
 
     def do_not_use_detect_object(self, object_to_detect, triger_margin, how_big_object_max, how_big_object_min):
@@ -178,16 +184,16 @@ class YObject:
     def ignore_error_in_error_and_create_new_object(self):
         global aou_results
         if self.category == "error":
-            boxA = self.bounds
+            boundsA = self.bounds
             for id, category, score, bounds in idresults:
-                if category == "error":
-                    boxB = bounds
-                    if get_bounding_box_around_area_ower_union(boxA, boxB):
-                        bounding_box_around_area_ower_union = get_bounding_box_around_area_ower_union(boxA, boxB)
+                if (category.decode("utf-8") == "error") and not self.id == id:
+                    boundsB = bounds
+                    if get_bounding_box_around_area_ower_union(boundsA, boundsB):
+                        bounding_box_around_area_ower_union = get_bounding_box_around_area_ower_union(boundsA, boundsA)
                         score_bounding_box_around_area_ower_union = (self.score + score)/2
-                        category_bounding_box_around_area_ower_union = "bounding_box_around_AOU"
+                        category_bounding_box_around_area_ower_union = "BB_around_AOU"
                         self.ignore = True
-                        aou_results  = category_bounding_box_around_area_ower_union, score_bounding_box_around_area_ower_union, bounding_box_around_area_ower_union
+                        aou_results = category_bounding_box_around_area_ower_union.encode("utf-8"), score_bounding_box_around_area_ower_union, bounding_box_around_area_ower_union
                         return aou_results
 
     def stamp(self, object_to_stamp):
@@ -231,7 +237,7 @@ def convert_from_xAyAxByB_to_xywh_format(bounds):
     return xywhBox
 
 
-def bb_intersection_over_union(boxA, boxB):
+def bb_intersection_over_union(boundsA, boundsB):
     """
 
     :param boundsA: in yolo format(xywh)
@@ -239,7 +245,7 @@ def bb_intersection_over_union(boxA, boxB):
     :return: IoU
     """
 
-    boxA, boxB = convert_from_xywh_to_xAyAxByB_format(boxA), convert_from_xywh_to_xAyAxByB_format(boxB)
+    boxA, boxB = convert_from_xywh_to_xAyAxByB_format(boundsA), convert_from_xywh_to_xAyAxByB_format(boundsB)
 
     # determine the (x, y)-coordinates of the intersection rectangle
     xA = max(boxA[0], boxB[0])
@@ -264,22 +270,24 @@ def bb_intersection_over_union(boxA, boxB):
     return iou
 
 
-def get_bounding_box_around_area_ower_union(boxA, boxB):
+def get_bounding_box_around_area_ower_union(boundsA, boundsB):
     """
 
-    :param boxA: xywhA
-    :param boxB: xywhB
+    :param boxA: xywh
+    :param boxB: xywh
     :return: xAyAxByB
     """
     #bb_intersection_over_union need to bigger as 0 thats how you know objects overlap each other
-    if bb_intersection_over_union(boxA, boxB) > 0:
-        boxA, boxB = convert_from_xywh_to_xAyAxByB_format(boxA), convert_from_xywh_to_xAyAxByB_format(boxB)
+    if bb_intersection_over_union(boundsA, boundsB) > 0:
+        boxA, boxB = convert_from_xywh_to_xAyAxByB_format(boundsA), convert_from_xywh_to_xAyAxByB_format(boundsB)
         xA = min(boxA[0], boxB[0])
         yA = min(boxA[1], boxB[1])
         xB = max(boxA[2], boxB[2])
         yB = max(boxA[3], boxB[3])
-        bounding_box_of_area_ower_union = [xA, yA, xB, yB]
-        return bounding_box_of_area_ower_union
+        bbox_of_area_ower_union = [xA, yA, xB, yB]
+        bbox_of_area_ower_union = convert_from_xAyAxByB_to_xywh_format(bbox_of_area_ower_union)
+
+        return bbox_of_area_ower_union
     else:
         return False
 
@@ -570,7 +578,7 @@ if __name__ == "__main__":
             results = net.detect(dark_frame, thresh=detection_treshold)
             try:
                 #update results for rim if founded in previous picture
-                results.append(rim_results)
+                #results.append(rim_results)
                 results.append(aou_results)
             except Exception as ex:
                 template = "An exception of type {0} occurred. Arguments:\n{1!r}"
@@ -590,6 +598,7 @@ if __name__ == "__main__":
                         objekty[id].category = category.decode("utf-8")
                         objekty[id].score = score
                         objekty[id].bounds = bounds
+                        objekty[id].position_on_trail = s_distance.value
                 except:
                     # create new object if not existing
                     objekty[id] = YObject(id, category.decode("utf-8"), score, bounds)
@@ -600,6 +609,7 @@ if __name__ == "__main__":
                 objekty[id].draw_object_bb_and_class()
                 objekty[id].draw_object_score()
                 objekty[id].draw_object_id()
+                objekty[id].draw_object_position_on_trail()
                 #objekty[id].do_not_use_detect_object(object_to_detect, triger_margin, how_big_object_max_small,how_big_object_min_small)
 
                 #objekty[id].save_picure_of_every_detected_object()
