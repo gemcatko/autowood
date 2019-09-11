@@ -37,7 +37,7 @@ class YObject:
         self.ready_for_blink_start = False
         self.ready_for_blink_end = False
 
-    def draw_object_and_id(self):
+    def draw_object_bb_and_class(self):
         """
         Draw objects name on screen using cv2
         :return: none
@@ -439,7 +439,7 @@ def convert_bounding_boxes_form_Yolo_Centroid_format(results):
     return rects
 
 
-def draw_ids_on_screens(objects):
+def draw_ids_on_screens(objects):   # DO not use! it was changed to sraw_object_id()
     """
 
     :param objects:  from cetroid tracker
@@ -454,7 +454,7 @@ def draw_ids_on_screens(objects):
         cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
 
 
-def draw_yolo_output_on_screen(results):
+def draw_yolo_output_on_screen(results): # DO not use! it was changed to draw_object_bb_and_class(self):
     """
 
     :param results: results from Yolo34
@@ -597,7 +597,7 @@ if __name__ == "__main__":
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
                 #TODO #Figure out if ignore_error_in_error_and_create_new_object() is working
                 objekty[id].ignore_error_in_error_and_create_new_object()
-                objekty[id].draw_object_and_id()
+                objekty[id].draw_object_bb_and_class()
                 objekty[id].draw_object_score()
                 objekty[id].draw_object_id()
                 #objekty[id].do_not_use_detect_object(object_to_detect, triger_margin, how_big_object_max_small,how_big_object_min_small)
