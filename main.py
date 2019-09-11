@@ -39,7 +39,7 @@ class YObject:
 
     def draw_object_and_id(self):
         """
-        Draw objects on screen using cv2
+        Draw objects name on screen using cv2
         :return: none
         """
         x, y, w, h = self.bounds
@@ -51,6 +51,19 @@ class YObject:
         # TODO finish
         # Draw id number text
         # TODO finish
+
+    def draw_object_score(self):
+        """
+        Draw objects score on screen using cv2
+        :return: none
+        """
+        x, y, w, h = self.bounds
+        cv2.putText(frame, str(round(self.score,2)), (int(x - 20), int(y-20)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
+
+    def draw_object_id(self):
+        x, y, w, h = self.bounds
+        cv2.putText(frame, str(self.id), (int(x - 40), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1,(255, 255, 0))
+
 
     def do_not_use_detect_object(self, object_to_detect, triger_margin, how_big_object_max, how_big_object_min):
         """
@@ -567,8 +580,7 @@ if __name__ == "__main__":
             del dark_frame
             rects = convert_bounding_boxes_form_Yolo_Centroid_format(results)
             objects = ct.update(rects)
-            draw_ids_on_screens(objects)
-            # PUTT all detected objects with ids to idresults list
+            #draw_ids_on_screens(objects)            # PUTT all detected objects with ids to idresults list
             idresults = update_resutls_for_id(results)
             # Loop over all objects which are detected by Yolo+id
             for id, category, score, bounds in idresults:
@@ -586,6 +598,8 @@ if __name__ == "__main__":
                 #TODO #Figure out if ignore_error_in_error_and_create_new_object() is working
                 objekty[id].ignore_error_in_error_and_create_new_object()
                 objekty[id].draw_object_and_id()
+                objekty[id].draw_object_score()
+                objekty[id].draw_object_id()
                 #objekty[id].do_not_use_detect_object(object_to_detect, triger_margin, how_big_object_max_small,how_big_object_min_small)
 
                 #objekty[id].save_picure_of_every_detected_object()

@@ -1,11 +1,11 @@
 ###################### VARS : ######################################################################################
 
 # set resolution taken from webcam it need to match reality!or relative calculations will not work
-Xresolution = 640
-Yresolution = 480
+#Xresolution = 640
+#Yresolution = 480
 
-#Xresolution = 1280
-#Yresolution = 720
+Xresolution = 1280
+Yresolution = 720
 
 
 video_filename = "/home/automateit/Videos/2019-07-08 07:07:37.017054_test_video_5-10minute.avi"
@@ -47,14 +47,12 @@ detection_treshold = 0.15
 #Alternative configuration for net
 object_for_rim_detection = "edge"
 object_to_detect = "error"
-yolov3_cfg = "cfg/2019_03_31_yolo-obj_v3.cfg"
+#yolov3_cfg = "cfg/2019_03_31_yolo-obj_v3.cfg"
+yolov3_cfg = "cfg/2019_09_07_yolo-obj_v3.cfg"
 cat_encoding = "utf-8"
-#yolov_weights = "weights/2019_03_31_yolo-obj_v3_900.weights"
-#yolov_weights = "weights/2019_03_31_yolo-obj_v3_2300.weights"
-#yolov_weights = "weights/2019_03_31_yolo-obj_v3_4327.weights"
-yolov_weights = "weights/2019_03_31_yolo-obj_v3_6904.weights"
-#yolov_weights = "weights/2019_03_31_yolo-obj_v3_10000.weights"
+#yolov_weights = "weights/2019_03_31_yolo-obj_v3_6904.weights"
+yolov_weights = "weights/2019_09_07_yolo-obj_v3_7139.weights"
 
 obj_data = "cfg/obj.data"
-detection_treshold = 0.15
+detection_treshold = 0.25
 
