@@ -25,13 +25,13 @@ from magneto import Magneto
 class YObject:
     # use for creating objects from Yolo.
     # def __init__(self, centroid_id, category, score, bounds):
-    def __init__(self, id, category, score, bounds):
+    def __init__(self, id, category, score, bounds,s_distance):
         # copy paste functionality of  detect_object_4_c
         self.id = id
         self.category = category
         self.score = score
         self.bounds = bounds
-        self.position_on_trail = s_distance.value
+        self.position_on_trail = s_distance
         self.is_on_screen = True
         self.ignore = False
         self.is_picture_saved = False
@@ -67,7 +67,9 @@ class YObject:
 
     def draw_object_position_on_trail(self):
         x, y, w, h = self.bounds
+        self.position_on_trail = self.position_on_trail + x
         cv2.putText(frame, str(self.position_on_trail), (int(x), int(y+25)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
+
 
 
 
@@ -594,6 +596,7 @@ if __name__ == "__main__":
             for id, category, score, bounds in idresults:
                 try:
                     # if Yobjekt with specific id already exists, update it
+                    # TODO # to je mozno chyba,co sa stane z objektami ktorych id je este na zobrazene ale nuz je objekt dissapeared
                     if objekty[id].id == id:
                         objekty[id].category = category.decode("utf-8")
                         objekty[id].score = score
@@ -601,10 +604,10 @@ if __name__ == "__main__":
                         objekty[id].position_on_trail = s_distance.value
                 except:
                     # create new object if not existing
-                    objekty[id] = YObject(id, category.decode("utf-8"), score, bounds)
+                    objekty[id] = YObject(id, category.decode("utf-8"), score, bounds, s_distance.value)
 
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
-                #TODO #Figure out if ignore_error_in_error_and_create_new_object() is working
+                #TODO #Figure out if ignore_error_in_error_and_create_new_object() is working - it is partly
                 objekty[id].ignore_error_in_error_and_create_new_object()
                 objekty[id].draw_object_bb_and_class()
                 objekty[id].draw_object_score()
