@@ -44,7 +44,7 @@ class YObject:
         :return: none
         """
         x, y, w, h = self.bounds
-        cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (125, 125, 125), 4)
+        cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), Blue, 4)
         # draw what is name of the object
         # cv2.putText(frame, str(category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
         cv2.putText(frame, str(self.category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
@@ -59,7 +59,7 @@ class YObject:
         :return: none
         """
         x, y, w, h = self.bounds
-        cv2.putText(frame, str(round(self.score,2)), (int(x - 20), int(y-20)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
+        cv2.putText(frame, str(round(self.score,2)), (int(x - 20), int(y-20)), cv2.FONT_HERSHEY_COMPLEX, 1, Azzure)
 
     def draw_object_id(self):
         x, y, w, h = self.bounds
@@ -67,8 +67,9 @@ class YObject:
 
     def draw_object_position_on_trail(self):
         x, y, w, h = self.bounds
-        self.position_on_trail = self.position_on_trail + x
-        cv2.putText(frame, str(self.position_on_trail), (int(x), int(y+25)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
+        x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x,y,w,h)
+        self.position_on_trail = round(self.position_on_trail + (x_rel * size_of_one_screen_in_dpi),1)
+        cv2.putText(frame, str(self.position_on_trail), (int(x), int(y+25)), cv2.FONT_HERSHEY_COMPLEX, 1, Blue)
 
 
 
@@ -352,7 +353,7 @@ def show_magneto_distance():
     :return:
     """
     cv2.putText(frame, str(s_distance.value), (int(Xresolution - 250), int(Yresolution - 80)),
-                cv2.FONT_HERSHEY_COMPLEX, 1, (255, 50, 255))
+                cv2.FONT_HERSHEY_COMPLEX, 1, Blue)
 
 
 def faster_loop_trigerlist_distance(qtrigerlist):
@@ -608,7 +609,7 @@ if __name__ == "__main__":
 
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
                 #TODO #Figure out if ignore_error_in_error_and_create_new_object() is working - it is partly
-                objekty[id].ignore_error_in_error_and_create_new_object()
+                #objekty[id].ignore_error_in_error_and_create_new_object()
                 objekty[id].draw_object_bb_and_class()
                 objekty[id].draw_object_score()
                 objekty[id].draw_object_id()

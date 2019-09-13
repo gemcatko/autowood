@@ -22,7 +22,7 @@ alreadyBlinkedList = []
 #field_of_view = 0.3  # field of view in m for camera
 #x_norm_last = 0
 #y_norm_last = 0
-size_of_one_screen_in_dpi = 150
+size_of_one_screen_in_dpi = 400 # one screen view in angles , the value need to be calibrated when angle or distance or zoom of camera changes
 delay = 1  # time in s to delay marking, can be use to set distance of sensing camera from BliknStick.
 saw_offset = 150
 objekty = {}  # it is storing all detection from program startup
@@ -55,4 +55,22 @@ yolov_weights = "weights/2019_09_07_yolo-obj_v3_7139.weights"
 
 obj_data = "cfg/obj.data"
 detection_treshold = 0.25
+
+
+#Colors
+
+Black=(0,0,0)
+White = (255,255,255)
+Red = (0,0,255)
+Green = (0,255,0)
+Blue = (255,0,0)
+Aqua = (0,255,255)
+Fuchsia = (255,0,255)
+Maroon = (128,0,0)
+Navy = (0,0,128)
+Olive = (128,128,0)
+Purple = (128,0,128)
+Teal = (0,128,128)
+Yellow = (255,255,0)
+Azzure = (255, 255, 0)
 
