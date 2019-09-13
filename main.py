@@ -19,7 +19,7 @@ import datetime
 #subprocess.Popen(['sudo', 'chmod', '666', '/dev/ttyUSB0'])
 
 from magneto import Magneto
-
+trail_visualization = np.zeros((int(Yresolution/2) , Xresolution *2 , 3), dtype="uint8")
 ### Imports end here
 ### Class definitions
 class YObject:
@@ -44,7 +44,7 @@ class YObject:
         :return: none
         """
         x, y, w, h = self.bounds
-        cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), Blue, 4)
+        cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), blue, 4)
         # draw what is name of the object
         # cv2.putText(frame, str(category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
         cv2.putText(frame, str(self.category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
@@ -59,7 +59,7 @@ class YObject:
         :return: none
         """
         x, y, w, h = self.bounds
-        cv2.putText(frame, str(round(self.score,2)), (int(x - 20), int(y-20)), cv2.FONT_HERSHEY_COMPLEX, 1, Azzure)
+        cv2.putText(frame, str(round(self.score,2)), (int(x - 20), int(y-20)), cv2.FONT_HERSHEY_COMPLEX, 1, azzure)
 
     def draw_object_id(self):
         x, y, w, h = self.bounds
@@ -69,8 +69,15 @@ class YObject:
         x, y, w, h = self.bounds
         x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x,y,w,h)
         self.position_on_trail = round(self.position_on_trail + (x_rel * size_of_one_screen_in_dpi),1)
-        cv2.putText(frame, str(self.position_on_trail), (int(x), int(y+25)), cv2.FONT_HERSHEY_COMPLEX, 1, Blue)
+        cv2.putText(frame, str(self.position_on_trail), (int(x), int(y+25)), cv2.FONT_HERSHEY_COMPLEX, 1, blue)
 
+    def draw_trail_detection_visualization(self):
+        #trail_visualization = np.zeros((int(Yresolution/2) , Xresolution *2 , 3), dtype="uint8")
+        xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(self.bounds)
+        xA= xA + self.position_on_trail
+        xB = xB + self.position_on_trail
+        cv2.rectangle(trail_visualization, (int(xA), int(yA/2)), (int(xB), int(yB/2)), green)
+        cv2.imshow("Trail_visualization", trail_visualization)
 
 
 
@@ -353,7 +360,7 @@ def show_magneto_distance():
     :return:
     """
     cv2.putText(frame, str(s_distance.value), (int(Xresolution - 250), int(Yresolution - 80)),
-                cv2.FONT_HERSHEY_COMPLEX, 1, Blue)
+                cv2.FONT_HERSHEY_COMPLEX, 1, blue)
 
 
 def faster_loop_trigerlist_distance(qtrigerlist):
@@ -499,6 +506,8 @@ def save_picture_to_file(folder_name):
     cv2.imwrite(get_path_filename_datetime(folder_name), oneframe)
 
 
+
+
 if __name__ == "__main__":
 
     ################################ SETUP #############################################################################
@@ -603,6 +612,7 @@ if __name__ == "__main__":
                         objekty[id].score = score
                         objekty[id].bounds = bounds
                         objekty[id].position_on_trail = s_distance.value
+
                 except:
                     # create new object if not existing
                     objekty[id] = YObject(id, category.decode("utf-8"), score, bounds, s_distance.value)
@@ -615,8 +625,8 @@ if __name__ == "__main__":
                 objekty[id].draw_object_id()
                 objekty[id].draw_object_position_on_trail()
                 #objekty[id].do_not_use_detect_object(object_to_detect, triger_margin, how_big_object_max_small,how_big_object_min_small)
-
                 #objekty[id].save_picure_of_every_detected_object()
+                objekty[id].draw_trail_detection_visualization()
             update_objekty_if_on_screen(objekty)
             # show distance of mouse sensor on screen
             show_magneto_distance()
