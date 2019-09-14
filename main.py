@@ -19,7 +19,8 @@ import datetime
 #subprocess.Popen(['sudo', 'chmod', '666', '/dev/ttyUSB0'])
 
 from magneto import Magneto
-trail_visualization = np.zeros((int(Yresolution/2) , Xresolution *2 , 3), dtype="uint8")
+from draw_trail_visualization import draw_trail_visualization
+
 ### Imports end here
 ### Class definitions
 class YObject:
@@ -70,16 +71,6 @@ class YObject:
         x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x,y,w,h)
         self.position_on_trail = round(self.position_on_trail + (x_rel * size_of_one_screen_in_dpi),1)
         cv2.putText(frame, str(self.position_on_trail), (int(x), int(y+25)), cv2.FONT_HERSHEY_COMPLEX, 1, blue)
-
-    def draw_trail_detection_visualization(self):
-        #trail_visualization = np.zeros((int(Yresolution/2) , Xresolution *2 , 3), dtype="uint8")
-        xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(self.bounds)
-        xA= xA + self.position_on_trail
-        xB = xB + self.position_on_trail
-        cv2.rectangle(trail_visualization, (int(xA), int(yA/2)), (int(xB), int(yB/2)), green)
-        cv2.imshow("Trail_visualization", trail_visualization)
-
-
 
     def do_not_use_detect_object(self, object_to_detect, triger_margin, how_big_object_max, how_big_object_min):
         """
@@ -215,6 +206,23 @@ class YObject:
 
 
             stamplist.append(stamp)
+
+class Trail:
+    def __int__(self,objekty):
+        self.objekty = objekty
+
+    def draw_trail_detection_visualization(self):
+        trail_visualization = np.zeros((int(Yresolution / scale_trail_visualization), Xresolution * 2, 3),
+                                       dtype="uint8")
+        for Yobject in self.objekty:
+            xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(Yobject.bounds)
+            xA= xA + Yobject.position_on_trail
+            xB = xB + Yobject.position_on_trail
+            cv2.rectangle(trail_visualization, (int(xA), int(yA/scale_trail_visualization)), (int(xB), int(yB/scale_trail_visualization)), green)
+            cv2.imshow("Trail_visualization", trail_visualization)
+
+
+
 
 
 class BlinkStickThread(threading.Thread):
@@ -491,9 +499,13 @@ def update_objekty_if_on_screen(objekty):
     Is updating all objects store in objekty if is on screen or not
     :return:
     """
-    for YObject in objekty:
-        if objekty[YObject].id not in idresults:
-            objekty[YObject].is_on_screen = False
+    for id in objekty:
+        if objekty[id].id not in idresults:
+            objekty[id].is_on_screen = False
+            #TODO FIx tha obejts are being updated even if not appeared 
+            #objekty[YObject].position_on_trail = s_distance
+
+
 
 
 def get_path_filename_datetime(folder_name):
@@ -626,8 +638,13 @@ if __name__ == "__main__":
                 objekty[id].draw_object_position_on_trail()
                 #objekty[id].do_not_use_detect_object(object_to_detect, triger_margin, how_big_object_max_small,how_big_object_min_small)
                 #objekty[id].save_picure_of_every_detected_object()
-                objekty[id].draw_trail_detection_visualization()
             update_objekty_if_on_screen(objekty)
+            try:
+                draw_trail_visualization(objekty, s_distance)
+            except Exception as ex:
+                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                message = template.format(type(ex).__name__, ex.args)
+                print (message)
             # show distance of mouse sensor on screen
             show_magneto_distance()
             show_count_of_objects_in_frame("error")

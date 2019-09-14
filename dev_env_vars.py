@@ -6,6 +6,7 @@
 
 Xresolution = 1280
 Yresolution = 720
+scale_trail_visualization = 4
 
 
 video_filename = "/home/automateit/Videos/2019-07-08 07:07:37.017054_test_video_5-10minute.avi"
@@ -73,4 +74,6 @@ purple = (128,0,128)
 teal = (0,128,128)
 yellow = (255,255,0)
 azzure = (255, 255, 0)
+
+
 
