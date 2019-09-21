@@ -34,7 +34,7 @@ class YObject:
         self.score = score
         self.bounds = bounds
         self.position_on_trail = s_distance
-        self.is_on_screen = True
+        self.is_detected_by_detector = True
         self.ignore = False
         self.is_picture_saved = False
         self.ready_for_blink_start = False
@@ -42,36 +42,43 @@ class YObject:
 
     def draw_object_bb_and_class(self):
         """
-        Draw objects name on screen using cv2
+        Draw objects name to CV2 frame  using cv2 only if still detected by detector
         :return: none
         """
-        x, y, w, h = self.bounds
-        cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), blue, 4)
-        # draw what is name of the object
-        # cv2.putText(frame, str(category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
-        cv2.putText(frame, str(self.category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
-        # Draw ID dot
-        # TODO finish
-        # Draw id number text
-        # TODO finish
+        if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
+            x, y, w, h = self.bounds
+            # draw what is name of the object
+            cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), blue, 4)
+            cv2.putText(frame, str(self.category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
 
     def draw_object_score(self):
         """
-        Draw objects score on screen using cv2
+        Draw objects score to CV2 frame  using cv2 only if still detected by detector
         :return: none
         """
-        x, y, w, h = self.bounds
-        cv2.putText(frame, str(round(self.score, 2)), (int(x - 20), int(y - 20)), cv2.FONT_HERSHEY_COMPLEX, 1, azzure)
+        if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
+            x, y, w, h = self.bounds
+            cv2.putText(frame, str(round(self.score, 2)), (int(x - 20), int(y - 20)), cv2.FONT_HERSHEY_COMPLEX, 1, azzure)
 
     def draw_object_id(self):
-        x, y, w, h = self.bounds
-        cv2.putText(frame, str(self.id), (int(x - 30), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
+        """
+        Drae object Id to CV2 frame only if still detected by detector
+        :return:
+        """
+        if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
+            x, y, w, h = self.bounds
+            cv2.putText(frame, str(self.id), (int(x - 30), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
 
     def draw_object_position_on_trail(self):
-        x, y, w, h = self.bounds
-        x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
-        self.position_on_trail = round(self.position_on_trail + (x_rel * size_of_one_screen_in_dpi), 1)
-        cv2.putText(frame, str(self.position_on_trail), (int(x), int(y + 25)), cv2.FONT_HERSHEY_COMPLEX, 1, blue)
+        """
+        Drae object Id to CV2 frame only if still detected by detector
+        :return:
+        """
+        if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
+            x, y, w, h = self.bounds
+            x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
+            self.position_on_trail = round(self.position_on_trail + (x_rel * size_of_one_screen_in_dpi), 1)
+            cv2.putText(frame, str(self.position_on_trail), (int(x), int(y + 25)), cv2.FONT_HERSHEY_COMPLEX, 1, blue)
 
     def do_not_use_detect_object(self, object_to_detect, triger_margin, how_big_object_max, how_big_object_min):
         """
@@ -502,8 +509,8 @@ def update_objekty_if_not_detected(objekty):
     """
     for id in objekty:
         if not id in (item for sublist in idresults for item in sublist):
-            objekty[id].is_on_screen = False
-            # objekty[YObject].position_on_trail = s_distance
+            objekty[id].is_detected_by_detector = False
+            objekty[id].position_on_trail = s_distance.value
 
 
 def get_path_filename_datetime(folder_name):
@@ -623,6 +630,7 @@ if __name__ == "__main__":
                 except:
                     # create new object if not existing
                     objekty[id] = YObject(id, category.decode("utf-8"), score, bounds, s_distance.value)
+
             for id in objekty:
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
                 # TODO #Figure out if ignore_error_in_error_and_create_new_object() is working - it is partly
@@ -630,7 +638,7 @@ if __name__ == "__main__":
                 objekty[id].draw_object_bb_and_class()
                 objekty[id].draw_object_score()
                 objekty[id].draw_object_id()
-                # objekty[id].draw_object_position_on_trail()
+                objekty[id].draw_object_position_on_trail()
                 # objekty[id].do_not_use_detect_object(object_to_detect, triger_margin, how_big_object_max_small,how_big_object_min_small)
                 # objekty[id].save_picure_of_every_detected_object()
             update_objekty_if_not_detected(objekty)
