@@ -16,17 +16,18 @@ from multiprocessing import Process, Value, Queue
 
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s', )
 import datetime
-#subprocess.Popen(['sudo', 'chmod', '666', '/dev/ttyUSB0'])
+# subprocess.Popen(['sudo', 'chmod', '666', '/dev/ttyUSB0'])
 
 from magneto import Magneto
 from draw_trail_visualization import draw_trail_visualization
+
 
 ### Imports end here
 ### Class definitions
 class YObject:
     # use for creating objects from Yolo.
     # def __init__(self, centroid_id, category, score, bounds):
-    def __init__(self, id, category, score, bounds,s_distance):
+    def __init__(self, id, category, score, bounds, s_distance):
         # copy paste functionality of  detect_object_4_c
         self.id = id
         self.category = category
@@ -60,17 +61,17 @@ class YObject:
         :return: none
         """
         x, y, w, h = self.bounds
-        cv2.putText(frame, str(round(self.score,2)), (int(x - 20), int(y-20)), cv2.FONT_HERSHEY_COMPLEX, 1, azzure)
+        cv2.putText(frame, str(round(self.score, 2)), (int(x - 20), int(y - 20)), cv2.FONT_HERSHEY_COMPLEX, 1, azzure)
 
     def draw_object_id(self):
         x, y, w, h = self.bounds
-        cv2.putText(frame, str(self.id), (int(x - 30), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1,(255, 255, 0))
+        cv2.putText(frame, str(self.id), (int(x - 30), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
 
     def draw_object_position_on_trail(self):
         x, y, w, h = self.bounds
-        x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x,y,w,h)
-        self.position_on_trail = round(self.position_on_trail + (x_rel * size_of_one_screen_in_dpi),1)
-        cv2.putText(frame, str(self.position_on_trail), (int(x), int(y+25)), cv2.FONT_HERSHEY_COMPLEX, 1, blue)
+        x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
+        self.position_on_trail = round(self.position_on_trail + (x_rel * size_of_one_screen_in_dpi), 1)
+        cv2.putText(frame, str(self.position_on_trail), (int(x), int(y + 25)), cv2.FONT_HERSHEY_COMPLEX, 1, blue)
 
     def do_not_use_detect_object(self, object_to_detect, triger_margin, how_big_object_max, how_big_object_min):
         """
@@ -88,8 +89,9 @@ class YObject:
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
             self.ready_for_blink_start = True
             # position of begin blink
-            position_indpi_begin = s_distance.value # this is from magneto the apsolut distance
-            position_indpi_begin = position_indpi_begin + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
+            position_indpi_begin = s_distance.value  # this is from magneto the apsolut distance
+            position_indpi_begin = position_indpi_begin + saw_offset + (
+                        (x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
             triger = id + 0.1, position_indpi_begin
             # save_picture_to_file("detected_errors")
             logging.debug("triger_slow_loop%s", triger)
@@ -107,7 +109,7 @@ class YObject:
             cv2.line(frame, (int(x - w / 2), int(y - h / 2)), (int(x - w / 2), int(y + h / 2)), (255, 0, 255), 10)
             self.ready_for_blink_end = True
             # position of end blink
-            position_indpi_end =s_distance.value # this is from magneto the apsolut distance
+            position_indpi_end = s_distance.value  # this is from magneto the apsolut distance
             position_indpi_end = position_indpi_end + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
             # add to trigerlist id.02 time end blink
             triger = id + 0.2, position_indpi_end
@@ -191,24 +193,25 @@ class YObject:
                     boundsB = bounds
                     if get_bounding_box_around_area_ower_union(boundsA, boundsB):
                         bounding_box_around_area_ower_union = get_bounding_box_around_area_ower_union(boundsA, boundsA)
-                        score_bounding_box_around_area_ower_union = (self.score + score)/2
+                        score_bounding_box_around_area_ower_union = (self.score + score) / 2
                         category_bounding_box_around_area_ower_union = "BB_around_AOU"
                         self.ignore = True
-                        aou_results = category_bounding_box_around_area_ower_union.encode("utf-8"), score_bounding_box_around_area_ower_union, bounding_box_around_area_ower_union
+                        aou_results = category_bounding_box_around_area_ower_union.encode(
+                            "utf-8"), score_bounding_box_around_area_ower_union, bounding_box_around_area_ower_union
                         return aou_results
 
     def stamp(self, object_to_stamp):
         x, y, w, h = self.bounds
         x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
         if self.category == object_to_stamp:
-            #position_indpi_begin = s_distance.value + (((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
-            #position_indpi_end = s_distance.value + (((x_rel - (w_rel / 2)) * size_of_one_screen_in_dpi)
-
+            # position_indpi_begin = s_distance.value + (((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
+            # position_indpi_end = s_distance.value + (((x_rel - (w_rel / 2)) * size_of_one_screen_in_dpi)
 
             stamplist.append(stamp)
 
+
 class Trail:
-    def __int__(self,objekty):
+    def __int__(self, objekty):
         self.objekty = objekty
 
     def draw_trail_detection_visualization(self):
@@ -216,13 +219,11 @@ class Trail:
                                        dtype="uint8")
         for Yobject in self.objekty:
             xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(Yobject.bounds)
-            xA= xA + Yobject.position_on_trail
+            xA = xA + Yobject.position_on_trail
             xB = xB + Yobject.position_on_trail
-            cv2.rectangle(trail_visualization, (int(xA), int(yA/scale_trail_visualization)), (int(xB), int(yB/scale_trail_visualization)), green)
+            cv2.rectangle(trail_visualization, (int(xA), int(yA / scale_trail_visualization)),
+                          (int(xB), int(yB / scale_trail_visualization)), green)
             cv2.imshow("Trail_visualization", trail_visualization)
-
-
-
 
 
 class BlinkStickThread(threading.Thread):
@@ -247,11 +248,11 @@ def convert_from_xywh_to_xAyAxByB_format(bounds):
 
 def convert_from_xAyAxByB_to_xywh_format(bounds):
     xA, yA, xB, yB = bounds
-    x=(xA+xB)/2
-    y=(yA+yB)/2
-    w= abs(xA-xB)
-    h= abs(yA-yB)
-    xywhBox = [x,y,w,h]  # type: List[Union[float, Any]]
+    x = (xA + xB) / 2
+    y = (yA + yB) / 2
+    w = abs(xA - xB)
+    h = abs(yA - yB)
+    xywhBox = [x, y, w, h]  # type: List[Union[float, Any]]
     return xywhBox
 
 
@@ -295,7 +296,7 @@ def get_bounding_box_around_area_ower_union(boundsA, boundsB):
     :param boxB: xywh
     :return: xAyAxByB
     """
-    #bb_intersection_over_union need to bigger as 0 thats how you know objects overlap each other
+    # bb_intersection_over_union need to bigger as 0 thats how you know objects overlap each other
     if bb_intersection_over_union(boundsA, boundsB) > 0:
         boxA, boxB = convert_from_xywh_to_xAyAxByB_format(boundsA), convert_from_xywh_to_xAyAxByB_format(boundsB)
         xA = min(boxA[0], boxB[0])
@@ -465,7 +466,7 @@ def convert_bounding_boxes_form_Yolo_Centroid_format(results):
     return rects
 
 
-def draw_ids_on_screens(objects):   # DO not use! it was changed to sraw_object_id()
+def draw_ids_on_screens(objects):  # DO not use! it was changed to sraw_object_id()
     """
 
     :param objects:  from cetroid tracker
@@ -480,7 +481,7 @@ def draw_ids_on_screens(objects):   # DO not use! it was changed to sraw_object_
         cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
 
 
-def draw_yolo_output_on_screen(results): # DO not use! it was changed to draw_object_bb_and_class(self):
+def draw_yolo_output_on_screen(results):  # DO not use! it was changed to draw_object_bb_and_class(self):
     """
 
     :param results: results from Yolo34
@@ -500,12 +501,10 @@ def update_objekty_if_on_screen(objekty):
     :return:
     """
     for id in objekty:
-        if objekty[id].id not in idresults:
+        if not id in (item for sublist in idresults for item in sublist):
             objekty[id].is_on_screen = False
-            #TODO FIx tha obejts are being updated even if not appeared 
-            #objekty[YObject].position_on_trail = s_distance
-
-
+            # TODO FIx tha obejts are being updated even if not appeared
+            # objekty[YObject].position_on_trail = s_distance
 
 
 def get_path_filename_datetime(folder_name):
@@ -518,15 +517,13 @@ def save_picture_to_file(folder_name):
     cv2.imwrite(get_path_filename_datetime(folder_name), oneframe)
 
 
-
-
 if __name__ == "__main__":
 
     ################################ SETUP #############################################################################
-    #USE if video from file. video_filename  fefinition is located in  dev_env_vars.py
-    #cap = cv2.VideoCapture(video_filename)
+    # USE if video from file. video_filename  fefinition is located in  dev_env_vars.py
+    # cap = cv2.VideoCapture(video_filename)
 
-    #USE if  webcam
+    # USE if  webcam
 
     cap = cv2.VideoCapture(0)  # set web cam properties width and height, working for USB for webcam
     cap.set(3, Xresolution)
@@ -570,7 +567,6 @@ if __name__ == "__main__":
     m_point.start(
     """
 
-
     # initialize shared var for distance for magneto
     # sudo chmod 666 /dev/ttyUSB0
     s_distance = Value('l', 0)
@@ -601,8 +597,8 @@ if __name__ == "__main__":
             # call Yolo34
             results = net.detect(dark_frame, thresh=detection_treshold)
             try:
-                #update results for rim if founded in previous picture
-                #results.append(rim_results)
+                # update results for rim if founded in previous picture
+                # results.append(rim_results)
                 results.append(aou_results)
             except Exception as ex:
                 template = "An exception of type {0} occurred. Arguments:\n{1!r}"
@@ -612,7 +608,7 @@ if __name__ == "__main__":
             del dark_frame
             rects = convert_bounding_boxes_form_Yolo_Centroid_format(results)
             objects = ct.update(rects)
-            #draw_ids_on_screens(objects)            # PUTT all detected objects with ids to idresults list
+            # draw_ids_on_screens(objects)            # PUTT all detected objects with ids to idresults list
             idresults = update_resutls_for_id(results)
             # Loop over all objects which are detected by Yolo+id
             for id, category, score, bounds in idresults:
@@ -630,14 +626,14 @@ if __name__ == "__main__":
                     objekty[id] = YObject(id, category.decode("utf-8"), score, bounds, s_distance.value)
 
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
-                #TODO #Figure out if ignore_error_in_error_and_create_new_object() is working - it is partly
-                #objekty[id].ignore_error_in_error_and_create_new_object()
+                # TODO #Figure out if ignore_error_in_error_and_create_new_object() is working - it is partly
+                # objekty[id].ignore_error_in_error_and_create_new_object()
                 objekty[id].draw_object_bb_and_class()
                 objekty[id].draw_object_score()
                 objekty[id].draw_object_id()
-                objekty[id].draw_object_position_on_trail()
-                #objekty[id].do_not_use_detect_object(object_to_detect, triger_margin, how_big_object_max_small,how_big_object_min_small)
-                #objekty[id].save_picure_of_every_detected_object()
+                # objekty[id].draw_object_position_on_trail()
+                # objekty[id].do_not_use_detect_object(object_to_detect, triger_margin, how_big_object_max_small,how_big_object_min_small)
+                # objekty[id].save_picure_of_every_detected_object()
             update_objekty_if_on_screen(objekty)
             try:
                 draw_trail_visualization(objekty, s_distance)
