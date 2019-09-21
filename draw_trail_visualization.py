@@ -21,7 +21,9 @@ def draw_trail_visualization(objeky,s_distance):
                                    dtype="uint8")
     for id in objekty:
         xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id].bounds)
-        xA = xA + objekty[id].position_on_trail
-        xB = xB + objekty[id].position_on_trail
+        #xA = xA + objekty[id].position_on_trail
+        #xB = xB + objekty[id].position_on_trail
+        xA = xA + (objekty[id].position_on_trail / size_of_one_screen_in_dpi * Xresolution)
+        xB = xB + (objekty[id].position_on_trail / size_of_one_screen_in_dpi * Xresolution)
         cv2.rectangle(trail_visualization, (int(xA), int(yA / scale_trail_visualization)),(int(xB), int(yB / scale_trail_visualization)), green)
         cv2.imshow("Trail_visualization", trail_visualization)

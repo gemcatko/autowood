@@ -213,7 +213,6 @@ class YObject:
         if self.category == object_to_stamp:
             # position_indpi_begin = s_distance.value + (((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
             # position_indpi_end = s_distance.value + (((x_rel - (w_rel / 2)) * size_of_one_screen_in_dpi)
-
             stamplist.append(stamp)
 
 
@@ -508,6 +507,7 @@ def update_objekty_if_not_detected(objekty):
     :return:
     """
     for id in objekty:
+        # id in (item for sublist in idresults for item in sublist) is returning True or False good explanation is https://www.geeksforgeeks.org/python-check-if-element-exists-in-list-of-lists/
         if not id in (item for sublist in idresults for item in sublist):
             objekty[id].is_detected_by_detector = False
             objekty[id].position_on_trail = s_distance.value
@@ -554,25 +554,6 @@ if __name__ == "__main__":
                    bytes(obj_data, encoding=cat_encoding), )
 
     # Start loop for blinking in separate process
-
-    """
-    # initialize shared vars for speed/movement x,y
-    s_x = Value('i', 0)
-    s_y = Value('i', 0)
-    s_distance_x = Value('l', 0)
-    s_distance_y = Value('l', 0)
-    s_queue = Queue()
-    
-    # create process to feed queue
-    p = Process(target=feed_queue, args=(s_queue, "/dev/input/mice"))
-    p.start()
-
-    # create instance of Process subclass Mpoint and pass shared values vars
-    m_point = Mpoint(shared_x=s_x, shared_y=s_y, shared_d_x=s_distance_x, shared_d_y=s_distance_y, shared_queue=s_queue,
-                     loop_delay=0.001, filename="/dev/input/mice")
-    m_point.start(
-    """
-
     # initialize shared var for distance for magneto
     # sudo chmod 666 /dev/ttyUSB0
     s_distance = Value('l', 0)
