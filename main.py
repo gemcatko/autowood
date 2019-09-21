@@ -466,7 +466,7 @@ def convert_bounding_boxes_form_Yolo_Centroid_format(results):
     return rects
 
 
-def draw_ids_on_screens(objects):  # DO not use! it was changed to sraw_object_id()
+def dddraw_ids_on_screens(objects):  # DO not use! it was changed to sraw_object_id()
     """
 
     :param objects:  from cetroid tracker
@@ -494,7 +494,7 @@ def draw_yolo_output_on_screen(results):  # DO not use! it was changed to draw_o
         cv2.putText(frame, str(cat.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
 
 
-def update_objekty_if_on_screen(objekty):
+def update_objekty_if_not_detected(objekty):
     """
     :param objekty:
     Is updating all objects store in objekty if is on screen or not
@@ -503,7 +503,6 @@ def update_objekty_if_on_screen(objekty):
     for id in objekty:
         if not id in (item for sublist in idresults for item in sublist):
             objekty[id].is_on_screen = False
-            # TODO FIx tha obejts are being updated even if not appeared
             # objekty[YObject].position_on_trail = s_distance
 
 
@@ -634,7 +633,7 @@ if __name__ == "__main__":
                 # objekty[id].draw_object_position_on_trail()
                 # objekty[id].do_not_use_detect_object(object_to_detect, triger_margin, how_big_object_max_small,how_big_object_min_small)
                 # objekty[id].save_picure_of_every_detected_object()
-            update_objekty_if_on_screen(objekty)
+            update_objekty_if_not_detected(objekty)
             try:
                 draw_trail_visualization(objekty, s_distance)
             except Exception as ex:
