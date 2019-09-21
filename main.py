@@ -497,7 +497,7 @@ def draw_yolo_output_on_screen(results):  # DO not use! it was changed to draw_o
 def update_objekty_if_not_detected(objekty):
     """
     :param objekty:
-    Is updating all objects store in objekty if is on screen or not
+    Is updating all objects store in objekty if not in in idresults list from detector
     :return:
     """
     for id in objekty:
@@ -623,7 +623,7 @@ if __name__ == "__main__":
                 except:
                     # create new object if not existing
                     objekty[id] = YObject(id, category.decode("utf-8"), score, bounds, s_distance.value)
-
+            for id in objekty:
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
                 # TODO #Figure out if ignore_error_in_error_and_create_new_object() is working - it is partly
                 # objekty[id].ignore_error_in_error_and_create_new_object()
