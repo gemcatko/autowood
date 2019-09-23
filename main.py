@@ -77,8 +77,8 @@ class YObject:
         if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
             x, y, w, h = self.bounds
             x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
-            self.position_on_trail = round(self.position_on_trail + (x_rel * size_of_one_screen_in_dpi), 1)
-            cv2.putText(frame, str(self.position_on_trail), (int(x), int(y + 25)), cv2.FONT_HERSHEY_COMPLEX, 1, blue)
+            position_on_trail_for_screen = round(self.position_on_trail + (x_rel * size_of_one_screen_in_dpi), 1)
+            cv2.putText(frame, str(position_on_trail_for_screen), (int(x), int(y + 25)), cv2.FONT_HERSHEY_COMPLEX, 1, blue)
 
     def do_not_use_detect_object(self, object_to_detect, triger_margin, how_big_object_max, how_big_object_min):
         """
@@ -624,6 +624,7 @@ if __name__ == "__main__":
                 # objekty[id].save_picure_of_every_detected_object()
             update_objekty_if_not_detected(objekty)
             try:
+                #print ("#draw_trail_visualization(objekty, s_distance)")
                 draw_trail_visualization(objekty, s_distance)
             except Exception as ex:
                 template = "An exception of type {0} occurred. Arguments:\n{1!r}"
