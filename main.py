@@ -510,7 +510,7 @@ def update_objekty_if_not_detected(objekty):
         # id in (item for sublist in idresults for item in sublist) is returning True or False good explanation is https://www.geeksforgeeks.org/python-check-if-element-exists-in-list-of-lists/
         if not id in (item for sublist in idresults for item in sublist):
             objekty[id].is_detected_by_detector = False
-            objekty[id].position_on_trail = s_distance.value
+            #objekty[id].position_on_trail = s_distance.value
 
 
 def get_path_filename_datetime(folder_name):
