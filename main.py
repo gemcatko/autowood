@@ -607,6 +607,7 @@ if __name__ == "__main__":
                         objekty[id].score = score
                         objekty[id].bounds = bounds
                         objekty[id].position_on_trail = s_distance.value
+                        objekty[id].is_detected_by_detector = True
 
                 except:
                     # create new object if not existing

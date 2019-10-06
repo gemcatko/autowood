@@ -23,11 +23,13 @@ def draw_trail_visualization(objeky,s_distance):
         xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id].bounds)
         #xA = xA + objekty[id].position_on_trail
         #xB = xB + objekty[id].position_on_trail
-        xA = xA + (objekty[id].position_on_trail / size_of_one_screen_in_dpi * Xresolution)
-        xB = xB + (objekty[id].position_on_trail / size_of_one_screen_in_dpi * Xresolution)
-        if objekty[id].category == "error":
-            cv2.rectangle(trail_visualization, (int(xA), int(yA / scale_trail_visualization)),
-                          (int(xB), int(yB / scale_trail_visualization)), red)
-        else:
-            cv2.rectangle(trail_visualization, (int(xA), int(yA / scale_trail_visualization)),(int(xB), int(yB / scale_trail_visualization)), green)
+        xA = xA + (objekty[id].position_on_trail / (size_of_one_screen_in_dpi * Xresolution)) #TODO treba odpociat poloho
+        xB = xB + (objekty[id].position_on_trail / (size_of_one_screen_in_dpi * Xresolution))
+        if objekty[id].is_detected_by_detector == True:
+            if objekty[id].category == "error":
+                cv2.rectangle(trail_visualization, (int(xA), int(yA / scale_trail_visualization)),
+                              (int(xB), int(yB / scale_trail_visualization)), red)
+            else:
+                cv2.rectangle(trail_visualization, (int(xA), int(yA / scale_trail_visualization)),(int(xB), int(yB / scale_trail_visualization)), green)
+            "#TODO draw objects if not detected anymore"
     cv2.imshow("Trail_visualization", trail_visualization)
