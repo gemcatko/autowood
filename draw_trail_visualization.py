@@ -25,6 +25,7 @@ def dpi_to_pixels(dpi):
 def draw_trail_visualization(objeky,s_distance):
     trail_visualization = np.zeros((int(Yresolution / scale_trail_visualization), Xresolution * 2, 3),
                                    dtype="uint8")
+    position_of_saw_senzor = dpi_to_pixels(s_distance.value) + dpi_to_pixels(saw_offset)
     for id in objekty:
         xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id].bounds)
         #if objekty[id].is_detected_by_detector == False or True:
@@ -39,4 +40,8 @@ def draw_trail_visualization(objeky,s_distance):
         elif objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" :
             cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),
                           (int(visualization_xB), int(yB / scale_trail_visualization)), brown, 2)
+
+        elif  visualization_xA < position_of_saw_senzor and visualization_xB > position_of_saw_senzor:
+            print ("Blikaj")
+            #todo cisla idu do minusu takzetreba prekopat porvnanavanie
     cv2.imshow("Trail_visualization", trail_visualization)
