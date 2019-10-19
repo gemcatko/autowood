@@ -1,8 +1,32 @@
+import multiprocessing
+import subprocess
+import threading
 import numpy as np
 import cv2
 
-
 from dev_env_vars import *
+
+class BlinkStickThread(threading.Thread):
+    def run(self):
+        '''Starting blinkStick to blink once in Separate Thread'''
+        subprocess.Popen(["python2", "BlinkStick.py"])
+        pass
+
+def blink_once():
+    """
+    Is using threading for blinking once, create tread for BlinkStick.py (python2.7)
+
+    """
+    try:
+        # os.system('python2 BlinkStick.py') # najpomalsie
+        # subprocess.Popen(["python2", "BlinkStick.py"]) #troska ryclesie
+        thread = BlinkStickThread()
+        thread.daemon = True
+        thread.start()
+    except:
+        print("BlinkStickOnce exception occurred ")
+    pass
+
 def convert_from_xywh_to_xAyAxByB_format(bounds):
     """
 
@@ -16,11 +40,11 @@ def convert_from_xywh_to_xAyAxByB_format(bounds):
 
 def dpi_to_pixels(dpi):
     """
-
     :param dpi: angle in dpi which you would like to convert to pixels . It is using global variable size_of_one_screen_in_dpi which is defined in dev_env_wars
     :return: pixels
     """
     return (Xresolution / size_of_one_screen_in_dpi) * dpi
+
 
 def draw_trail_visualization(objeky,s_distance):
     trail_visualization = np.zeros((int(Yresolution / scale_trail_visualization), Xresolution * 2, 3),
@@ -32,7 +56,6 @@ def draw_trail_visualization(objeky,s_distance):
                 magenta)
     for id in objekty:
         xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id].bounds)
-        #if objekty[id].is_detected_by_detector == False or True:
         #calcculate begining xA and endig xB of rectangle in trai_visualization
         visualization_xA = xA + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
         visualization_xB = xB + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
@@ -42,18 +65,14 @@ def draw_trail_visualization(objeky,s_distance):
             # draw objekty[id].position_on_trail
             cv2.putText(trail_visualization, str(objekty[id].position_on_trail), (int(visualization_xA), int(yB / scale_trail_visualization)),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
             if(visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
-                print ("Blikaj visualization_xB xA")
-               #if (visualization_xA < saw_senzor_ofset_from_screen_pixels):
-                #    print ("Blikaj visualization_xA")
+                print ("Blikaj error xB xA")
+                objekty[id].ready_for_blink_start = True
+                blink_once()
+                #@TODO vygeneruj znacky
 
         #draw secondclass as brown collor
         elif objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" :
             cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),
                           (int(visualization_xB), int(yB / scale_trail_visualization)), brown, 2)
 
-        #elif  visualization_xA < position_of_saw_senzor_pixels and visualization_xB > position_of_saw_senzor_pixels:
-        #elif (visualization_xB > position_of_saw_senzor_pixels):
-        #    if (visualization_xA < position_of_saw_senzor_pixels):
-        #        print ("Blikaj")
-            #todo cisla idu do minusu takzetreba prekopat porvnanavanie
     cv2.imshow("Trail_visualization", trail_visualization)
