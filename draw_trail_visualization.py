@@ -25,10 +25,10 @@ def dpi_to_pixels(dpi):
 def draw_trail_visualization(objeky,s_distance):
     trail_visualization = np.zeros((int(Yresolution / scale_trail_visualization), Xresolution * 2, 3),
                                    dtype="uint8")
-    position_of_saw_senzor = dpi_to_pixels(s_distance.value) + dpi_to_pixels(saw_offset)
+    saw_senzor_ofset_from_screen_pixels = int(Xresolution + dpi_to_pixels(saw_offset))
     #draw position of senzor with purple line
     cv2.line(trail_visualization, (int(Xresolution + dpi_to_pixels(saw_offset) ), int(1)), (int(Xresolution + dpi_to_pixels(saw_offset)), int(Yresolution/scale_trail_visualization)), (255, 0, 255), 10)
-    cv2.putText(trail_visualization, str(position_of_saw_senzor),(int(Xresolution + dpi_to_pixels(saw_offset)), int(Yresolution/scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,
+    cv2.putText(trail_visualization, str(saw_senzor_ofset_from_screen_pixels),(int(Xresolution + dpi_to_pixels(saw_offset)), int(Yresolution/scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,
                 magenta)
     for id in objekty:
         xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id].bounds)
@@ -41,9 +41,9 @@ def draw_trail_visualization(objeky,s_distance):
             cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),(int(visualization_xB), int(yB / scale_trail_visualization)), red, 3)
             # draw objekty[id].position_on_trail
             cv2.putText(trail_visualization, str(objekty[id].position_on_trail), (int(visualization_xA), int(yB / scale_trail_visualization)),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
-            if(visualization_xB > position_of_saw_senzor):
-                print ("Blikaj visualization_xB")
-                #if (visualization_xA < position_of_saw_senzor):
+            if(visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
+                print ("Blikaj visualization_xB xA")
+               #if (visualization_xA < saw_senzor_ofset_from_screen_pixels):
                 #    print ("Blikaj visualization_xA")
 
         #draw secondclass as brown collor
@@ -51,9 +51,9 @@ def draw_trail_visualization(objeky,s_distance):
             cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),
                           (int(visualization_xB), int(yB / scale_trail_visualization)), brown, 2)
 
-        #elif  visualization_xA < position_of_saw_senzor and visualization_xB > position_of_saw_senzor:
-        #elif (visualization_xB > position_of_saw_senzor):
-        #    if (visualization_xA < position_of_saw_senzor):
+        #elif  visualization_xA < position_of_saw_senzor_pixels and visualization_xB > position_of_saw_senzor_pixels:
+        #elif (visualization_xB > position_of_saw_senzor_pixels):
+        #    if (visualization_xA < position_of_saw_senzor_pixels):
         #        print ("Blikaj")
             #todo cisla idu do minusu takzetreba prekopat porvnanavanie
     cv2.imshow("Trail_visualization", trail_visualization)
