@@ -17,9 +17,8 @@ from multiprocessing import Process, Value, Queue
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s', )
 import datetime
 # subprocess.Popen(['sudo', 'chmod', '666', '/dev/ttyUSB0'])
-
 from magneto import Magneto
-from draw_trail_visualization import draw_trail_visualization
+#from draw_trail_visualization import draw_trail_visualization
 
 
 ### Imports end here
@@ -423,6 +422,40 @@ def faster_loop_trigerlist_distance(qtrigerlist):
         if (last_loop_duration) > 0.010:
             logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
 
+def faster_loop_2(faster_loop2_blikaj, faster_loop2_trieda):
+
+    """
+    loopa ktra bude stale bezat a bude mat udaj kedy moze ist najblizss dalsi blik
+    :param blikaj:
+    :param trieda:
+    :return: is returning next possible blick
+    """
+    next_possible_blink = 0
+    while True:
+        start_time_loop = time.time()
+        try:
+            # needed because qtrigerlist is not always having object inside
+            #@TODO tu zisti preco nedava sharovanu value s druheho procesu !!!!!
+            blikaj = faster_loop2_blikaj.get_nowait()
+            logging.debug("trigerlist%s", blikaj)
+
+        except:
+            # is setting speed of the loop in case 0.0005 it is 2000 times per second
+            # except is not executed if qtrigerlist is have data
+            time.sleep(0.0005)
+
+
+        if blikaj and (s_distance.value < next_possible_blink):
+            blink_once()
+            next_possible_blink = (s_distance.value - 50)
+            logging.debug('Next_possible_blink is :%s', next_possible_blink)
+        end_time_loop = time.time()
+        # check for how long took execution the loop and log if it is too long
+        last_loop_duration = end_time_loop - start_time_loop
+        if (last_loop_duration) > 0.010:
+            logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
+        #return next_possible_blink
+
 
 def update_resutls_for_id(results):
     """
@@ -524,6 +557,69 @@ def save_picture_to_file(folder_name):
     cv2.imwrite(get_path_filename_datetime(folder_name), oneframe)
 
 
+def convert_from_xywh_to_xAyAxByB_format(bounds):
+    """
+
+    :param bounds: bounds of in format xywh
+    :return: return x1x2y1y2  format
+    """
+
+    x, y, w, h = bounds
+    box = [x - w / 2, y - h / 2, x + w / 2, y + h / 2]
+    return box
+
+def dpi_to_pixels(dpi):
+    """
+    :param dpi: angle in dpi which you would like to convert to pixels . It is using global variable size_of_one_screen_in_dpi which is defined in dev_env_wars
+    :return: pixels
+    """
+    return (Xresolution / size_of_one_screen_in_dpi) * dpi
+
+
+def draw_trail_visualization(objeky,s_distance):
+    global faster_loop2_blikaj
+    global faster_loop2_trieda
+    trail_visualization = np.zeros((int(Yresolution / scale_trail_visualization), Xresolution * 2, 3),
+                                   dtype="uint8")
+    saw_senzor_ofset_from_screen_pixels = int(Xresolution + dpi_to_pixels(saw_offset))
+    #draw position of senzor with purple line
+    cv2.line(trail_visualization, (int(Xresolution + dpi_to_pixels(saw_offset) ), int(1)), (int(Xresolution + dpi_to_pixels(saw_offset)), int(Yresolution/scale_trail_visualization)), (255, 0, 255), 10)
+    cv2.putText(trail_visualization, str(saw_senzor_ofset_from_screen_pixels),(int(Xresolution + dpi_to_pixels(saw_offset)), int(Yresolution/scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,
+                magenta)
+    for id in objekty:
+        xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id].bounds)
+        #calcculate begining xA and endig xB of rectangle in trai_visualization
+        visualization_xA = xA + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
+        visualization_xB = xB + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
+        #draw error, eye, crack, rot, and crust as red color
+        if objekty[id].category == "error" or objekty[id].category == "eye" or objekty[id].category == "crack" or objekty[id].category == "rot" or objekty[id].category == "crust":
+            cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),(int(visualization_xB), int(yB / scale_trail_visualization)), red, 3)
+            # draw objekty[id].position_on_trail
+            cv2.putText(trail_visualization, str(objekty[id].position_on_trail), (int(visualization_xA), int(yB / scale_trail_visualization)),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
+            if(visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
+                print ("Blikaj error xB xA")
+                objekty[id].ready_for_blink_start = True
+                #blink_once()
+                faster_loop2_blikaj = True
+                faster_loop2_trieda = "error"
+                #@TODO vygeneruj znacky
+
+            else:
+                faster_loop2_blikaj = True
+                faster_loop2_trieda = "error"
+
+
+        #draw secondclass as brown collor
+        elif objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" :
+            cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),
+                          (int(visualization_xB), int(yB / scale_trail_visualization)), brown, 2)
+
+    cv2.imshow("Trail_visualization", trail_visualization)
+
+
+
+
+
 if __name__ == "__main__":
 
     ################################ SETUP #############################################################################
@@ -569,7 +665,12 @@ if __name__ == "__main__":
     # process1 = multiprocessing.Process(target=faster_loop_trigerlist, args=(qtrigerlist, s_x, s_y, ))
     process1 = multiprocessing.Process(target=faster_loop_trigerlist_distance, args=(qtrigerlist,))
     process1.daemon = True
-    process1.start()
+    #process1.start()
+    faster_loop2_blikaj = False
+    faster_loop2_trieda = "ziadna"
+    process2 = multiprocessing.Process(target=faster_loop_2, args=(faster_loop2_blikaj, faster_loop2_trieda,))
+    process2.daemon = True
+    process2.start()
 
     ########################## MAIN LOOP ###############################################################################
 

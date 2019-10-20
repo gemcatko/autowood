@@ -47,6 +47,8 @@ def dpi_to_pixels(dpi):
 
 
 def draw_trail_visualization(objeky,s_distance):
+    global faster_loop2_blikaj
+    global faster_loop2_trieda
     trail_visualization = np.zeros((int(Yresolution / scale_trail_visualization), Xresolution * 2, 3),
                                    dtype="uint8")
     saw_senzor_ofset_from_screen_pixels = int(Xresolution + dpi_to_pixels(saw_offset))
@@ -67,8 +69,15 @@ def draw_trail_visualization(objeky,s_distance):
             if(visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
                 print ("Blikaj error xB xA")
                 objekty[id].ready_for_blink_start = True
-                blink_once()
+                #blink_once()
+                faster_loop2_blikaj = True
+                faster_loop2_trieda = "error"
                 #@TODO vygeneruj znacky
+
+            else:
+                faster_loop2_blikaj = True
+                faster_loop2_trieda = "error"
+
 
         #draw secondclass as brown collor
         elif objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" :
