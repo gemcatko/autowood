@@ -436,7 +436,7 @@ def faster_loop_2(faster_loop2_blikaj, faster_loop2_trieda):
         try:
             # needed because qtrigerlist is not always having object inside
             #@TODO tu zisti preco nedava sharovanu value s druheho procesu !!!!!
-            blikaj = faster_loop2_blikaj.get_nowait()
+            blikaj =  faster_loop2_blikaj.value
             logging.debug("trigerlist%s", blikaj)
 
         except:
@@ -666,7 +666,7 @@ if __name__ == "__main__":
     process1 = multiprocessing.Process(target=faster_loop_trigerlist_distance, args=(qtrigerlist,))
     process1.daemon = True
     #process1.start()
-    faster_loop2_blikaj = False
+    faster_loop2_blikaj = multiprocessing.Value('i',0)
     faster_loop2_trieda = "ziadna"
     process2 = multiprocessing.Process(target=faster_loop_2, args=(faster_loop2_blikaj, faster_loop2_trieda,))
     process2.daemon = True
