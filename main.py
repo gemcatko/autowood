@@ -437,7 +437,7 @@ def faster_loop_2(faster_loop2_blikaj, faster_loop2_trieda):
             # needed because qtrigerlist is not always having object inside
             #@TODO tu zisti preco nedava sharovanu value s druheho procesu !!!!!
             blikaj =  faster_loop2_blikaj.value
-            logging.debug("trigerlist%s", blikaj)
+            #logging.debug("trigerlist%s", blikaj)
 
         except:
             # is setting speed of the loop in case 0.0005 it is 2000 times per second
@@ -600,13 +600,14 @@ def draw_trail_visualization(objeky,s_distance):
                 print ("Blikaj error xB xA")
                 objekty[id].ready_for_blink_start = True
                 #blink_once()
-                faster_loop2_blikaj = True
+                faster_loop2_blikaj = multiprocessing.Value('i', 1)
                 faster_loop2_trieda = "error"
                 #@TODO vygeneruj znacky
 
             else:
-                faster_loop2_blikaj = True
+                faster_loop2_blikaj = multiprocessing.Value('i', 0)
                 faster_loop2_trieda = "error"
+                print ("!!!neblikaj error xB xA")
 
 
         #draw secondclass as brown collor
