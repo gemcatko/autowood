@@ -25,7 +25,7 @@ alreadyBlinkedList = []
 #y_norm_last = 0
 size_of_one_screen_in_dpi = 400 # one screen view in angles , the value need to be calibrated when angle or distance or zoom of camera changes
 delay = 1  # time in s to delay marking, can be use to set distance of sensing camera from BliknStick.
-saw_offset = 400 # saw ofset in dpi
+saw_offset = 200 # saw ofset in dpi
 objekty = {}  # it is storing all detection from program startup
 
 how_big_object_max_small = 0.9  # detect object from how_big_object_min_small to how_big_object_max_small size of screen
@@ -75,6 +75,7 @@ teal = (0,128,128)
 yellow = (255,255,0)
 azzure = (255, 255, 0)
 brown = (19, 69,139)
+magenta = (255, 0, 255)
 
 
 
