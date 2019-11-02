@@ -41,7 +41,7 @@ class YObject:
 
     def draw_object_bb_and_class(self):
         """
-        Draw objects name to CV2 frame  using cv2 only if still detected by detector
+        Draw objects name to CV2 frame  using cv2 only if  detected by detector
         :return: none
         """
         if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
@@ -66,7 +66,7 @@ class YObject:
         """
         if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
             x, y, w, h = self.bounds
-            cv2.putText(frame, str(self.id), (int(x - 30), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
+            cv2.putText(frame, str(self.id), (int(x - 30), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (magenta))
 
     def draw_object_position_on_trail(self):
         """
@@ -584,6 +584,7 @@ def draw_trail_visualization(objeky,s_distance):
     saw_senzor_ofset_from_screen_pixels = int(Xresolution + dpi_to_pixels(saw_offset))
     #draw position of senzor with purple line
     cv2.line(trail_visualization, (int(Xresolution + dpi_to_pixels(saw_offset) ), int(1)), (int(Xresolution + dpi_to_pixels(saw_offset)), int(Yresolution/scale_trail_visualization)), (255, 0, 255), 10)
+
     cv2.putText(trail_visualization, str(saw_senzor_ofset_from_screen_pixels),(int(Xresolution + dpi_to_pixels(saw_offset)), int(Yresolution/scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,
                 magenta)
     for id in objekty:
@@ -595,7 +596,8 @@ def draw_trail_visualization(objeky,s_distance):
         if objekty[id].category == "error" or objekty[id].category == "eye" or objekty[id].category == "crack" or objekty[id].category == "rot" or objekty[id].category == "crust":
             cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),(int(visualization_xB), int(yB / scale_trail_visualization)), red, 3)
             # draw objekty[id].position_on_trail
-            cv2.putText(trail_visualization, str(objekty[id].position_on_trail), (int(visualization_xA), int(yB / scale_trail_visualization)),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
+            cv2.putText(trail_visualization, str(objekty[id].id), (int(visualization_xA), int(yB / scale_trail_visualization)),cv2.FONT_HERSHEY_COMPLEX, 1, (magenta))
+            # visualization_xB is start location of error and visualization_xA end of error
             if(visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
                 print ("Blikaj error xB xA")
                 objekty[id].ready_for_blink_start = True
@@ -611,9 +613,12 @@ def draw_trail_visualization(objeky,s_distance):
 
 
         #draw secondclass as brown collor
-        elif objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" :
+        elif objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" or objekty[id].category == "edge":
             cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),
                           (int(visualization_xB), int(yB / scale_trail_visualization)), brown, 2)
+            cv2.putText(trail_visualization, str(objekty[id].id),
+                        (int(visualization_xA), int(yB / scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,
+                        (magenta))
 
     cv2.imshow("Trail_visualization", trail_visualization)
 
@@ -705,12 +710,13 @@ if __name__ == "__main__":
                 try:
                     # if Yobjekt with specific id already exists, update it
                     # TODO # to je mozno chyba,co sa stane z objektami ktorych id je este na zobrazene ale nuz je objekt dissapeared
-                    if objekty[id].id == id:
-                        objekty[id].category = category.decode("utf-8")
-                        objekty[id].score = score
-                        objekty[id].bounds = bounds
-                        objekty[id].position_on_trail = s_distance.value
-                        objekty[id].is_detected_by_detector = True
+                    if objekty[id].id == id: #and objekty[id].category == category.decode("utf-8"):
+                        if objekty[id].category == category.decode("utf-8"):
+                            objekty[id].category = category.decode("utf-8")
+                            objekty[id].score = score
+                            objekty[id].bounds = bounds
+                            objekty[id].position_on_trail = s_distance.value
+                            objekty[id].is_detected_by_detector = True
 
                 except:
                     # create new object if not existing
