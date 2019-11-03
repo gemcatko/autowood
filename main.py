@@ -601,16 +601,18 @@ def draw_trail_visualization(objeky,s_distance):
             cv2.putText(trail_visualization, str(objekty[id].id), (int(visualization_xA), int(yB / scale_trail_visualization)),cv2.FONT_HERSHEY_COMPLEX, 1, (magenta))
             # visualization_xB is start location of error and visualization_xA end of error
             if(visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
-                #print ("Blikaj error xB xA")
+                print ("Blikaj error")
                 objekty[id].ready_for_blink_start = True
                 #blikaj !
                 faster_loop2_blikaj = multiprocessing.Value('i', 1)
                 faster_loop2_trieda = "error"
+                #generuj znacky kedy
+
 
             else:
                 faster_loop2_blikaj = multiprocessing.Value('i', 0)
                 faster_loop2_trieda = "error"
-                #print ("!!!neblikaj error xB xA")
+                print ("!!!neblikaj error")
 
 
         #draw secondclass as brown collor
@@ -620,6 +622,15 @@ def draw_trail_visualization(objeky,s_distance):
             cv2.putText(trail_visualization, str(objekty[id].id),
                         (int(visualization_xA), int(yB / scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,
                         (magenta))
+            if (visualization_xB > saw_senzor_ofset_from_screen_pixels) and (
+                    visualization_xA < saw_senzor_ofset_from_screen_pixels) :
+                # nesmie but ziadna klasa a nesie byt chyba
+                if faster_loop2_blikaj.value != 1 or faster_loop2_blikaj.value != 0:
+                    print ("blikaj druhu triedu")
+                    faster_loop2_blikaj = multiprocessing.Value('i', 2)
+
+
+
 
     cv2.imshow("Trail_visualization", trail_visualization)
 
