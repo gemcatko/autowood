@@ -445,11 +445,13 @@ def faster_loop_2(faster_loop2_blikaj, faster_loop2_trieda):
             time.sleep(0.0005)
 
 
-        if blikaj and (s_distance.value < next_possible_blink):
+        if (blikaj==1) and (s_distance.value < next_possible_blink):
             blink_once()
             next_possible_blink = (s_distance.value - 50)
             logging.debug('Next_possible_blink is :%s', next_possible_blink)
         end_time_loop = time.time()
+
+
         # check for how long took execution the loop and log if it is too long
         last_loop_duration = end_time_loop - start_time_loop
         if (last_loop_duration) > 0.010:
@@ -599,21 +601,20 @@ def draw_trail_visualization(objeky,s_distance):
             cv2.putText(trail_visualization, str(objekty[id].id), (int(visualization_xA), int(yB / scale_trail_visualization)),cv2.FONT_HERSHEY_COMPLEX, 1, (magenta))
             # visualization_xB is start location of error and visualization_xA end of error
             if(visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
-                print ("Blikaj error xB xA")
+                #print ("Blikaj error xB xA")
                 objekty[id].ready_for_blink_start = True
-                #blink_once()
+                #blikaj !
                 faster_loop2_blikaj = multiprocessing.Value('i', 1)
                 faster_loop2_trieda = "error"
-                #@TODO vygeneruj znacky
 
             else:
                 faster_loop2_blikaj = multiprocessing.Value('i', 0)
                 faster_loop2_trieda = "error"
-                print ("!!!neblikaj error xB xA")
+                #print ("!!!neblikaj error xB xA")
 
 
         #draw secondclass as brown collor
-        elif objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" or objekty[id].category == "edge":
+        elif objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" or objekty[id].category == "edge" or bjekty[id].category == "darksecondclass" or bjekty[id].category == "mark":
             cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),
                           (int(visualization_xB), int(yB / scale_trail_visualization)), brown, 2)
             cv2.putText(trail_visualization, str(objekty[id].id),
