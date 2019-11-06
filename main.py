@@ -422,7 +422,7 @@ def faster_loop_trigerlist_distance(qtrigerlist):
         if (last_loop_duration) > 0.010:
             logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
 
-def faster_loop_2(faster_loop2_blikaj, faster_loop2_trieda):
+def faster_loop_2(faster_loop2_blikaj_error, faster_loop2_blikaj_second, faster_loop2_blikaj_first):
 
     """
     loopa ktra bude stale bezat a bude mat udaj kedy moze ist najblizss dalsi blik
@@ -436,7 +436,7 @@ def faster_loop_2(faster_loop2_blikaj, faster_loop2_trieda):
         try:
             # needed because qtrigerlist is not always having object inside
             #@TODO tu zisti preco nedava sharovanu value s druheho procesu !!!!!
-            blikaj =  faster_loop2_blikaj.value
+            blikaj =  faster_loop2_blikaj_error.value
             #logging.debug("trigerlist%s", blikaj)
 
         except:
@@ -579,8 +579,8 @@ def dpi_to_pixels(dpi):
 
 
 def draw_trail_visualization(objeky,s_distance):
-    global faster_loop2_blikaj
-    global faster_loop2_trieda
+    global faster_loop2_blikaj_error
+    global faster_loop2_blikaj_second
     trail_visualization = np.zeros((int(Yresolution / scale_trail_visualization), Xresolution * 2, 3),
                                    dtype="uint8")
     saw_senzor_ofset_from_screen_pixels = int(Xresolution + dpi_to_pixels(saw_offset))
@@ -602,21 +602,21 @@ def draw_trail_visualization(objeky,s_distance):
             # visualization_xB is start location of error and visualization_xA end of error
             if(visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
                 print ("Blikaj error")
-                objekty[id].ready_for_blink_start = True
+                #objekty[id].ready_for_blink_start = True
                 #blikaj !
-                faster_loop2_blikaj = multiprocessing.Value('i', 1)
-                faster_loop2_trieda = "error"
+                faster_loop2_blikaj_error = Value('i', 1)
+
                 #generuj znacky kedy
 
 
             else:
-                faster_loop2_blikaj = multiprocessing.Value('i', 0)
-                faster_loop2_trieda = "error"
-                print ("!!!neblikaj error")
+                faster_loop2_blikaj_error = Value('i', 0)
+
+                #print ("!!!neblikaj error")
 
 
         #draw secondclass as brown collor
-        elif objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" or objekty[id].category == "edge" or bjekty[id].category == "darksecondclass" or bjekty[id].category == "mark":
+        if objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" or objekty[id].category == "edge" or objekty[id].category == "darksecondclass" or objekty[id].category == "mark":
             cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),
                           (int(visualization_xB), int(yB / scale_trail_visualization)), brown, 2)
             cv2.putText(trail_visualization, str(objekty[id].id),
@@ -625,13 +625,13 @@ def draw_trail_visualization(objeky,s_distance):
             if (visualization_xB > saw_senzor_ofset_from_screen_pixels) and (
                     visualization_xA < saw_senzor_ofset_from_screen_pixels) :
                 # nesmie but ziadna klasa a nesie byt chyba
-                if faster_loop2_blikaj.value != 1 or faster_loop2_blikaj.value != 0:
-                    print ("blikaj druhu triedu")
-                    faster_loop2_blikaj = multiprocessing.Value('i', 2)
 
-
-
-
+                print ("blikaj Second")
+                faster_loop2_blikaj_second = Value('i', 1)
+            else:
+                faster_loop2_blikaj_second = Value('i', 0)
+                #print ("!!!neblikaj Second")
+        print(faster_loop2_blikaj_error.value,faster_loop2_blikaj_second.value)
     cv2.imshow("Trail_visualization", trail_visualization)
 
 
@@ -684,9 +684,10 @@ if __name__ == "__main__":
     process1 = multiprocessing.Process(target=faster_loop_trigerlist_distance, args=(qtrigerlist,))
     process1.daemon = True
     #process1.start()
-    faster_loop2_blikaj = multiprocessing.Value('i',0)
-    faster_loop2_trieda = "ziadna"
-    process2 = multiprocessing.Process(target=faster_loop_2, args=(faster_loop2_blikaj, faster_loop2_trieda,))
+    faster_loop2_blikaj_error = multiprocessing.Value('i', 0)
+    faster_loop2_blikaj_second = multiprocessing.Value('i', 0)
+    faster_loop2_blikaj_first = multiprocessing.Value('i', 0)
+    process2 = multiprocessing.Process(target=faster_loop_2, args=(faster_loop2_blikaj_error, faster_loop2_blikaj_second,faster_loop2_blikaj_first,))
     process2.daemon = True
     process2.start()
 
