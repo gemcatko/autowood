@@ -620,8 +620,8 @@ def check_on_vysialization (trail_visualization):
     global faster_loop2_blikaj_second
     #faster_loop2_blikaj_error = Value('b', 0)
     saw_senzor_ofset_from_screen_pixels = int(Xresolution + dpi_to_pixels(saw_offset))
-    #draw position of senzor with purple line
 
+    # fire mark if first on magenta line
     for id in objekty:
         xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id].bounds)
         #calcculate begining xA and endig xB of rectangle in trai_visualization
@@ -637,32 +637,20 @@ def check_on_vysialization (trail_visualization):
 
     cv2.putText(trail_visualization, str(faster_loop2_blikaj_error.value), (int(10), int(30)),
                 cv2.FONT_HERSHEY_COMPLEX, 1, red)
-    """
-    for id1 in objekty:
-        xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id1].bounds)
+
+    # fire mark if second class on magenta line
+    for id in objekty:
+        xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id].bounds)
         # calcculate begining xA and endig xB of rectangle in trai_visualization
         visualization_xA = xA + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
         visualization_xB = xB + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
-        #draw secondclass as brown collor
         if objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" or objekty[id].category == "edge" or objekty[id].category == "darksecondclass" or objekty[id].category == "mark":
-            if (visualization_xB > saw_senzor_ofset_from_screen_pixels) and (
-                    visualization_xA < saw_senzor_ofset_from_screen_pixels) :
-                # nesmie but ziadna klasa a nesie byt chyba
-
-                #print ("blikaj Second")
-                faster_loop2_blikaj_second = Value('i', 1)
-                cv2.putText(trail_visualization, str(faster_loop2_blikaj_second.value), (int(10), int(60)),
-                            cv2.FONT_HERSHEY_COMPLEX, 1, brown)
+            if (visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
+                faster_loop2_blikaj_second.value = 1
                 break
-
-            else:
-                faster_loop2_blikaj_second = Value('i', 0)
-                #print ("!!!neblikaj Second")
-                cv2.putText(trail_visualization, str(faster_loop2_blikaj_second.value), (int(10), int(60)),
-                            cv2.FONT_HERSHEY_COMPLEX, 1, brown)
-
-    """
-        #print(faster_loop2_blikaj_error.value,faster_loop2_blikaj_second.value)
+            faster_loop2_blikaj_second.value = 0
+    # siganlyze on screen if second class found
+    cv2.putText(trail_visualization, str(faster_loop2_blikaj_second.value), (int(10), int(60)),cv2.FONT_HERSHEY_COMPLEX, 1, brown)
     cv2.imshow("Trail_visualization", trail_visualization)
 
 if __name__ == "__main__":
