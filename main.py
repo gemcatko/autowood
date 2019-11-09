@@ -221,7 +221,7 @@ class Trail:
         self.objekty = objekty
 
     def draw_trail_detection_visualization(self):
-        trail_visualization = np.zeros((int(Yresolution / scale_trail_visualization), Xresolution * 2, 3),
+        trail_visualization1 = np.zeros((int(Yresolution / scale_trail_visualization), Xresolution * 2, 3),
                                        dtype="uint8")
         for Yobject in self.objekty:
             xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(Yobject.bounds)
@@ -422,7 +422,9 @@ def faster_loop_trigerlist_distance(qtrigerlist):
         if (last_loop_duration) > 0.010:
             logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
 
-def faster_loop_2(faster_loop2_blikaj_error, faster_loop2_blikaj_second, faster_loop2_blikaj_first):
+def faster_loop_2( faster_loop2_blikaj_first):
+    global faster_loop2_blikaj_error
+    global faster_loop2_blikaj_second
 
     """
     loopa ktra bude stale bezat a bude mat udaj kedy moze ist najblizss dalsi blik
@@ -433,23 +435,24 @@ def faster_loop_2(faster_loop2_blikaj_error, faster_loop2_blikaj_second, faster_
     next_possible_blink = 0
     while True:
         start_time_loop = time.time()
-        try:
+        #try:
             # needed because qtrigerlist is not always having object inside
             #@TODO tu zisti preco nedava sharovanu value s druheho procesu !!!!!
-            blikaj =  faster_loop2_blikaj_error.value
+            #blikaj =  faster_loop2_blikaj_error.value
             #logging.debug("trigerlist%s", blikaj)
 
-        except:
+        #except:
             # is setting speed of the loop in case 0.0005 it is 2000 times per second
             # except is not executed if qtrigerlist is have data
-            time.sleep(0.0005)
+            #time.sleep(0.0005)
 
 
-        if (blikaj==1) and (s_distance.value < next_possible_blink):
+        if (faster_loop2_blikaj_error.value == 1) and (s_distance.value < next_possible_blink):
             blink_once()
             next_possible_blink = (s_distance.value - 50)
             logging.debug('Next_possible_blink is :%s', next_possible_blink)
         end_time_loop = time.time()
+        print ("faster:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
 
 
         # check for how long took execution the loop and log if it is too long
@@ -600,20 +603,6 @@ def draw_trail_visualization(objeky,s_distance):
             # draw objekty[id].position_on_trail
             cv2.putText(trail_visualization, str(objekty[id].id), (int(visualization_xA), int(yB / scale_trail_visualization)),cv2.FONT_HERSHEY_COMPLEX, 1, (magenta))
             # visualization_xB is start location of error and visualization_xA end of error
-            if(visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
-                print ("Blikaj error")
-                #objekty[id].ready_for_blink_start = True
-                #blikaj !
-                faster_loop2_blikaj_error = Value('i', 1)
-
-                #generuj znacky kedy
-
-
-            else:
-                faster_loop2_blikaj_error = Value('i', 0)
-
-                #print ("!!!neblikaj error")
-
 
         #draw secondclass as brown collor
         if objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" or objekty[id].category == "edge" or objekty[id].category == "darksecondclass" or objekty[id].category == "mark":
@@ -622,24 +611,60 @@ def draw_trail_visualization(objeky,s_distance):
             cv2.putText(trail_visualization, str(objekty[id].id),
                         (int(visualization_xA), int(yB / scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,
                         (magenta))
-            if (visualization_xB > saw_senzor_ofset_from_screen_pixels) and (
-                    visualization_xA < saw_senzor_ofset_from_screen_pixels) :
-                # nesmie but ziadna klasa a nesie byt chyba
+    #cv2.imshow("Trail_visualization", trail_visualization)
+    return trail_visualization
 
-                print ("blikaj Second")
-                faster_loop2_blikaj_second = Value('i', 1)
-            else:
-                faster_loop2_blikaj_second = Value('i', 0)
-                #print ("!!!neblikaj Second")
-        print(faster_loop2_blikaj_error.value,faster_loop2_blikaj_second.value)
+def check_on_vysialization (trail_visualization):
+    global faster_loop2_blikaj_error
+    global faster_loop2_blikaj_second
+    saw_senzor_ofset_from_screen_pixels = int(Xresolution + dpi_to_pixels(saw_offset))
+    #draw position of senzor with purple line
+
+    for id in objekty:
+        xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id].bounds)
+        #calcculate begining xA and endig xB of rectangle in trai_visualization
+        visualization_xA = xA + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
+        visualization_xB = xB + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
+        #draw error, eye, crack, rot, and crust as red color
+        if objekty[id].category == "error" or objekty[id].category == "eye" or objekty[id].category == "crack" or objekty[id].category == "rot" or objekty[id].category == "crust":
+            # visualization_xB is start location of error and visualization_xA end of error
+            if(visualization_xB > saw_senzor_ofset_from_screen_pixels) :
+                if (visualization_xA < saw_senzor_ofset_from_screen_pixels):
+                    #print ("Blikaj error")
+                    faster_loop2_blikaj_error = Value('b',1)
+                    cv2.putText(trail_visualization, str(faster_loop2_blikaj_error.value), (int(10), int(30)),
+                            cv2.FONT_HERSHEY_COMPLEX, 1, red)
+                    break
+
+            faster_loop2_blikaj_error = Value('b',0)
+            #print ("neblikaj error")
+            cv2.putText(trail_visualization, str(faster_loop2_blikaj_error.value), (int(10), int(30)),
+                            cv2.FONT_HERSHEY_COMPLEX, 1, red)
+
+
+    for id1 in objekty:
+        xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id1].bounds)
+        # calcculate begining xA and endig xB of rectangle in trai_visualization
+        visualization_xA = xA + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
+        visualization_xB = xB + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
+        #draw secondclass as brown collor
+        if objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" or objekty[id].category == "edge" or objekty[id].category == "darksecondclass" or objekty[id].category == "mark":
+            if (visualization_xB > saw_senzor_ofset_from_screen_pixels) :
+                if (visualization_xA < saw_senzor_ofset_from_screen_pixels) :
+                    # nesmie but ziadna klasa a nesie byt chyba
+                    #print ("blikaj Second")
+                    faster_loop2_blikaj_second = Value('i', 1)
+                    cv2.putText(trail_visualization, str(faster_loop2_blikaj_second.value), (int(10), int(60)),
+                            cv2.FONT_HERSHEY_COMPLEX, 1, brown)
+                    break
+            faster_loop2_blikaj_second = Value('i', 0)
+            #print ("!!!neblikaj Second")
+            cv2.putText(trail_visualization, str(faster_loop2_blikaj_second.value), (int(10), int(60)),
+                            cv2.FONT_HERSHEY_COMPLEX, 1, brown)
+        #print(faster_loop2_blikaj_error.value,faster_loop2_blikaj_second.value)
     cv2.imshow("Trail_visualization", trail_visualization)
 
-
-
-
-
 if __name__ == "__main__":
-
     ################################ SETUP #############################################################################
     # USE if video from file. video_filename  fefinition is located in  dev_env_vars.py
     # cap = cv2.VideoCapture(video_filename)
@@ -684,10 +709,10 @@ if __name__ == "__main__":
     process1 = multiprocessing.Process(target=faster_loop_trigerlist_distance, args=(qtrigerlist,))
     process1.daemon = True
     #process1.start()
-    faster_loop2_blikaj_error = multiprocessing.Value('i', 0)
+    faster_loop2_blikaj_error = multiprocessing.Value('b', 0)
     faster_loop2_blikaj_second = multiprocessing.Value('i', 0)
     faster_loop2_blikaj_first = multiprocessing.Value('i', 0)
-    process2 = multiprocessing.Process(target=faster_loop_2, args=(faster_loop2_blikaj_error, faster_loop2_blikaj_second,faster_loop2_blikaj_first,))
+    process2 = multiprocessing.Process(target=faster_loop_2, args=(faster_loop2_blikaj_first,))
     process2.daemon = True
     process2.start()
 
@@ -748,7 +773,8 @@ if __name__ == "__main__":
             update_objekty_if_not_detected(objekty)
             try:
                 #print ("#draw_trail_visualization(objekty, s_distance)")
-                draw_trail_visualization(objekty, s_distance)
+                #draw_trail_visualization(objekty, s_distance)
+                check_on_vysialization(draw_trail_visualization(objekty, s_distance))
             except Exception as ex:
                 template = "An exception of type {0} occurred. Arguments:\n{1!r}"
                 message = template.format(type(ex).__name__, ex.args)
