@@ -448,6 +448,7 @@ def faster_loop_2( faster_loop2_blikaj_first):
 
 
         if (faster_loop2_blikaj_error.value == 1) and (s_distance.value < next_possible_blink):
+            print ("faster:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
             blink_once()
             next_possible_blink = (s_distance.value - 50)
             logging.debug('Next_possible_blink is :%s', next_possible_blink)
@@ -582,8 +583,8 @@ def dpi_to_pixels(dpi):
 
 
 def draw_trail_visualization(objeky,s_distance):
-    global faster_loop2_blikaj_error
-    global faster_loop2_blikaj_second
+
+
     trail_visualization = np.zeros((int(Yresolution / scale_trail_visualization), Xresolution * 2, 3),
                                    dtype="uint8")
     saw_senzor_ofset_from_screen_pixels = int(Xresolution + dpi_to_pixels(saw_offset))
@@ -617,6 +618,7 @@ def draw_trail_visualization(objeky,s_distance):
 def check_on_vysialization (trail_visualization):
     global faster_loop2_blikaj_error
     global faster_loop2_blikaj_second
+    #faster_loop2_blikaj_error = Value('b', 0)
     saw_senzor_ofset_from_screen_pixels = int(Xresolution + dpi_to_pixels(saw_offset))
     #draw position of senzor with purple line
 
@@ -626,22 +628,16 @@ def check_on_vysialization (trail_visualization):
         visualization_xA = xA + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
         visualization_xB = xB + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
         #draw error, eye, crack, rot, and crust as red color
-        if objekty[id].category == "error" or objekty[id].category == "eye" or objekty[id].category == "crack" or objekty[id].category == "rot" or objekty[id].category == "crust":
-            # visualization_xB is start location of error and visualization_xA end of error
-            if(visualization_xB > saw_senzor_ofset_from_screen_pixels) :
-                if (visualization_xA < saw_senzor_ofset_from_screen_pixels):
-                    #print ("Blikaj error")
-                    faster_loop2_blikaj_error = Value('b',1)
-                    cv2.putText(trail_visualization, str(faster_loop2_blikaj_error.value), (int(10), int(30)),
-                            cv2.FONT_HERSHEY_COMPLEX, 1, red)
-                    break
-
-            faster_loop2_blikaj_error = Value('b',0)
+        if objekty[id].category == "error" or objekty[id].category == "eye" or objekty[id].category == "crack" or objekty[id].category == "rot" or objekty[id].category == "crust" :
+            if (visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
+                faster_loop2_blikaj_error.value = 1
+                break
+            faster_loop2_blikaj_error.value = 0
             #print ("neblikaj error")
-            cv2.putText(trail_visualization, str(faster_loop2_blikaj_error.value), (int(10), int(30)),
-                            cv2.FONT_HERSHEY_COMPLEX, 1, red)
 
-
+    cv2.putText(trail_visualization, str(faster_loop2_blikaj_error.value), (int(10), int(30)),
+                cv2.FONT_HERSHEY_COMPLEX, 1, red)
+    """
     for id1 in objekty:
         xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id1].bounds)
         # calcculate begining xA and endig xB of rectangle in trai_visualization
@@ -649,18 +645,23 @@ def check_on_vysialization (trail_visualization):
         visualization_xB = xB + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
         #draw secondclass as brown collor
         if objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" or objekty[id].category == "edge" or objekty[id].category == "darksecondclass" or objekty[id].category == "mark":
-            if (visualization_xB > saw_senzor_ofset_from_screen_pixels) :
-                if (visualization_xA < saw_senzor_ofset_from_screen_pixels) :
-                    # nesmie but ziadna klasa a nesie byt chyba
-                    #print ("blikaj Second")
-                    faster_loop2_blikaj_second = Value('i', 1)
-                    cv2.putText(trail_visualization, str(faster_loop2_blikaj_second.value), (int(10), int(60)),
+            if (visualization_xB > saw_senzor_ofset_from_screen_pixels) and (
+                    visualization_xA < saw_senzor_ofset_from_screen_pixels) :
+                # nesmie but ziadna klasa a nesie byt chyba
+
+                #print ("blikaj Second")
+                faster_loop2_blikaj_second = Value('i', 1)
+                cv2.putText(trail_visualization, str(faster_loop2_blikaj_second.value), (int(10), int(60)),
                             cv2.FONT_HERSHEY_COMPLEX, 1, brown)
-                    break
-            faster_loop2_blikaj_second = Value('i', 0)
-            #print ("!!!neblikaj Second")
-            cv2.putText(trail_visualization, str(faster_loop2_blikaj_second.value), (int(10), int(60)),
+                break
+
+            else:
+                faster_loop2_blikaj_second = Value('i', 0)
+                #print ("!!!neblikaj Second")
+                cv2.putText(trail_visualization, str(faster_loop2_blikaj_second.value), (int(10), int(60)),
                             cv2.FONT_HERSHEY_COMPLEX, 1, brown)
+
+    """
         #print(faster_loop2_blikaj_error.value,faster_loop2_blikaj_second.value)
     cv2.imshow("Trail_visualization", trail_visualization)
 
