@@ -238,6 +238,12 @@ class BlinkStickThread(threading.Thread):
         subprocess.Popen(["python2", "BlinkStick.py"])
         pass
 
+class BlinkStickThreadDouble(threading.Thread):
+    def run(self):
+        '''Starting blinkStick to blink once in Separate Thread'''
+        subprocess.Popen(["python2", "BlinkStickDouble.py"])
+        pass
+
 
 ### Funktions
 def convert_from_xywh_to_xAyAxByB_format(bounds):
@@ -332,6 +338,20 @@ def blink_once():
         print("BlinkStickOnce exception occurred ")
     pass
 
+def blink_once_double():
+    """
+    Is using threading for blinking once, create tread for BlinkStick.py (python2.7)
+
+    """
+    try:
+        # os.system('python2 BlinkStick.py') # najpomalsie
+        # subprocess.Popen(["python2", "BlinkStick.py"]) #troska ryclesie
+        thread = BlinkStickThreadDouble()
+        thread.daemon = True
+        thread.start()
+    except:
+        print("BlinkStickDouble exception occurred ")
+    pass
 
 def calculate_relative_coordinates(x, y, w, h):
     """
@@ -452,10 +472,16 @@ def faster_loop_2( faster_loop2_blikaj_first):
             blink_once()
             next_possible_blink = (s_distance.value - 50)
             logging.debug('Next_possible_blink is :%s', next_possible_blink)
+        if (faster_loop2_blikaj_second.value == 1) and (s_distance.value < next_possible_blink) and (faster_loop2_blikaj_error.value == 0):
+            print ("faster:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
+            blink_once_double()
+            next_possible_blink = (s_distance.value - 50)
+            logging.debug('Next_possible_blink is :%s', next_possible_blink)
+
+
+
         end_time_loop = time.time()
-        print ("faster:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
-
-
+        #print ("faster:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
         # check for how long took execution the loop and log if it is too long
         last_loop_duration = end_time_loop - start_time_loop
         if (last_loop_duration) > 0.010:
