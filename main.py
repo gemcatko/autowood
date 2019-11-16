@@ -454,7 +454,7 @@ def faster_loop_2( faster_loop2_blikaj_first):
     """
     next_possible_blink = 0
     next_possible_blink_second = 0
-    last_blinked_class = "error"
+    last_blinked_class = "error" # need to be set for as if below is checking it
     while True:
         start_time_loop = time.time()
         #try:
@@ -468,31 +468,28 @@ def faster_loop_2( faster_loop2_blikaj_first):
             # except is not executed if qtrigerlist is have data
             #time.sleep(0.0005)
 
-
+        # if for error
         if (faster_loop2_blikaj_error.value == 1) and (s_distance.value < next_possible_blink):
-            print ("faster:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
+            print ("Ferror:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
             blink_once()
             next_possible_blink = (s_distance.value - 50)
-            logging.debug('Next_possible_blink is :%s', next_possible_blink)
+            next_possible_blink_second = next_possible_blink
+            logging.debug('Next_possible_blink_error is :%s', next_possible_blink)
             last_blinked_class = "error"
 
-        if (faster_loop2_blikaj_second.value == 1) and (s_distance.value < next_possible_blink_second) and (faster_loop2_blikaj_error.value == 0) and last_blinked_class == "error":
-            print ("faster:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
-            blink_once_double() #TODO nahrad toto blink once
-
+        #if for second class
+        if (faster_loop2_blikaj_second.value == 1) and (s_distance.value < next_possible_blink_second) and (faster_loop2_blikaj_error.value == 0) : #and (last_blinked_class != "second")
+            blink_once_double() #TODO nahrad toto blink once when you will have more stable s_distance
             next_possible_blink_second = (s_distance.value - 100)
             last_blinked_class = "second"
-            logging.debug('Next_possible_blink is :%s', next_possible_blink)
-
-
+            logging.debug('Next_possible_blink_second is :%s', next_possible_blink_second)
 
         end_time_loop = time.time()
-        #print ("faster:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
         # check for how long took execution the loop and log if it is too long
         last_loop_duration = end_time_loop - start_time_loop
-        if (last_loop_duration) > 0.010:
-            logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
-        #return next_possible_blink
+        #if (last_loop_duration) > 0.010:
+            #logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
+
 
 
 def update_resutls_for_id(results):
