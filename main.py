@@ -453,6 +453,8 @@ def faster_loop_2( faster_loop2_blikaj_first):
     :return: is returning next possible blick
     """
     next_possible_blink = 0
+    next_possible_blink_second = 0
+    last_blinked_class = "error"
     while True:
         start_time_loop = time.time()
         #try:
@@ -472,10 +474,14 @@ def faster_loop_2( faster_loop2_blikaj_first):
             blink_once()
             next_possible_blink = (s_distance.value - 50)
             logging.debug('Next_possible_blink is :%s', next_possible_blink)
-        if (faster_loop2_blikaj_second.value == 1) and (s_distance.value < next_possible_blink) and (faster_loop2_blikaj_error.value == 0):
+            last_blinked_class = "error"
+
+        if (faster_loop2_blikaj_second.value == 1) and (s_distance.value < next_possible_blink_second) and (faster_loop2_blikaj_error.value == 0) and last_blinked_class == "error":
             print ("faster:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
-            blink_once_double()
-            next_possible_blink = (s_distance.value - 50)
+            blink_once_double() #TODO nahrad toto blink once
+
+            next_possible_blink_second = (s_distance.value - 100)
+            last_blinked_class = "second"
             logging.debug('Next_possible_blink is :%s', next_possible_blink)
 
 
