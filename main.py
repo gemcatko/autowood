@@ -479,10 +479,22 @@ def faster_loop_2( faster_loop2_blikaj_first):
 
         #if for second class
         if (faster_loop2_blikaj_second.value == 1) and (s_distance.value < next_possible_blink_second) and (faster_loop2_blikaj_error.value == 0) : #and (last_blinked_class != "second")
+            print ("FSecond:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
             blink_once_double() #TODO nahrad toto blink once when you will have more stable s_distance
             next_possible_blink_second = (s_distance.value - 100)
             last_blinked_class = "second"
             logging.debug('Next_possible_blink_second is :%s', next_possible_blink_second)
+            #TODO check maybe where the second  class is ending
+
+        #If first class
+        if (faster_loop2_blikaj_error.value == 0) and (faster_loop2_blikaj_second.value == 0) and (s_distance.value < next_possible_blink_second) and (last_blinked_class == "second"):
+            print ("FFirst:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
+            blink_once()
+            last_blinked_class = "first"
+            #TODO check if folowing  wood is not contaning any error or second class
+
+
+
 
         end_time_loop = time.time()
         # check for how long took execution the loop and log if it is too long
