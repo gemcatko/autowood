@@ -42,6 +42,12 @@ try:
         bstick.set_color(channel=0, index=6, name="")
         bstick.set_color(channel=0, index=7, name="")
         """
+        time.sleep(0.2)
+        bstick.set_color(channel=0, index=0, name="red")
+        bstick.set_color(channel=0, index=1, name="red")
+
+        bstick.set_color(channel=0, index=0, name="")
+        bstick.set_color(channel=0, index=1, name="")
         end_time = time.time()
         #print("You have bliked, Elapsed Time of the Blink:", end_time - start_time)
         #logging.debug('You have bliked, Elapsed Time of the Blink: %s', end_time - start_time)

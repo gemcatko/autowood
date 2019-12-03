@@ -8,3 +8,5 @@ detected_errors/
 detected_objects/
 #ignore python generated files
 *.pyc
+YOLO3-4-Py/
+venv*/

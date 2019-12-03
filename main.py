@@ -8,8 +8,7 @@ from typing import List, Any, Union
 from pydarknet import Detector, Image
 import cv2
 import numpy as np
-from mpoint.mpoint import Mpoint, feed_queue
-# import Mpoint from mpoint.mpoint
+
 # for manual see: https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
 from pyimagesearch.centroidtracker import CentroidTracker
 from dev_env_vars import *
@@ -17,38 +16,71 @@ from multiprocessing import Process, Value, Queue
 
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s', )
 import datetime
+# subprocess.Popen(['sudo', 'chmod', '666', '/dev/ttyUSB0'])
+from magneto import Magneto
+#from draw_trail_visualization import draw_trail_visualization
 
+
+### Imports end here
+### Class definitions
 class YObject:
     # use for creating objects from Yolo.
     # def __init__(self, centroid_id, category, score, bounds):
-    def __init__(self, id, category, score, bounds):
+    def __init__(self, id, category, score, bounds, s_distance):
         # copy paste functionality of  detect_object_4_c
         self.id = id
         self.category = category
         self.score = score
         self.bounds = bounds
-        self.is_on_screen = True
+        self.position_on_trail = s_distance
+        self.is_detected_by_detector = True
         self.ignore = False
         self.is_picture_saved = False
         self.ready_for_blink_start = False
         self.ready_for_blink_end = False
 
-    def draw_object_and_id(self):
+    def draw_object_bb_and_class(self):
         """
-        Draw objects on screen using cv2
+        Draw objects name to CV2 frame  using cv2 only if  detected by detector
         :return: none
         """
-        x, y, w, h = self.bounds
-        cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (125, 125, 125), 4)
-        # draw what is name of the object
-        # cv2.putText(frame, str(category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
-        cv2.putText(frame, str(self.category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
-        # Draw ID dot
-        # TODO finish
-        # Draw id number text
-        # TODO finish
+        if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
+            x, y, w, h = self.bounds
+            # draw what is name of the object
+            cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), blue, 4)
+            cv2.putText(frame, str(self.category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
 
-    def detect_object(self, object_to_detect, triger_margin, how_big_object_max, how_big_object_min):
+    def draw_object_score(self):
+        """
+        Draw objects score to CV2 frame  using cv2 only if still detected by detector
+        :return: none
+        """
+        if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
+            x, y, w, h = self.bounds
+            cv2.putText(frame, str(round(self.score, 2)), (int(x - 20), int(y - 20)), cv2.FONT_HERSHEY_COMPLEX, 1, azzure)
+
+    def draw_object_id(self):
+        """
+        Drae object Id to CV2 frame only if still detected by detector
+        :return:
+        """
+        if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
+            x, y, w, h = self.bounds
+            cv2.putText(frame, str(self.id), (int(x - 30), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (magenta))
+
+    def draw_object_position_on_trail(self):
+        """
+        Drae object Id to CV2 frame only if still detected by detector
+        :return:
+        """
+        if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
+            x, y, w, h = self.bounds
+            x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
+            #position_on_trail_for_screen = round(self.position_on_trail + (x_rel * size_of_one_screen_in_dpi), 1)
+            position_on_trail_for_screen = round((x_rel * size_of_one_screen_in_dpi)  )
+            cv2.putText(frame, str(position_on_trail_for_screen), (int(x), int(y + 25)), cv2.FONT_HERSHEY_COMPLEX, 1, yellow)
+
+    def do_not_use_detect_object(self, object_to_detect, triger_margin, how_big_object_max, how_big_object_min):
         """
         :param object_to_detect:
         :param triger_margin:
@@ -59,13 +91,14 @@ class YObject:
         ##chnage format to utf-8### object_to_check ## how width ########### where is triger margin################### check if is not id.1 already in in triger list
         if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (
                 x_rel + (w_rel / 2)) > triger_margin and self.ready_for_blink_start == False:
-            print('Sprav znacky for zaciatok ID', self.id)
+            print('Sprav znacky for zaciatok ID .1', self.id)
             # draw purple line on the screens it is just for visual check when call for blink
             cv2.line(frame, (int(x + w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 255), 10)
             self.ready_for_blink_start = True
             # position of begin blink
-            dis_x, dis_y = m_point.get_distance()
-            position_indpi_begin = dis_y + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
+            position_indpi_begin = s_distance.value  # this is from magneto the apsolut distance
+            position_indpi_begin = position_indpi_begin + saw_offset + (
+                        (x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
             triger = id + 0.1, position_indpi_begin
             # save_picture_to_file("detected_errors")
             logging.debug("triger_slow_loop%s", triger)
@@ -78,13 +111,13 @@ class YObject:
 
         if self.category == object_to_detect and how_big_object_max >= w_rel >= how_big_object_min and (
                 x_rel - (w_rel / 2)) > triger_margin and self.ready_for_blink_end == False:
-            print('Sprav znacky for end ID', self.id)
+            print('Sprav znacky for end .2 ID', self.id)
             # draw purple line on the screens it is just for visual check when call for blink
             cv2.line(frame, (int(x - w / 2), int(y - h / 2)), (int(x - w / 2), int(y + h / 2)), (255, 0, 255), 10)
             self.ready_for_blink_end = True
             # position of end blink
-            dis_x, dis_y = m_point.get_distance()
-            position_indpi_end = dis_y + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
+            position_indpi_end = s_distance.value  # this is from magneto the apsolut distance
+            position_indpi_end = position_indpi_end + saw_offset + ((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
             # add to trigerlist id.02 time end blink
             triger = id + 0.2, position_indpi_end
             # save_picture_to_file("detected_errors")
@@ -96,11 +129,11 @@ class YObject:
             except:
                 print("Main thread exception occurred qtrigerlist.put(trigerlist)")
 
-    def detect_rim(self, edge, distance_of_second_edge):
+    def detect_rim(self, edge, max_dist_of_2nd_edge):
         """
         rim is defined by 2 edges close enough
         :param edge: category you would like use for rim detection
-        :param distance_of_second_edge for example 0.5 fo 50% of the screen
+        :param max_dist_of_2nd_edge for example 0.5 fo 50% of the screen
         :return: true
         """
         if self.category == edge:
@@ -113,7 +146,7 @@ class YObject:
                     xx, yy, ww, hh = bounds
                     xx_rel, yy_rel, ww_rel, hh_rel, aarea_rel = calculate_relative_coordinates(xx, yy, ww, hh)
                     # is second edge close enought ?)
-                    if (((x_rel - xx_rel) ** 2) + ((y_rel - yy_rel) ** 2)) ** (0.5) < distance_of_second_edge:
+                    if (((x_rel - xx_rel) ** 2) + ((y_rel - yy_rel) ** 2)) ** (0.5) < max_dist_of_2nd_edge:
                         # calculate rim properties
                         new_rim_score = (self.score + score) / 2
                         new_rim_x = (x + xx) / 2
@@ -161,20 +194,42 @@ class YObject:
     def ignore_error_in_error_and_create_new_object(self):
         global aou_results
         if self.category == "error":
-            boxA = self.bounds
+            boundsA = self.bounds
             for id, category, score, bounds in idresults:
-                if category == "error":
-                    boxB = bounds
-                    if get_bounding_box_around_area_ower_union(boxA, boxB):
-                        bounding_box_around_area_ower_union = get_bounding_box_around_area_ower_union(boxA, boxB)
-                        score_bounding_box_around_area_ower_union = (self.score + score)/2
-                        category_bounding_box_around_area_ower_union = "bounding_box_around_AOU"
+                if (category.decode("utf-8") == "error") and not self.id == id:
+                    boundsB = bounds
+                    if get_bounding_box_around_area_ower_union(boundsA, boundsB):
+                        bounding_box_around_area_ower_union = get_bounding_box_around_area_ower_union(boundsA, boundsA)
+                        score_bounding_box_around_area_ower_union = (self.score + score) / 2
+                        category_bounding_box_around_area_ower_union = "BB_around_AOU"
                         self.ignore = True
-                        aou_results  =category_bounding_box_around_area_ower_union, score_bounding_box_around_area_ower_union, bounding_box_around_area_ower_union
+                        aou_results = category_bounding_box_around_area_ower_union.encode(
+                            "utf-8"), score_bounding_box_around_area_ower_union, bounding_box_around_area_ower_union
                         return aou_results
 
+    def stamp(self, object_to_stamp):
+        x, y, w, h = self.bounds
+        x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
+        if self.category == object_to_stamp:
+            # position_indpi_begin = s_distance.value + (((x_rel + (w_rel / 2)) * size_of_one_screen_in_dpi)
+            # position_indpi_end = s_distance.value + (((x_rel - (w_rel / 2)) * size_of_one_screen_in_dpi)
+            stamplist.append(stamp)
 
 
+class Trail:
+    def __int__(self, objekty):
+        self.objekty = objekty
+
+    def draw_trail_detection_visualization(self):
+        trail_visualization1 = np.zeros((int(Yresolution / scale_trail_visualization), Xresolution * 2, 3),
+                                       dtype="uint8")
+        for Yobject in self.objekty:
+            xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(Yobject.bounds)
+            xA = xA + Yobject.position_on_trail
+            xB = xB + Yobject.position_on_trail
+            cv2.rectangle(trail_visualization, (int(xA), int(yA / scale_trail_visualization)),
+                          (int(xB), int(yB / scale_trail_visualization)), green)
+            cv2.imshow("Trail_visualization", trail_visualization)
 
 
 class BlinkStickThread(threading.Thread):
@@ -183,7 +238,14 @@ class BlinkStickThread(threading.Thread):
         subprocess.Popen(["python2", "BlinkStick.py"])
         pass
 
+class BlinkStickThreadDouble(threading.Thread):
+    def run(self):
+        '''Starting blinkStick to blink once in Separate Thread'''
+        subprocess.Popen(["python2", "BlinkStickDouble.py"])
+        pass
 
+
+### Funktions
 def convert_from_xywh_to_xAyAxByB_format(bounds):
     """
 
@@ -198,15 +260,15 @@ def convert_from_xywh_to_xAyAxByB_format(bounds):
 
 def convert_from_xAyAxByB_to_xywh_format(bounds):
     xA, yA, xB, yB = bounds
-    x=(xA+xB)/2
-    y=(yA+yB)/2
-    w= abs(xA-xB)
-    h= abs(yA-yB)
-    xywhBox = [x,y,w,h]  # type: List[Union[float, Any]]
+    x = (xA + xB) / 2
+    y = (yA + yB) / 2
+    w = abs(xA - xB)
+    h = abs(yA - yB)
+    xywhBox = [x, y, w, h]  # type: List[Union[float, Any]]
     return xywhBox
 
 
-def bb_intersection_over_union(boxA, boxB):
+def bb_intersection_over_union(boundsA, boundsB):
     """
 
     :param boundsA: in yolo format(xywh)
@@ -214,7 +276,7 @@ def bb_intersection_over_union(boxA, boxB):
     :return: IoU
     """
 
-    boxA, boxB = convert_from_xywh_to_xAyAxByB_format(boxA), convert_from_xywh_to_xAyAxByB_format(boxB)
+    boxA, boxB = convert_from_xywh_to_xAyAxByB_format(boundsA), convert_from_xywh_to_xAyAxByB_format(boundsB)
 
     # determine the (x, y)-coordinates of the intersection rectangle
     xA = max(boxA[0], boxB[0])
@@ -239,22 +301,24 @@ def bb_intersection_over_union(boxA, boxB):
     return iou
 
 
-def get_bounding_box_around_area_ower_union(boxA, boxB):
+def get_bounding_box_around_area_ower_union(boundsA, boundsB):
     """
 
-    :param boxA: xywhA
-    :param boxB: xywhB
+    :param boxA: xywh
+    :param boxB: xywh
     :return: xAyAxByB
     """
-    #bb_intersection_over_union need to bigger as 0 thats how you know objects overlap each other
-    if bb_intersection_over_union(boxA, boxB) > 0:
-        boxA, boxB = convert_from_xywh_to_xAyAxByB_format(boxA), convert_from_xywh_to_xAyAxByB_format(boxB)
+    # bb_intersection_over_union need to bigger as 0 thats how you know objects overlap each other
+    if bb_intersection_over_union(boundsA, boundsB) > 0:
+        boxA, boxB = convert_from_xywh_to_xAyAxByB_format(boundsA), convert_from_xywh_to_xAyAxByB_format(boundsB)
         xA = min(boxA[0], boxB[0])
         yA = min(boxA[1], boxB[1])
         xB = max(boxA[2], boxB[2])
         yB = max(boxA[3], boxB[3])
-        bounding_box_of_area_ower_union = [xA, yA, xB, yB]
-        return bounding_box_of_area_ower_union
+        bbox_of_area_ower_union = [xA, yA, xB, yB]
+        bbox_of_area_ower_union = convert_from_xAyAxByB_to_xywh_format(bbox_of_area_ower_union)
+
+        return bbox_of_area_ower_union
     else:
         return False
 
@@ -274,6 +338,20 @@ def blink_once():
         print("BlinkStickOnce exception occurred ")
     pass
 
+def blink_once_double():
+    """
+    Is using threading for blinking once, create tread for BlinkStick.py (python2.7)
+
+    """
+    try:
+        # os.system('python2 BlinkStick.py') # najpomalsie
+        # subprocess.Popen(["python2", "BlinkStick.py"]) #troska ryclesie
+        thread = BlinkStickThreadDouble()
+        thread.daemon = True
+        thread.start()
+    except:
+        print("BlinkStickDouble exception occurred ")
+    pass
 
 def calculate_relative_coordinates(x, y, w, h):
     """
@@ -309,9 +387,15 @@ def show_fps(start_time, end_time):
                 (255, 100, 255))
     return FPS
 
-def show_m_point_distance():
-    cv2.putText(frame, str(m_point.get_distance()), (int(Xresolution - 250), int(Yresolution - 80)),
-                cv2.FONT_HERSHEY_COMPLEX, 1, (255, 50, 255))
+
+def show_magneto_distance():
+    """
+    IT is using s_distance.value which is actual sum of angles from magneto
+    The funktion need to be called every frame you want to sho something
+    :return:
+    """
+    cv2.putText(frame, str(s_distance.value), (int(Xresolution - 250), int(Yresolution - 80)),
+                cv2.FONT_HERSHEY_COMPLEX, 1, blue)
 
 
 def faster_loop_trigerlist_distance(qtrigerlist):
@@ -333,10 +417,11 @@ def faster_loop_trigerlist_distance(qtrigerlist):
             # except is not executed if qtrigerlist is have data
             time.sleep(0.0005)
         # print("Distance {}".format(m_point.get_distance()))
-        dis_x, dis_y = m_point.get_distance()
+
+        distance = s_distance.value
         # for id_begining, begin_distance, id_ending, end_distance in trigerlist:
         for id_begining, begin_distance in trigerlist:
-            if begin_distance <= abs(dis_y) and not (any(id_begining in sublist for sublist in alreadyBlinkedList)):
+            if begin_distance <= abs(distance) and not (any(id_begining in sublist for sublist in alreadyBlinkedList)):
                 alreadyBlinkedTriger = id_begining, begin_distance
                 alreadyBlinkedList.append(alreadyBlinkedTriger)
                 blink_once()
@@ -344,7 +429,7 @@ def faster_loop_trigerlist_distance(qtrigerlist):
 
                 logging.debug('id_begining blink_once() called for blink, alreadyBlinkedList:%s', alreadyBlinkedList)
             """
-            if end_distance <= abs(dis_y) and not (any(id_ending in sublist for sublist in alreadyBlinkedList)):
+            if end_distance <= abs(distance) and not (any(id_ending in sublist for sublist in alreadyBlinkedList)):
                 alreadyBlinkedTriger = id_ending, end_distance
                 # needed thus the function know which object was already blinked and which not
                 alreadyBlinkedList.append(alreadyBlinkedTriger)
@@ -356,6 +441,67 @@ def faster_loop_trigerlist_distance(qtrigerlist):
         last_loop_duration = end_time_loop - start_time_loop
         if (last_loop_duration) > 0.010:
             logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
+
+def faster_loop_2( faster_loop2_blikaj_first):
+    global faster_loop2_blikaj_error
+    global faster_loop2_blikaj_second
+
+    """
+    loopa ktra bude stale bezat a bude mat udaj kedy moze ist najblizss dalsi blik
+    :param blikaj:
+    :param trieda:
+    :return: is returning next possible blick
+    """
+    next_possible_blink = 0
+    next_possible_blink_second = 0
+    last_blinked_class = "error" # need to be set for as if below is checking it
+    while True:
+        start_time_loop = time.time()
+        #try:
+            # needed because qtrigerlist is not always having object inside
+            #@TODO tu zisti preco nedava sharovanu value s druheho procesu !!!!!
+            #blikaj =  faster_loop2_blikaj_error.value
+            #logging.debug("trigerlist%s", blikaj)
+
+        #except:
+            # is setting speed of the loop in case 0.0005 it is 2000 times per second
+            # except is not executed if qtrigerlist is have data
+            #time.sleep(0.0005)
+
+        # if for error
+        if (faster_loop2_blikaj_error.value == 1) and (s_distance.value < next_possible_blink):
+            print ("Ferror:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
+            blink_once()
+            next_possible_blink = (s_distance.value - 50)
+            next_possible_blink_second = next_possible_blink
+            logging.debug('Next_possible_blink_error is :%s', next_possible_blink)
+            last_blinked_class = "error"
+
+        #if for second class
+        if (faster_loop2_blikaj_second.value == 1) and (s_distance.value < next_possible_blink_second) and (faster_loop2_blikaj_error.value == 0) : #and (last_blinked_class != "second")
+            print ("FSecond:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
+            blink_once_double() #TODO nahrad toto blink once when you will have more stable s_distance
+            next_possible_blink_second = (s_distance.value - 100)
+            last_blinked_class = "second"
+            logging.debug('Next_possible_blink_second is :%s', next_possible_blink_second)
+            #TODO check maybe where the second  class is ending
+
+        #If first class
+        if (faster_loop2_blikaj_error.value == 0) and (faster_loop2_blikaj_second.value == 0) and (s_distance.value < next_possible_blink_second) and (last_blinked_class == "second"):
+            print ("FFirst:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
+            blink_once()
+            last_blinked_class = "first"
+            #TODO check if folowing  wood is not contaning any error or second class
+
+
+
+
+        end_time_loop = time.time()
+        # check for how long took execution the loop and log if it is too long
+        last_loop_duration = end_time_loop - start_time_loop
+        #if (last_loop_duration) > 0.010:
+            #logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
+
 
 
 def update_resutls_for_id(results):
@@ -407,7 +553,7 @@ def convert_bounding_boxes_form_Yolo_Centroid_format(results):
     return rects
 
 
-def draw_ids_on_screens(objects):
+def dddraw_ids_on_screens(objects):  # DO not use! it was changed to sraw_object_id()
     """
 
     :param objects:  from cetroid tracker
@@ -422,7 +568,7 @@ def draw_ids_on_screens(objects):
         cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
 
 
-def draw_yolo_output_on_screen(results):
+def draw_yolo_output_on_screen(results):  # DO not use! it was changed to draw_object_bb_and_class(self):
     """
 
     :param results: results from Yolo34
@@ -435,15 +581,17 @@ def draw_yolo_output_on_screen(results):
         cv2.putText(frame, str(cat.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
 
 
-def update_objekty_if_on_screen(objekty):
+def update_objekty_if_not_detected(objekty):
     """
     :param objekty:
-    Is updating all objects store in objekty if is on screen or not
+    Is updating all objects store in objekty if not in in idresults list from detector
     :return:
     """
-    for YObject in objekty:
-        if objekty[YObject].id not in idresults:
-            objekty[YObject].is_on_screen = False
+    for id in objekty:
+        # id in (item for sublist in idresults for item in sublist) is returning True or False good explanation is https://www.geeksforgeeks.org/python-check-if-element-exists-in-list-of-lists/
+        if not id in (item for sublist in idresults for item in sublist):
+            objekty[id].is_detected_by_detector = False
+            #objekty[id].position_on_trail = s_distance.value
 
 
 def get_path_filename_datetime(folder_name):
@@ -456,17 +604,115 @@ def save_picture_to_file(folder_name):
     cv2.imwrite(get_path_filename_datetime(folder_name), oneframe)
 
 
+def convert_from_xywh_to_xAyAxByB_format(bounds):
+    """
 
+    :param bounds: bounds of in format xywh
+    :return: return x1x2y1y2  format
+    """
+
+    x, y, w, h = bounds
+    box = [x - w / 2, y - h / 2, x + w / 2, y + h / 2]
+    return box
+
+def dpi_to_pixels(dpi):
+    """
+    :param dpi: angle in dpi which you would like to convert to pixels . It is using global variable size_of_one_screen_in_dpi which is defined in dev_env_wars
+    :return: pixels
+    """
+    return (Xresolution / size_of_one_screen_in_dpi) * dpi
+
+
+def draw_trail_visualization(objeky,s_distance):
+
+
+    trail_visualization = np.zeros((int(Yresolution / scale_trail_visualization), Xresolution * 2, 3),
+                                   dtype="uint8")
+    saw_senzor_ofset_from_screen_pixels = int(Xresolution + dpi_to_pixels(saw_offset))
+    #draw position of senzor with purple line
+    cv2.line(trail_visualization, (int(Xresolution + dpi_to_pixels(saw_offset) ), int(1)), (int(Xresolution + dpi_to_pixels(saw_offset)), int(Yresolution/scale_trail_visualization)), (255, 0, 255), 10)
+
+    cv2.putText(trail_visualization, str(saw_senzor_ofset_from_screen_pixels),(int(Xresolution + dpi_to_pixels(saw_offset)), int(Yresolution/scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,
+                magenta)
+    for id in objekty:
+        xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id].bounds)
+        #calcculate begining xA and endig xB of rectangle in trai_visualization
+        visualization_xA = xA + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
+        visualization_xB = xB + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
+        #draw error, eye, crack, rot, and crust as red color
+        if objekty[id].category == "error" or objekty[id].category == "eye" or objekty[id].category == "crack" or objekty[id].category == "rot" or objekty[id].category == "crust":
+            cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),(int(visualization_xB), int(yB / scale_trail_visualization)), red, 3)
+            # draw objekty[id].position_on_trail
+            cv2.putText(trail_visualization, str(objekty[id].id), (int(visualization_xA), int(yB / scale_trail_visualization)),cv2.FONT_HERSHEY_COMPLEX, 1, (magenta))
+            # visualization_xB is start location of error and visualization_xA end of error
+
+        #draw secondclass as brown collor
+        if objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" or objekty[id].category == "edge" or objekty[id].category == "darksecondclass" or objekty[id].category == "mark":
+            cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),
+                          (int(visualization_xB), int(yB / scale_trail_visualization)), brown, 2)
+            cv2.putText(trail_visualization, str(objekty[id].id),
+                        (int(visualization_xA), int(yB / scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,
+                        (magenta))
+    #cv2.imshow("Trail_visualization", trail_visualization)
+    return trail_visualization
+
+def check_on_vysialization (trail_visualization):
+    global faster_loop2_blikaj_error
+    global faster_loop2_blikaj_second
+    #faster_loop2_blikaj_error = Value('b', 0)
+    saw_senzor_ofset_from_screen_pixels = int(Xresolution + dpi_to_pixels(saw_offset))
+
+    # fire mark if first on magenta line
+    for id in objekty:
+        xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id].bounds)
+        #calcculate begining xA and endig xB of rectangle in trai_visualization
+        visualization_xA = xA + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
+        visualization_xB = xB + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
+        #draw error, eye, crack, rot, and crust as red color
+        if objekty[id].category == "error" or objekty[id].category == "eye" or objekty[id].category == "crack" or objekty[id].category == "rot" or objekty[id].category == "crust" :
+            if (visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
+                faster_loop2_blikaj_error.value = 1
+                break
+            faster_loop2_blikaj_error.value = 0
+            #print ("neblikaj error")
+
+    cv2.putText(trail_visualization, str(faster_loop2_blikaj_error.value), (int(10), int(30)),
+                cv2.FONT_HERSHEY_COMPLEX, 1, red)
+
+    # fire mark if second class on magenta line
+    for id in objekty:
+        xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id].bounds)
+        # calcculate begining xA and endig xB of rectangle in trai_visualization
+        visualization_xA = xA + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
+        visualization_xB = xB + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
+        if objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" or objekty[id].category == "edge" or objekty[id].category == "darksecondclass" or objekty[id].category == "mark":
+            if (visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
+                faster_loop2_blikaj_second.value = 1
+                break
+            faster_loop2_blikaj_second.value = 0
+    # siganlyze on screen if second class found
+    cv2.putText(trail_visualization, str(faster_loop2_blikaj_second.value), (int(10), int(60)),cv2.FONT_HERSHEY_COMPLEX, 1, brown)
+    cv2.imshow("Trail_visualization", trail_visualization)
 
 if __name__ == "__main__":
-
     ################################ SETUP #############################################################################
-    """"""
-    cap = cv2.VideoCapture(0)  # set web cam properties width and height, working for USB for webcam
-    # video_filename = "MOV_2426.mp4"                                        # use if you want to use static video file
+    # USE if video from file. video_filename  fefinition is located in  dev_env_vars.py
     # cap = cv2.VideoCapture(video_filename)
+
+    # USE if  webcam
+
+    cap = cv2.VideoCapture(0)  # set web cam properties width and height, working for USB for webcam
     cap.set(3, Xresolution)
     cap.set(4, Yresolution)
+    ##Use webcam with high frame rate
+    codec = cv2.VideoWriter_fourcc("M", "J", "P", "G")
+    cap.set(cv2.CAP_PROP_FPS, 50)  # FPS60FPS
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, Xresolution)  # set resolutionx of webcam
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Yresolution)  # set resolutiony of webcam
+    cap.set(cv2.CAP_PROP_FOURCC, codec)
+    print(cap.get(cv2.CAP_PROP_FPS))
+    print(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    print(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     # initialize our centroid tracker and frame dimensions
     ct = CentroidTracker(maxDisappeared=20)
@@ -478,22 +724,12 @@ if __name__ == "__main__":
                    bytes(obj_data, encoding=cat_encoding), )
 
     # Start loop for blinking in separate process
-
-    # initialize shared vars for speed/movement x,y
-    s_x = Value('i', 0)
-    s_y = Value('i', 0)
-    s_distance_x = Value('l', 0)
-    s_distance_y = Value('l', 0)
-    s_queue = Queue()
-
-    # create process to feed queue
-    p = Process(target=feed_queue, args=(s_queue, "/dev/input/mice"))
-    p.start()
-
-    # create instance of Process subclass Mpoint and pass shared values vars
-    m_point = Mpoint(shared_x=s_x, shared_y=s_y, shared_d_x=s_distance_x, shared_d_y=s_distance_y, shared_queue=s_queue,
-                     loop_delay=0.001, filename="/dev/input/mice")
-    m_point.start()
+    # initialize shared var for distance for magneto
+    # sudo chmod 666 /dev/ttyUSB0
+    s_distance = Value('l', 0)
+    # create instance of Process subclass Magneto and pass shared value var
+    sensor_process = Magneto(shared_distance=s_distance)
+    sensor_process.start()
 
     # Shared queue for list with ids to blink
     qtrigerlist = multiprocessing.Queue()
@@ -502,7 +738,13 @@ if __name__ == "__main__":
     # process1 = multiprocessing.Process(target=faster_loop_trigerlist, args=(qtrigerlist, s_x, s_y, ))
     process1 = multiprocessing.Process(target=faster_loop_trigerlist_distance, args=(qtrigerlist,))
     process1.daemon = True
-    process1.start()
+    #process1.start()
+    faster_loop2_blikaj_error = multiprocessing.Value('b', 0)
+    faster_loop2_blikaj_second = multiprocessing.Value('i', 0)
+    faster_loop2_blikaj_first = multiprocessing.Value('i', 0)
+    process2 = multiprocessing.Process(target=faster_loop_2, args=(faster_loop2_blikaj_first,))
+    process2.daemon = True
+    process2.start()
 
     ########################## MAIN LOOP ###############################################################################
 
@@ -518,8 +760,8 @@ if __name__ == "__main__":
             # call Yolo34
             results = net.detect(dark_frame, thresh=detection_treshold)
             try:
-                #update results for rim if founded in previous picture
-                results.append(rim_results)
+                # update results for rim if founded in previous picture
+                # results.append(rim_results)
                 results.append(aou_results)
             except Exception as ex:
                 template = "An exception of type {0} occurred. Arguments:\n{1!r}"
@@ -529,35 +771,51 @@ if __name__ == "__main__":
             del dark_frame
             rects = convert_bounding_boxes_form_Yolo_Centroid_format(results)
             objects = ct.update(rects)
-            draw_ids_on_screens(objects)
-            # PUTT all detected objects with ids to idresults list
+            # draw_ids_on_screens(objects)            # PUTT all detected objects with ids to idresults list
             idresults = update_resutls_for_id(results)
             # Loop over all objects which are detected by Yolo+id
             for id, category, score, bounds in idresults:
                 try:
                     # if Yobjekt with specific id already exists, update it
-                    if objekty[id].id == id:
-                        objekty[id].category = category.decode("utf-8")
-                        objekty[id].score = score
-                        objekty[id].bounds = bounds
+                    # TODO # to je mozno chyba,co sa stane z objektami ktorych id je este na zobrazene ale nuz je objekt dissapeared
+                    if objekty[id].id == id: #and objekty[id].category == category.decode("utf-8"):
+                        if objekty[id].category == category.decode("utf-8"):
+                            objekty[id].category = category.decode("utf-8")
+                            objekty[id].score = score
+                            objekty[id].bounds = bounds
+                            objekty[id].position_on_trail = s_distance.value
+                            objekty[id].is_detected_by_detector = True
+
                 except:
                     # create new object if not existing
-                    objekty[id] = YObject(id, category.decode("utf-8"), score, bounds)
+                    objekty[id] = YObject(id, category.decode("utf-8"), score, bounds, s_distance.value)
 
+            for id in objekty:
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
-                #TODO #Figure out if ignore_error_in_error_and_create_new_object() is working
-                #objekty[id].ignore_error_in_error_and_create_new_object()
-                objekty[id].draw_object_and_id()
-                objekty[id].detect_object(object_to_detect, triger_margin, how_big_object_max_small,
-                                          how_big_object_min_small)
-                #objekty[id].save_picure_of_every_detected_object()
-            update_objekty_if_on_screen(objekty)
+                # TODO #Figure out if ignore_error_in_error_and_create_new_object() is working - it is partly
+                # objekty[id].ignore_error_in_error_and_create_new_object()
+                objekty[id].draw_object_bb_and_class()
+                objekty[id].draw_object_score()
+                objekty[id].draw_object_id()
+                objekty[id].draw_object_position_on_trail()
+                # objekty[id].do_not_use_detect_object(object_to_detect, triger_margin, how_big_object_max_small,how_big_object_min_small)
+                # objekty[id].save_picure_of_every_detected_object()
+            update_objekty_if_not_detected(objekty)
+            try:
+                #print ("#draw_trail_visualization(objekty, s_distance)")
+                #draw_trail_visualization(objekty, s_distance)
+                check_on_vysialization(draw_trail_visualization(objekty, s_distance))
+            except Exception as ex:
+                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                message = template.format(type(ex).__name__, ex.args)
+                print (message)
             # show distance of mouse sensor on screen
-            show_m_point_distance()
+            show_magneto_distance()
             show_count_of_objects_in_frame("error")
+            # used for counting the show_fps
             end_time = time.time()
             show_fps(start_time, end_time)
-        # print("Distance {}".format(m_point.get_distance()))
+
         cv2.imshow("preview", frame)
         # print("Elapsed Time:",end_time-start_time)
         k = cv2.waitKey(1)
