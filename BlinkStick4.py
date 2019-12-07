@@ -8,7 +8,11 @@ logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-
 try:
     for bstick in blinkstick.find_all():
         start_time = time.time()
-        time_between_blinks = 0.1
+        #time_between_blinks = 0.001
+        #time_between_blinks2 = 0.005
+
+        time_between_blinks = 0.0035
+        time_between_blinks2 = 0.005 # jaks tak funguje
         """
         print ("Found device:")
         print ("    Manufacturer:  " + bstick.get_manufacturer())
@@ -19,24 +23,28 @@ try:
         print ("    Info Block 2:  " + bstick.get_info_block2())
         """
         bstick.set_color(channel=0, index=0, name="red")
-        bstick.set_color(channel=0, index=1, name="red")
+        # bstick.set_color(channel=0, index=1, name="red")
+        time.sleep(time_between_blinks2)
         bstick.set_color(channel=0, index=0, name="")
-        bstick.set_color(channel=0, index=1, name="")
+        # bstick.set_color(channel=0, index=1, name="")
         time.sleep(time_between_blinks)
         bstick.set_color(channel=0, index=0, name="red")
-        bstick.set_color(channel=0, index=1, name="red")
+        # bstick.set_color(channel=0, index=1, name="red")
+        time.sleep(time_between_blinks2)
         bstick.set_color(channel=0, index=0, name="")
-        bstick.set_color(channel=0, index=1, name="")
+        # bstick.set_color(channel=0, index=1, name="")
         time.sleep(time_between_blinks)
         bstick.set_color(channel=0, index=0, name="red")
-        bstick.set_color(channel=0, index=1, name="red")
+        # bstick.set_color(channel=0, index=1, name="red")
+        time.sleep(time_between_blinks2)
         bstick.set_color(channel=0, index=0, name="")
-        bstick.set_color(channel=0, index=1, name="")
+        # bstick.set_color(channel=0, index=1, name="")
         time.sleep(time_between_blinks)
         bstick.set_color(channel=0, index=0, name="red")
-        bstick.set_color(channel=0, index=1, name="red")
+        # bstick.set_color(channel=0, index=1, name="red")
+        time.sleep(time_between_blinks2)
         bstick.set_color(channel=0, index=0, name="")
-        bstick.set_color(channel=0, index=1, name="")
+        time.sleep(time_between_blinks)
         end_time = time.time()
         #print("You have bliked, Elapsed Time of the Blink:", end_time - start_time)
         #logging.debug('You have bliked, Elapsed Time of the Blink: %s', end_time - start_time)
