@@ -22,6 +22,7 @@ try:
         print ("    Info Block 1:  " + bstick.get_info_block1())
         print ("    Info Block 2:  " + bstick.get_info_block2())
         """
+        """
         bstick.set_color(channel=0, index=0, name="red")
         # bstick.set_color(channel=0, index=1, name="red")
         time.sleep(time_between_blinks2)
@@ -44,7 +45,10 @@ try:
         # bstick.set_color(channel=0, index=1, name="red")
         time.sleep(time_between_blinks2)
         bstick.set_color(channel=0, index=0, name="")
-        time.sleep(time_between_blinks)
+        """
+        bstick.blink(channel=0, index=0, red=255, green=0, blue=0, name=None, hex=None, repeats=4, delay=7)
+
+
         end_time = time.time()
         #print("You have bliked, Elapsed Time of the Blink:", end_time - start_time)
         #logging.debug('You have bliked, Elapsed Time of the Blink: %s', end_time - start_time)
