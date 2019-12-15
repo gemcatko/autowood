@@ -8,8 +8,8 @@ Xresolution = 1280
 Yresolution = 720
 scale_trail_visualization = 4
 
-
-video_filename = "/home/automateit/Videos/2019-07-08 07:07:37.017054_test_video_5-10minute.avi"
+video_filename = "my_video-2.mkv"
+video_filename_path = "/home/automateit/Videos/" + video_filename
 
 cell_phone = []
 list_chyba = []
@@ -49,13 +49,15 @@ detection_treshold = 0.15
 object_for_rim_detection = "edge"
 object_to_detect = "error"
 #yolov3_cfg = "cfg/2019_03_31_yolo-obj_v3.cfg"
-yolov3_cfg = "cfg/2019_09_07_yolo-obj_v3.cfg"
+#yolov3_cfg = "cfg/2019_09_07_yolo-obj_v3.cfg"
+yolov3_cfg = "cfg/2019_12_09_yolo-obj_v3.cfg"
 cat_encoding = "utf-8"
 #yolov_weights = "weights/2019_03_31_yolo-obj_v3_6904.weights"
-yolov_weights = "weights/2019_09_07_yolo-obj_v3_7139.weights"
+#yolov_weights = "weights/2019_09_07_yolo-obj_v3_7139.weights"
+yolov_weights = "weights/2019_12_09_yolo-obj_v3_final.weights"
 
 obj_data = "cfg/obj.data"
-detection_treshold = 0.25
+detection_treshold = 0.15
 
 
 #Colors
