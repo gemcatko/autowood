@@ -187,6 +187,9 @@ class YObject:
             # print (message)
 
     def save_picure_of_every_detected_object(self, file_name="detected_objects"):
+        """
+        :param folder name need to be suplied:
+        """
         if self.is_picture_saved == False:
             save_picture_to_file(file_name)
             self.is_picture_saved = True
@@ -791,6 +794,11 @@ if __name__ == "__main__":
                 except:
                     # create new object if not existing
                     objekty[id] = YObject(id, category.decode("utf-8"), score, bounds, s_distance.value)
+            print(len(objekty))
+            #print(objekty)
+            if len(objekty) > 10:
+                del objekty[number_of_deleted_objects]
+                number_of_deleted_objects = number_of_deleted_objects + 1
 
             for id in objekty:
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()

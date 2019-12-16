@@ -8,7 +8,7 @@ Xresolution = 1280
 Yresolution = 720
 scale_trail_visualization = 4
 
-video_filename = "my_video-2.mkv"
+video_filename = "my_video-3.mkv"
 video_filename_path = "/home/automateit/Videos/" + video_filename
 
 cell_phone = []
@@ -33,6 +33,8 @@ how_big_object_min_small = 0.05 # detect object from how_big_object_min_small to
 max_dist_of_2nd_edge = 0.4 # max distance of second edge to create rim object
 # virtual position of triger relative to camera
 triger_margin = 0.6  # place on screen where it is detecting objects
+number_of_deleted_objects = 0
+number_of_max_detection_per_trail = 5  #if more detection on trail firstly detected will be removed
 
 #Yolo configuration for net
 """
@@ -57,7 +59,7 @@ cat_encoding = "utf-8"
 yolov_weights = "weights/2019_12_09_yolo-obj_v3_final.weights"
 
 obj_data = "cfg/obj.data"
-detection_treshold = 0.15
+detection_treshold = 0.10
 
 
 #Colors
@@ -78,6 +80,7 @@ yellow = (255,255,0)
 azzure = (255, 255, 0)
 brown = (19, 69,139)
 magenta = (255, 0, 255)
+
 
 
 
