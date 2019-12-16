@@ -796,7 +796,7 @@ if __name__ == "__main__":
                     objekty[id] = YObject(id, category.decode("utf-8"), score, bounds, s_distance.value)
             print(len(objekty))
             #print(objekty)
-            if len(objekty) > 10:
+            if len(objekty) > 25: # max number of object which draw on trail
                 del objekty[number_of_deleted_objects]
                 number_of_deleted_objects = number_of_deleted_objects + 1
 
