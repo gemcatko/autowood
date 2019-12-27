@@ -187,6 +187,9 @@ class YObject:
             # print (message)
 
     def save_picure_of_every_detected_object(self, file_name="detected_objects"):
+        """
+        :param folder name need to be suplied:
+        """
         if self.is_picture_saved == False:
             save_picture_to_file(file_name)
             self.is_picture_saved = True
@@ -596,9 +599,9 @@ def update_objekty_if_not_detected(objekty):
 
 def get_path_filename_datetime(folder_name):
     # Use current date to get a text file name.
-    return folder_name + "/" + str(datetime.datetime.now()) + ".jpg"
+    return folder_name + "/" + video_filename + "_" + str(round(cap.get(cv2.CAP_PROP_POS_MSEC),0)) + ".jpg"
 
-
+#print(round(cap.get(cv2.CAP_PROP_POS_MSEC),0)) #get video_timestamp
 def save_picture_to_file(folder_name):
     rr, oneframe = cap.read()
     cv2.imwrite(get_path_filename_datetime(folder_name), oneframe)
@@ -694,13 +697,24 @@ def check_on_vysialization (trail_visualization):
     cv2.putText(trail_visualization, str(faster_loop2_blikaj_second.value), (int(10), int(60)),cv2.FONT_HERSHEY_COMPLEX, 1, brown)
     cv2.imshow("Trail_visualization", trail_visualization)
 
+def rotate_by_180_and_delays(frame,delay):
+    (h, w) = frame.shape[:2]
+    center = (w / 2, h / 2)
+    angle180 = 180
+    scale = 1.0
+    # 180 degrees
+    M = cv2.getRotationMatrix2D(center, angle180, scale)
+    rotated180 = cv2.warpAffine(frame, M, (w, h))
+    time.sleep(delay)
+    return rotated180
+
 if __name__ == "__main__":
     ################################ SETUP #############################################################################
-    # USE if video from file. video_filename  fefinition is located in  dev_env_vars.py
-    # cap = cv2.VideoCapture(video_filename)
+    # USE if video from file. video_filename_path  fefinition is located in  dev_env_vars.py
+    cap = cv2.VideoCapture(video_filename_path)
 
     # USE if  webcam
-
+    """
     cap = cv2.VideoCapture(0)  # set web cam properties width and height, working for USB for webcam
     cap.set(3, Xresolution)
     cap.set(4, Yresolution)
@@ -713,6 +727,8 @@ if __name__ == "__main__":
     print(cap.get(cv2.CAP_PROP_FPS))
     print(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     print(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    
+    """
 
     # initialize our centroid tracker and frame dimensions
     ct = CentroidTracker(maxDisappeared=20)
@@ -753,6 +769,8 @@ if __name__ == "__main__":
         r, frame = cap.read(0)
         if r:
             # start_time = time.time()
+            # rotate frame by 180
+            frame = rotate_by_180_and_delays(frame,0.1)
             # Only measure the time taken by YOLO and API Call overhead
             dark_frame = Image(frame)
             # This are the function parameters of detect:
@@ -789,6 +807,11 @@ if __name__ == "__main__":
                 except:
                     # create new object if not existing
                     objekty[id] = YObject(id, category.decode("utf-8"), score, bounds, s_distance.value)
+            print(len(objekty))
+            #print(objekty)
+            if len(objekty) > 25: # max number of object which draw on trail
+                del objekty[number_of_deleted_objects]
+                number_of_deleted_objects = number_of_deleted_objects + 1
 
             for id in objekty:
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
@@ -799,7 +822,7 @@ if __name__ == "__main__":
                 objekty[id].draw_object_id()
                 objekty[id].draw_object_position_on_trail()
                 # objekty[id].do_not_use_detect_object(object_to_detect, triger_margin, how_big_object_max_small,how_big_object_min_small)
-                # objekty[id].save_picure_of_every_detected_object()
+                objekty[id].save_picure_of_every_detected_object("detected_objects")
             update_objekty_if_not_detected(objekty)
             try:
                 #print ("#draw_trail_visualization(objekty, s_distance)")
