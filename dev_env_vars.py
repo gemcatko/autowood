@@ -8,8 +8,8 @@ Xresolution = 1280
 Yresolution = 720
 scale_trail_visualization = 4
 
-video_filename = "my_video-3.mkv"
-video_filename_path = "/home/automateit/Videos/" + video_filename
+video_filename = "test_01-40_03-17_1440x1080.mp4"
+video_filename_path = "/home/automateit/Projects/darknet-alexeyAB/darknet/x64/Release/data/" + video_filename
 
 cell_phone = []
 list_chyba = []
@@ -50,13 +50,15 @@ detection_treshold = 0.15
 #Alternative configuration for net
 object_for_rim_detection = "edge"
 object_to_detect = "error"
-#yolov3_cfg = "cfg/2019_03_31_yolo-obj_v3.cfg"
+yolov3_cfg = "cfg/2019_12_22_yolo-obj_v3.cfg"
 #yolov3_cfg = "cfg/2019_09_07_yolo-obj_v3.cfg"
-yolov3_cfg = "cfg/2019_12_09_yolo-obj_v3.cfg"
+#yolov3_cfg = "cfg/2019_12_09_yolo-obj_v3.cfg"
+#yolov3_cfg = "cfg/2019_12_24_yolo-obj_v3.cfg"
 cat_encoding = "utf-8"
 #yolov_weights = "weights/2019_03_31_yolo-obj_v3_6904.weights"
 #yolov_weights = "weights/2019_09_07_yolo-obj_v3_7139.weights"
-yolov_weights = "weights/2019_12_09_yolo-obj_v3_final.weights"
+#yolov_weights = "weigh ts/2019_12_09_yolo-obj_v3_final.weights"
+yolov_weights = "weights/2019_12_22_yolo-obj_v3_18000.weights"
 
 obj_data = "cfg/obj.data"
 detection_treshold = 0.10

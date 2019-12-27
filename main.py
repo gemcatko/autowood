@@ -697,6 +697,17 @@ def check_on_vysialization (trail_visualization):
     cv2.putText(trail_visualization, str(faster_loop2_blikaj_second.value), (int(10), int(60)),cv2.FONT_HERSHEY_COMPLEX, 1, brown)
     cv2.imshow("Trail_visualization", trail_visualization)
 
+def rotate_by_180_and_delays(frame,delay):
+    (h, w) = frame.shape[:2]
+    center = (w / 2, h / 2)
+    angle180 = 180
+    scale = 1.0
+    # 180 degrees
+    M = cv2.getRotationMatrix2D(center, angle180, scale)
+    rotated180 = cv2.warpAffine(frame, M, (w, h))
+    time.sleep(delay)
+    return rotated180
+
 if __name__ == "__main__":
     ################################ SETUP #############################################################################
     # USE if video from file. video_filename_path  fefinition is located in  dev_env_vars.py
@@ -758,6 +769,8 @@ if __name__ == "__main__":
         r, frame = cap.read(0)
         if r:
             # start_time = time.time()
+            # rotate frame by 180
+            frame = rotate_by_180_and_delays(frame,0.1)
             # Only measure the time taken by YOLO and API Call overhead
             dark_frame = Image(frame)
             # This are the function parameters of detect:
