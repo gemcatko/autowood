@@ -5,8 +5,8 @@ import threading
 import time
 from typing import List, Any, Union
 
-#from pydarknet import Detector, Image
-import darknet
+from pydarknet import Detector, Image
+#import darknet
 
 import cv2
 import numpy as np
@@ -759,10 +759,7 @@ if __name__ == "__main__":
             # This are the function parameters of detect:
             # Possible inputs: def detect(self, Image image, float thresh=.5, float hier_thresh=.5, float nms=.45):
             # call Yolo34
-            #results = net.detect(dark_frame, thresh=detection_treshold)
-            darknet_image = darknet.make_image(darknet.network_width(netMain),
-                                               darknet.network_height(netMain), 3)
-            detections = darknet.detect_image(netMain, metaMain, darknet_image, thresh=0.25)
+            results = net.detect(dark_frame, thresh=detection_treshold)
             try:
                 # update results for rim if founded in previous picture
                 # results.append(rim_results)

@@ -44,16 +44,10 @@ altNames = None
 
 def YOLO():
 
-    global metaMain, netMain, altNames
-    #configPath = "./cfg/yolov3.cfg"
-    #weightPath = "./yolov3.weights"
-    #metaPath = "./cfg/coco.data"
+    global metaMain, netMain, altNames ,detections
     configPath = "./x64/Release/data/2019_12_22_yolo-obj_v3.cfg"
     weightPath = "./backup/2019_12_22_yolo-obj_v3_18000.weights"
     metaPath = "./x64/Release/data/obj.data"
-
-    obj_data = "cfg/obj.data"
-    detection_treshold = 0.10
     if not os.path.exists(configPath):
         raise ValueError("Invalid config path `" +
                          os.path.abspath(configPath)+"`")
@@ -121,6 +115,8 @@ def YOLO():
         cv2.waitKey(3)
     cap.release()
     out.release()
+
+
 
 if __name__ == "__main__":
     YOLO()
