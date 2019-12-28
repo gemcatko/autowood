@@ -10,6 +10,10 @@ import sys
 # insert at 1, 0 is the script path (or '' in REPL)
 sys.path.insert(1, '/home/automateit/Projects/darknet-alexeyAB/darknet')
 import darknet
+from multiprocessing import Process, Value, Array, Manager
+manager = Manager()
+detections = manager.list()
+#print(type(detections))
 
 def convertBack(x, y, w, h):
     xmin = int(round(x - (w / 2)))
@@ -40,7 +44,6 @@ def cvDrawBoxes(detections, img):
 netMain = None
 metaMain = None
 altNames = None
-
 
 def YOLO():
 
@@ -105,17 +108,30 @@ def YOLO():
                                    interpolation=cv2.INTER_LINEAR)
 
         darknet.copy_image_from_bytes(darknet_image,frame_resized.tobytes())
-
-        detections = darknet.detect_image(netMain, metaMain, darknet_image, thresh=0.25)
-        image = cvDrawBoxes(detections, frame_resized)
+        #arr = Array('i', range(10))
+        #detections= darknet.detect_image(netMain, metaMain, darknet_image, thresh=0.25)
+        del detections[:]
+        detection = darknet.detect_image(netMain, metaMain, darknet_image, thresh=0.25)
+        detections.append(detection)
+        image = cvDrawBoxes(detection, frame_resized)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         #print(1/(time.time()-prev_time))
-        print (detections)
+        #print (type(detection))
+        #print (detection)
+
         cv2.imshow('Demo', image)
         cv2.waitKey(3)
     cap.release()
     out.release()
 
+def draw_trail_visualization():
+    while True:
+        if detections:
+            print (detections)
+
+process10 = Process(target=draw_trail_visualization)
+process10.daemon = True
+process10.start()
 
 
 if __name__ == "__main__":
