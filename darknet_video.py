@@ -5,6 +5,10 @@ import os
 import cv2
 import numpy as np
 import time
+# some_file.py
+import sys
+# insert at 1, 0 is the script path (or '' in REPL)
+sys.path.insert(1, '/home/automateit/Projects/darknet-alexeyAB/darknet')
 import darknet
 
 def convertBack(x, y, w, h):
@@ -13,7 +17,6 @@ def convertBack(x, y, w, h):
     ymin = int(round(y - (h / 2)))
     ymax = int(round(y + (h / 2)))
     return xmin, ymin, xmax, ymax
-
 
 def cvDrawBoxes(detections, img):
     for detection in detections:
@@ -46,7 +49,7 @@ def YOLO():
     #weightPath = "./yolov3.weights"
     #metaPath = "./cfg/coco.data"
     configPath = "./x64/Release/data/2019_12_22_yolo-obj_v3.cfg"
-    weightPath = "./backup/2019_12_22_yolo-obj_v3_19000.weights"
+    weightPath = "./backup/2019_12_22_yolo-obj_v3_18000.weights"
     metaPath = "./x64/Release/data/obj.data"
 
     obj_data = "cfg/obj.data"
