@@ -11,8 +11,15 @@ import sys
 sys.path.insert(1, '/home/automateit/Projects/darknet-alexeyAB/darknet')
 import darknet
 from multiprocessing import Process, Value, Array, Manager
+from multiprocessing import shared_memory
+import numpy as np
 manager = Manager()
-detections = manager.list()
+manager_detections = manager.list()
+#a = np.array([])
+shm = shared_memory.SharedMemory(create=True, size=6520800, name='psm_c013ddb7')
+shm_image = np.ndarray((416,416,3), dtype=np.uint8, buffer=shm.buf)
+#b[:] = a[:]  # Copy the original data into shared memory
+#print(b,shm.name)
 #print(type(detections))
 
 def convertBack(x, y, w, h):
@@ -47,7 +54,7 @@ altNames = None
 
 def YOLO():
 
-    global metaMain, netMain, altNames ,detections
+    global metaMain, netMain, altNames ,manager_detections
     configPath = "./x64/Release/data/2019_12_22_yolo-obj_v3.cfg"
     weightPath = "./backup/2019_12_22_yolo-obj_v3_18000.weights"
     metaPath = "./x64/Release/data/obj.data"
@@ -110,26 +117,35 @@ def YOLO():
         darknet.copy_image_from_bytes(darknet_image,frame_resized.tobytes())
         #arr = Array('i', range(10))
         #detections= darknet.detect_image(netMain, metaMain, darknet_image, thresh=0.25)
-        del detections[:]
-        detection = darknet.detect_image(netMain, metaMain, darknet_image, thresh=0.25)
-        detections.append(detection)
-        image = cvDrawBoxes(detection, frame_resized)
+        del manager_detections[:]                       #need to be cleared every iterration
+        detections = darknet.detect_image(netMain, metaMain, darknet_image, thresh=0.25)
+        manager_detections.append(detections)
+        image = cvDrawBoxes(detections, frame_resized)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        #print(1/(time.time()-prev_time))
-        #print (type(detection))
-        #print (detection)
-
+        shm_image[:] = image[:]
+        #mpimage = Array ('d', image)
+        #print("a",type(image))
+        #print(image)
         cv2.imshow('Demo', image)
+        #print(image.dtype)
+
         cv2.waitKey(3)
     cap.release()
     out.release()
 
-def draw_trail_visualization():
+def second_visualization():
+    existing_shm = shared_memory.SharedMemory(name='psm_c013ddb7')
+    image = np.ndarray((416,416,3), dtype=np.uint8, buffer=existing_shm.buf)
     while True:
-        if detections:
-            print (detections)
+        #print (manager_detections)
+        #print(type(c))
+        cv2.imshow('second_visualization', image)
+        cv2.waitKey(3)
+        #time.sleep(1)
 
-process10 = Process(target=draw_trail_visualization)
+
+
+process10 = Process(target=second_visualization )
 process10.daemon = True
 process10.start()
 
