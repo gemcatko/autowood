@@ -112,18 +112,14 @@ def YOLO():
                                    interpolation=cv2.INTER_LINEAR)
 
         darknet.copy_image_from_bytes(darknet_image,frame_resized.tobytes())
-        #arr = Array('i', range(10))
-        #detections= darknet.detect_image(netMain, metaMain, darknet_image, thresh=0.25)
         del manager_detections[:]                       #need to be cleared every iterration
         detections = darknet.detect_image(netMain, metaMain, darknet_image, thresh=0.25)
         #print(detections)
         manager_detections.append(detections)
         image = cvDrawBoxes(detections, frame_resized)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        #copy image to shared memory as array because we would like to share with other proces
         shm_image[:] = image[:]
-        #mpimage = Array ('d', image)
-        #print("a",type(image))
-        #print(image)
         cv2.imshow('Demo', image)
         #print(image.dtype)
 
@@ -169,19 +165,42 @@ def second_visualization(net_width,net_heigth):
     while True:
 
         cv2.imshow('second_visualization', image)
+        # get data from shared memory
         results = manager_detections
         results = unpack_results(results)
-        #print(results)
-        rects = convert_bounding_boxes_form_Yolo_Centroid_format(results)
-        #print(rects)
-        ct_objects = ct.update(rects)
-        #idresults = update_resutls_for_id(results)
-
-        #orderedDict([(0, array([1003, 476])), (1, array([271, 612])), (2, array([987, 751])), (3, array([327, 611])),(4, array([570, 608])), (5, array([383, 617]))])
+        #print("Results from darkent:",results)
+        # genreate IDs for for results from Darknet
+        ct_objects = ct.update(convert_bounding_boxes_form_Yolo_Centroid_format(results))
+        idresults = update_resutls_for_id(results,ct_objects)
+        print("Resultswith ID", idresults)
         cv2.waitKey(3)
         #time.sleep(1)
 
-
+def update_resutls_for_id(results,ct_objects):
+    """
+    loop over the tracked objects from Yolo34
+    Reconstruct Yolo34 results with object id (data from centroid tracker) an put object ID to idresults list, like :
+    class 'list'>[(b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
+    class 'list'>[(1, b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (4, b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
+    :param results from Darknet, ct_objects:
+    :return:idresults
+    """
+    idresults = []
+    try:
+        for cat, score, bounds in results:
+            x, y, w, h = bounds
+            # loop over the tracked objects from Centroid
+            for (objectID, centroid) in ct_objects.items():
+                # put centroid coordinates to cX and Cy variables
+                cX, cY = centroid[0], centroid[1]
+                # there is difference between yolo34 centroids and centroids calculated by centroid tracker,Centroid closer then 2 pixel are considired to matcg  TODO find where?
+                if abs(cX - int(x)) <= 2 and abs(cY - int(y)) <= 2:
+                    # reconstruct detection list as from yolo34 including ID from centroid
+                    idresult = objectID, cat, score, bounds
+                    idresults.append(idresult)
+        return idresults
+    except:
+        return idresults
 
 class YObject:
     # use for creating objects from Yolo.
