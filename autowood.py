@@ -15,12 +15,12 @@ from multiprocessing import shared_memory
 import numpy as np
 manager = Manager()
 manager_detections = manager.list()
-#a = np.array([])
+from pyimagesearch.centroidtracker import CentroidTracker
+from dev_env_vars import *
+
 shm = shared_memory.SharedMemory(create=True, size=6520800, name='psm_c013ddb7')
 shm_image = np.ndarray((416,416,3), dtype=np.uint8, buffer=shm.buf)
-#b[:] = a[:]  # Copy the original data into shared memory
-#print(b,shm.name)
-#print(type(detections))
+
 
 def convertBack(x, y, w, h):
     xmin = int(round(x - (w / 2)))
@@ -119,6 +119,7 @@ def YOLO():
         #detections= darknet.detect_image(netMain, metaMain, darknet_image, thresh=0.25)
         del manager_detections[:]                       #need to be cleared every iterration
         detections = darknet.detect_image(netMain, metaMain, darknet_image, thresh=0.25)
+        #print(detections)
         manager_detections.append(detections)
         image = cvDrawBoxes(detections, frame_resized)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -133,19 +134,138 @@ def YOLO():
     cap.release()
     out.release()
 
-def second_visualization():
+def convert_bounding_boxes_form_Yolo_Centroid_format(results):
+    # clean rect so it is clean an can be filled with new detection from frame\
+    # later used in conversion_to_x1y1x2y2 . Conversion from yolo format to Centroid Format
+    # rects are needed for centroid to work. They need to be cleared every time
+    rects = []
+
+    #if len(results) <= 1: # check if array is not empty, for prevention of crashing in later stage
+    #    return []
+    try:
+        for oneresult in results:   #unpacking
+            for cat, score, bounds in oneresult:    # unpacking
+                x, y, w, h = bounds
+                """
+                convert from yolo format to cetroid format
+                Yolo output:
+                [(b'person', 0.9299755096435547, (363.68475341796875, 348.0577087402344, 252.04286193847656, 231.17266845703125)), (b'vase', 0.3197628855705261, (120.3013687133789, 405.3641357421875, 40.76551055908203, 32.07142639160156))]
+                [(b'mark', 0.9893345236778259, (86.11815643310547, 231.90643310546875, 22.100597381591797, 54.182857513427734)), (b'mark', 0.8441593050956726, (225.28382873535156, 234.5716094970703, 14.333066940307617, 53.428749084472656)), (b'edge', 0.6000953316688538, (377.6446838378906, 254.71759033203125, 8.562969207763672, 18.379894256591797)), (b'edge', 0.5561915636062622, (388.4414367675781, 211.0662841796875, 10.678437232971191, 15.206807136535645)), (b'edge', 0.44139474630355835, (377.0844421386719, 150.8873748779297, 9.128596305847168, 18.9124755859375)), (b'crack', 0.28897273540496826, (268.6462707519531, 169.00457763671875, 253.9573516845703, 34.764007568359375))]]
+                """
+                # calculate bounding box for every object from YOLO for centroid purposes
+                box = np.array([x - w / 2, y - h / 2, x + w / 2, y + h / 2])
+                # append to list of  bounding boxes for centroid
+                rects.append(box.astype("int"))
+        return rects
+    except:
+        print("There was a problem with extrection from result:")
+        return rects
+
+def second_visualization(net_width,net_heigth):
     existing_shm = shared_memory.SharedMemory(name='psm_c013ddb7')
-    image = np.ndarray((416,416,3), dtype=np.uint8, buffer=existing_shm.buf)
+    image = np.ndarray((net_width,net_heigth,3), dtype=np.uint8, buffer=existing_shm.buf)
+    ct = CentroidTracker(maxDisappeared=20)
     while True:
-        #print (manager_detections)
-        #print(type(c))
+
         cv2.imshow('second_visualization', image)
+        results = manager_detections
+        #print(results)
+        rects = convert_bounding_boxes_form_Yolo_Centroid_format(results)
+        #print(rects)
+        ct_objects = ct.update(rects)
+        #idresults = update_resutls_for_id(results)
+        #orderedDict([(0, array([1003, 476])), (1, array([271, 612])), (2, array([987, 751])), (3, array([327, 611])),(4, array([570, 608])), (5, array([383, 617]))])
         cv2.waitKey(3)
         #time.sleep(1)
 
+class YObject:
+    # use for creating objects from Yolo.
+    # def __init__(self, centroid_id, category, score, bounds):
+    def __init__(self, id, category, score, bounds, s_distance):
+        # copy paste functionality of  detect_object_4_c
+        self.id = id
+        self.category = category
+        self.score = score
+        self.bounds = bounds
+        self.position_on_trail = s_distance
+        self.is_detected_by_detector = True
+        self.ignore = False
+        self.is_picture_saved = False
+        self.ready_for_blink_start = False
+        self.ready_for_blink_end = False
 
+    def draw_object_bb_and_class(self):
+        """
+        Draw objects name to CV2 frame  using cv2 only if  detected by detector
+        :return: none
+        """
+        if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
+            x, y, w, h = self.bounds
+            # draw what is name of the object
+            cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), blue, 4)
+            cv2.putText(frame, str(self.category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
 
-process10 = Process(target=second_visualization )
+    def draw_object_score(self):
+        """
+        Draw objects score to CV2 frame  using cv2 only if still detected by detector
+        :return: none
+        """
+        if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
+            x, y, w, h = self.bounds
+            cv2.putText(frame, str(round(self.score, 2)), (int(x - 20), int(y - 20)), cv2.FONT_HERSHEY_COMPLEX, 1, azzure)
+
+    def draw_object_id(self):
+        """
+        Drae object Id to CV2 frame only if still detected by detector
+        :return:
+        """
+        if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
+            x, y, w, h = self.bounds
+            cv2.putText(frame, str(self.id), (int(x - 30), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (magenta))
+
+    def draw_object_position_on_trail(self):
+        """
+        Drae object Id to CV2 frame only if still detected by detector
+        :return:
+        """
+        if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
+            x, y, w, h = self.bounds
+            x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
+            #position_on_trail_for_screen = round(self.position_on_trail + (x_rel * size_of_one_screen_in_dpi), 1)
+            position_on_trail_for_screen = round((x_rel * size_of_one_screen_in_dpi)  )
+            cv2.putText(frame, str(position_on_trail_for_screen), (int(x), int(y + 25)), cv2.FONT_HERSHEY_COMPLEX, 1, yellow)
+
+    def detect_rim_and_propagate_back_to_yolo_detections(self):
+        """
+        # find rim and back propagate to detection from Yolo in next loop
+        :return:
+        """
+        global rim_results
+        try:
+            # if rim is not detected delete rim_results so it will not be appended to detection from youlo in next loop
+            if objekty[id].detect_rim(object_for_rim_detection, distance_of_second_edge) == False:
+                del rim_results
+            # detect_rim return True hten you need to update
+            else:
+                hcategory, hscore, hbounds = objekty[id].detect_rim(object_for_rim_detection,
+                                                                    distance_of_second_edge)
+                # in rim_results is rim stored so in can be inported to detection from Yolo in next loop
+                rim_results = hcategory.encode("utf-8"), hscore, hbounds
+
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            # print (message)
+
+    def save_picure_of_every_detected_object(self, file_name="detected_objects"):
+        """
+        :param folder name need to be suplied:
+        """
+        if self.is_picture_saved == False:
+            save_picture_to_file(file_name)
+            self.is_picture_saved = True
+
+process10 = Process(target=second_visualization, args=(416,416) )
 process10.daemon = True
 process10.start()
 
