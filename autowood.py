@@ -17,6 +17,7 @@ manager = Manager()
 manager_detections = manager.list()
 from pyimagesearch.centroidtracker import CentroidTracker
 from dev_env_vars import *
+from magneto import Magneto
 
 shm = shared_memory.SharedMemory(create=True, size=6520800, name='psm_c013ddb7')
 shm_image = np.ndarray((416,416,3), dtype=np.uint8, buffer=shm.buf)
@@ -158,50 +159,6 @@ def unpack_results(results):
         #print(oneresult)
         return oneresult
 
-def second_visualization(net_width,net_heigth):
-    existing_shm = shared_memory.SharedMemory(name='psm_c013ddb7')
-    image = np.ndarray((net_width,net_heigth,3), dtype=np.uint8, buffer=existing_shm.buf)
-    ct = CentroidTracker(maxDisappeared=20)
-    while True:
-
-        cv2.imshow('second_visualization', image)
-        # get data from shared memory
-        results = manager_detections
-        results = unpack_results(results)
-        #print("Results from darkent:",results)
-        # genreate IDs for for results from Darknet
-        ct_objects = ct.update(convert_bounding_boxes_form_Yolo_Centroid_format(results))
-        idresults = update_resutls_for_id(results,ct_objects)
-        print("Resultswith ID", idresults)
-        cv2.waitKey(3)
-        #time.sleep(1)
-
-def update_resutls_for_id(results,ct_objects):
-    """
-    loop over the tracked objects from Yolo34
-    Reconstruct Yolo34 results with object id (data from centroid tracker) an put object ID to idresults list, like :
-    class 'list'>[(b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
-    class 'list'>[(1, b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (4, b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
-    :param results from Darknet, ct_objects:
-    :return:idresults
-    """
-    idresults = []
-    try:
-        for cat, score, bounds in results:
-            x, y, w, h = bounds
-            # loop over the tracked objects from Centroid
-            for (objectID, centroid) in ct_objects.items():
-                # put centroid coordinates to cX and Cy variables
-                cX, cY = centroid[0], centroid[1]
-                # there is difference between yolo34 centroids and centroids calculated by centroid tracker,Centroid closer then 2 pixel are considired to matcg  TODO find where?
-                if abs(cX - int(x)) <= 2 and abs(cY - int(y)) <= 2:
-                    # reconstruct detection list as from yolo34 including ID from centroid
-                    idresult = objectID, cat, score, bounds
-                    idresults.append(idresult)
-        return idresults
-    except:
-        return idresults
-
 class YObject:
     # use for creating objects from Yolo.
     # def __init__(self, centroid_id, category, score, bounds):
@@ -287,12 +244,107 @@ class YObject:
         """
         if self.is_picture_saved == False:
             save_picture_to_file(file_name)
-            self.is_picture_saved = True
+        self.is_picture_saved = True
 
+        def update_resutls_for_id(results, ct_objects):
+            """
+            loop over the tracked objects from Yolo34
+            Reconstruct Yolo34 results with object id (data from centroid tracker) an put object ID to idresults list, like :
+            class 'list'>[(b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
+            class 'list'>[(1, b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (4, b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
+            :param results from Darknet, ct_objects:
+            :return:idresults
+            """
+            idresults = []
+            try:
+                for cat, score, bounds in results:
+                    x, y, w, h = bounds
+                    # loop over the tracked objects from Centroid
+                    for (objectID, centroid) in ct_objects.items():
+                        # put centroid coordinates to cX and Cy variables
+                        cX, cY = centroid[0], centroid[1]
+                        # there is difference between yolo34 centroids and centroids calculated by centroid tracker,Centroid closer then 2 pixel are considired to matcg  TODO find where?
+                        if abs(cX - int(x)) <= 2 and abs(cY - int(y)) <= 2:
+                            # reconstruct detection list as from yolo34 including ID from centroid
+                            idresult = objectID, cat, score, bounds
+                            idresults.append(idresult)
+                return idresults
+            except:
+                return idresults
+
+def update_resutls_for_id(results,ct_objects):
+    """
+    loop over the tracked objects from Yolo34
+    Reconstruct Yolo34 results with object id (data from centroid tracker) an put object ID to idresults list, like :
+    class 'list'>[(b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
+    class 'list'>[(1, b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (4, b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
+    :param results from Darknet, ct_objects:
+    :return:idresults
+    """
+    idresults = []
+    try:
+        for cat, score, bounds in results:
+            x, y, w, h = bounds
+            # loop over the tracked objects from Centroid
+            for (objectID, centroid) in ct_objects.items():
+                # put centroid coordinates to cX and Cy variables
+                cX, cY = centroid[0], centroid[1]
+                # there is difference between yolo34 centroids and centroids calculated by centroid tracker,Centroid closer then 2 pixel are considired to matcg  TODO find where?
+                if abs(cX - int(x)) <= 2 and abs(cY - int(y)) <= 2:
+                    # reconstruct detection list as from yolo34 including ID from centroid
+                    idresult = objectID, cat, score, bounds
+                    idresults.append(idresult)
+        return idresults
+    except:
+        return idresults
+
+def second_visualization(net_width,net_heigth):
+    existing_shm = shared_memory.SharedMemory(name='psm_c013ddb7')
+    image = np.ndarray((net_width,net_heigth,3), dtype=np.uint8, buffer=existing_shm.buf)
+    ct = CentroidTracker(maxDisappeared=20)
+    while True:
+
+        cv2.imshow('second_visualization', image)
+        # get data from shared memory
+        results = manager_detections
+        results = unpack_results(results)
+        #print("Results from darkent:",results)
+        # genreate IDs for for results from Darknet
+        ct_objects = ct.update(convert_bounding_boxes_form_Yolo_Centroid_format(results))
+        idresults = update_resutls_for_id(results,ct_objects)
+        print("Resultswith ID", idresults)
+        cv2.waitKey(3)
+        #time.sleep(1)
+        for id, category, score, bounds in idresults:
+            try:
+                # if Yobjekt with specific id already exists, update it
+                # TODO # to je mozno chyba,co sa stane z objektami ktorych id je este na zobrazene ale nuz je objekt dissapeared
+                if objekty[id].id == id:  # and objekty[id].category == category.decode("utf-8"):
+                    if objekty[id].category == category.decode("utf-8"):
+                        objekty[id].category = category.decode("utf-8")
+                        objekty[id].score = score
+                        objekty[id].bounds = bounds
+                        objekty[id].position_on_trail = s_distance.value
+                        objekty[id].is_detected_by_detector = True
+
+            except:
+                # create new object if not existing
+                objekty[id] = YObject(id, category.decode("utf-8"), score, bounds, s_distance.value)
+
+
+
+
+# Start loop for blinking in separate process
+# initialize shared var for distance for magneto
+# sudo chmod 666 /dev/ttyUSB0
+s_distance = Value('l', 0)
+# create instance of Process subclass Magneto and pass shared value var
+sensor_process = Magneto(shared_distance=s_distance)
 second_visualization_proc = Process(target=second_visualization, args=(network_width, network_heigth))
 second_visualization_proc.daemon = True
 
 
 if __name__ == "__main__":
+    sensor_process.start()
     second_visualization_proc.start()
     YOLO()
