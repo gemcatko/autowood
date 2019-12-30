@@ -206,7 +206,7 @@ class YObject:
             x, y, w, h = self.bounds
             cv2.putText(frame, str(self.id), (int(x - 30), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (magenta))
 
-    def draw_object_position_on_trail(self,idresults):
+    def draw_object_position_on_trail(self,frame,idresults):
         """
         Drae object Id to CV2 frame only if still detected by detector
         :return:
@@ -216,7 +216,7 @@ class YObject:
             x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
             #position_on_trail_for_screen = round(self.position_on_trail + (x_rel * size_of_one_screen_in_dpi), 1)
             position_on_trail_for_screen = round((x_rel * size_of_one_screen_in_dpi)  )
-            cv2.putText(frame, str(position_on_trail_for_screen), (int(x), int(y + 25)), cv2.FONT_HERSHEY_COMPLEX, 1, yellow)
+            cv2.putText(frame, str(position_on_trail_for_screen), (int(x), int(y + 25)), cv2.FONT_HERSHEY_COMPLEX, 1, (yellow))
 
     def detect_rim_and_propagate_back_to_yolo_detections(self):
         """
@@ -341,7 +341,7 @@ def second_visualization(net_width,net_heigth):
             objekty[id].draw_object_bb_and_class(frame, idresults)
             objekty[id].draw_object_score(frame, idresults)
             objekty[id].draw_object_id(frame, idresults)
-            objekty[id].draw_object_position_on_trail(idresults)
+            objekty[id].draw_object_position_on_trail(frame,idresults)
             # objekty[id].do_not_use_detect_object(object_to_detect, triger_margin, how_big_object_max_small,how_big_object_min_small)
             #objekty[id].save_picure_of_every_detected_object("detected_objects")
         update_objekty_if_not_detected(objekty,idresults)
