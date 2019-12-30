@@ -60,6 +60,13 @@ cat_encoding = "utf-8"
 #yolov_weights = "weigh ts/2019_12_09_yolo-obj_v3_final.weights"
 yolov_weights = "weights/2019_12_22_yolo-obj_v3_18000.weights"
 
+configPath = "./x64/Release/data/2019_12_22_yolo-obj_v3.cfg"
+weightPath = "./backup/2019_12_22_yolo-obj_v3_18000.weights"
+metaPath = "./x64/Release/data/obj.data"
+network_width = 416
+network_heigth = 416
+
+
 obj_data = "cfg/obj.data"
 detection_treshold = 0.10
 

@@ -55,9 +55,6 @@ altNames = None
 def YOLO():
 
     global metaMain, netMain, altNames ,manager_detections
-    configPath = "./x64/Release/data/2019_12_22_yolo-obj_v3.cfg"
-    weightPath = "./backup/2019_12_22_yolo-obj_v3_18000.weights"
-    metaPath = "./x64/Release/data/obj.data"
     if not os.path.exists(configPath):
         raise ValueError("Invalid config path `" +
                          os.path.abspath(configPath)+"`")
@@ -143,23 +140,27 @@ def convert_bounding_boxes_form_Yolo_Centroid_format(results):
     #if len(results) <= 1: # check if array is not empty, for prevention of crashing in later stage
     #    return []
     try:
-        for oneresult in results:   #unpacking
-            for cat, score, bounds in oneresult:    # unpacking
-                x, y, w, h = bounds
-                """
-                convert from yolo format to cetroid format
-                Yolo output:
-                [(b'person', 0.9299755096435547, (363.68475341796875, 348.0577087402344, 252.04286193847656, 231.17266845703125)), (b'vase', 0.3197628855705261, (120.3013687133789, 405.3641357421875, 40.76551055908203, 32.07142639160156))]
-                [(b'mark', 0.9893345236778259, (86.11815643310547, 231.90643310546875, 22.100597381591797, 54.182857513427734)), (b'mark', 0.8441593050956726, (225.28382873535156, 234.5716094970703, 14.333066940307617, 53.428749084472656)), (b'edge', 0.6000953316688538, (377.6446838378906, 254.71759033203125, 8.562969207763672, 18.379894256591797)), (b'edge', 0.5561915636062622, (388.4414367675781, 211.0662841796875, 10.678437232971191, 15.206807136535645)), (b'edge', 0.44139474630355835, (377.0844421386719, 150.8873748779297, 9.128596305847168, 18.9124755859375)), (b'crack', 0.28897273540496826, (268.6462707519531, 169.00457763671875, 253.9573516845703, 34.764007568359375))]]
-                """
-                # calculate bounding box for every object from YOLO for centroid purposes
-                box = np.array([x - w / 2, y - h / 2, x + w / 2, y + h / 2])
-                # append to list of  bounding boxes for centroid
-                rects.append(box.astype("int"))
+        for cat, score, bounds in results:    # unpacking
+            x, y, w, h = bounds
+            """
+            convert from yolo format to cetroid format
+            Yolo output:
+            [(b'person', 0.9299755096435547, (363.68475341796875, 348.0577087402344, 252.04286193847656, 231.17266845703125)), (b'vase', 0.3197628855705261, (120.3013687133789, 405.3641357421875, 40.76551055908203, 32.07142639160156))]
+            [(b'mark', 0.9893345236778259, (86.11815643310547, 231.90643310546875, 22.100597381591797, 54.182857513427734)), (b'mark', 0.8441593050956726, (225.28382873535156, 234.5716094970703, 14.333066940307617, 53.428749084472656)), (b'edge', 0.6000953316688538, (377.6446838378906, 254.71759033203125, 8.562969207763672, 18.379894256591797)), (b'edge', 0.5561915636062622, (388.4414367675781, 211.0662841796875, 10.678437232971191, 15.206807136535645)), (b'edge', 0.44139474630355835, (377.0844421386719, 150.8873748779297, 9.128596305847168, 18.9124755859375)), (b'crack', 0.28897273540496826, (268.6462707519531, 169.00457763671875, 253.9573516845703, 34.764007568359375))]]
+            """
+            # calculate bounding box for every object from YOLO for centroid purposes
+            box = np.array([x - w / 2, y - h / 2, x + w / 2, y + h / 2])
+            # append to list of  bounding boxes for centroid
+            rects.append(box.astype("int"))
         return rects
     except:
-        print("There was a problem with extrection from result:")
+        #print("There was a problem with extrection from result:", rects)
         return rects
+
+def unpack_results(results):
+    for oneresult in results:  # unpacking
+        #print(oneresult)
+        return oneresult
 
 def second_visualization(net_width,net_heigth):
     existing_shm = shared_memory.SharedMemory(name='psm_c013ddb7')
@@ -169,14 +170,18 @@ def second_visualization(net_width,net_heigth):
 
         cv2.imshow('second_visualization', image)
         results = manager_detections
+        results = unpack_results(results)
         #print(results)
         rects = convert_bounding_boxes_form_Yolo_Centroid_format(results)
         #print(rects)
         ct_objects = ct.update(rects)
         #idresults = update_resutls_for_id(results)
+
         #orderedDict([(0, array([1003, 476])), (1, array([271, 612])), (2, array([987, 751])), (3, array([327, 611])),(4, array([570, 608])), (5, array([383, 617]))])
         cv2.waitKey(3)
         #time.sleep(1)
+
+
 
 class YObject:
     # use for creating objects from Yolo.
@@ -265,10 +270,10 @@ class YObject:
             save_picture_to_file(file_name)
             self.is_picture_saved = True
 
-process10 = Process(target=second_visualization, args=(416,416) )
-process10.daemon = True
-process10.start()
+second_visualization_proc = Process(target=second_visualization, args=(network_width, network_heigth))
+second_visualization_proc.daemon = True
 
 
 if __name__ == "__main__":
+    second_visualization_proc.start()
     YOLO()
