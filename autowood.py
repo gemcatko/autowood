@@ -122,6 +122,7 @@ def YOLO():
         #copy image to shared memory as array because we would like to share with other proces
         shm_image[:] = image[:]
         cv2.imshow('Demo', image)
+        time.sleep(0.2)
         #print(image.dtype)
 
         cv2.waitKey(3)
@@ -174,8 +175,9 @@ class YObject:
         self.is_picture_saved = False
         self.ready_for_blink_start = False
         self.ready_for_blink_end = False
+        global frame
 
-    def draw_object_bb_and_class(self):
+    def draw_object_bb_and_class(self, frame,idresults):
         """
         Draw objects name to CV2 frame  using cv2 only if  detected by detector
         :return: none
@@ -186,7 +188,7 @@ class YObject:
             cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), blue, 4)
             cv2.putText(frame, str(self.category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
 
-    def draw_object_score(self):
+    def draw_object_score(self,frame,idresults):
         """
         Draw objects score to CV2 frame  using cv2 only if still detected by detector
         :return: none
@@ -195,7 +197,7 @@ class YObject:
             x, y, w, h = self.bounds
             cv2.putText(frame, str(round(self.score, 2)), (int(x - 20), int(y - 20)), cv2.FONT_HERSHEY_COMPLEX, 1, azzure)
 
-    def draw_object_id(self):
+    def draw_object_id(self,frame,idresults):
         """
         Drae object Id to CV2 frame only if still detected by detector
         :return:
@@ -204,7 +206,7 @@ class YObject:
             x, y, w, h = self.bounds
             cv2.putText(frame, str(self.id), (int(x - 30), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (magenta))
 
-    def draw_object_position_on_trail(self):
+    def draw_object_position_on_trail(self,idresults):
         """
         Drae object Id to CV2 frame only if still detected by detector
         :return:
@@ -302,9 +304,9 @@ def second_visualization(net_width,net_heigth):
     existing_shm = shared_memory.SharedMemory(name='psm_c013ddb7')
     image = np.ndarray((net_width,net_heigth,3), dtype=np.uint8, buffer=existing_shm.buf)
     ct = CentroidTracker(maxDisappeared=20)
+    which_id_to_delete=0     # is used for object deletion
     while True:
-
-        cv2.imshow('second_visualization', image)
+        frame = image
         # get data from shared memory
         results = manager_detections
         results = unpack_results(results)
@@ -312,24 +314,81 @@ def second_visualization(net_width,net_heigth):
         # genreate IDs for for results from Darknet
         ct_objects = ct.update(convert_bounding_boxes_form_Yolo_Centroid_format(results))
         idresults = update_resutls_for_id(results,ct_objects)
-        print("Resultswith ID", idresults)
+        #print("Resultswith ID", idresults)
         cv2.waitKey(3)
-        #time.sleep(1)
         for id, category, score, bounds in idresults:
-            try:
+            try:#
                 # if Yobjekt with specific id already exists, update it
                 # TODO # to je mozno chyba,co sa stane z objektami ktorych id je este na zobrazene ale nuz je objekt dissapeared
                 if objekty[id].id == id:  # and objekty[id].category == category.decode("utf-8"):
-                    if objekty[id].category == category.decode("utf-8"):
+                    #if objekty[id].category == category.decode("utf-8"): - If you enable you need to take care of umached objects which are deteceted
                         objekty[id].category = category.decode("utf-8")
                         objekty[id].score = score
                         objekty[id].bounds = bounds
                         objekty[id].position_on_trail = s_distance.value
                         objekty[id].is_detected_by_detector = True
-
             except:
                 # create new object if not existing
                 objekty[id] = YObject(id, category.decode("utf-8"), score, bounds, s_distance.value)
+        if len(objekty) > 25:  # max number of object which to keep
+            del objekty[which_id_to_delete]
+            which_id_to_delete = which_id_to_delete + 1
+
+        for id in objekty:
+            #objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
+            # TODO #Figure out if ignore_error_in_error_and_create_new_object() is working - it is partly
+            # objekty[id].ignore_error_in_error_and_create_new_object()
+            objekty[id].draw_object_bb_and_class(frame, idresults)
+            objekty[id].draw_object_score(frame, idresults)
+            objekty[id].draw_object_id(frame, idresults)
+            objekty[id].draw_object_position_on_trail(idresults)
+            # objekty[id].do_not_use_detect_object(object_to_detect, triger_margin, how_big_object_max_small,how_big_object_min_small)
+            #objekty[id].save_picure_of_every_detected_object("detected_objects")
+        update_objekty_if_not_detected(objekty,idresults)
+        
+        """
+        try:
+            # print ("#draw_trail_visualization(objekty, s_distance)")
+            # draw_trail_visualization(objekty, s_distance)
+            check_on_vysialization(draw_trail_visualization(objekty, s_distance))
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
+        """
+        cv2.imshow('second_visualozation', frame)
+        k = cv2.waitKey(1)
+        if k == 0xFF & ord("q"):
+            break
+
+
+def update_objekty_if_not_detected(objekty,idresults):
+    """
+    :param objekty:
+    Is updating all objects store in objekty if not in in idresults list from detector
+    :return:
+    """
+    for id in objekty:
+        # id in (item for sublist in idresults for item in sublist) is returning True or False good explanation is https://www.geeksforgeeks.org/python-check-if-element-exists-in-list-of-lists/
+        if not id in (item for sublist in idresults for item in sublist):
+            objekty[id].is_detected_by_detector = False
+            #objekty[id].position_on_trail = s_distance.value
+
+def calculate_relative_coordinates(x, y, w, h):
+    """
+    Calculate coordinates in percentage relative to the screen
+    :param x: center of detected object on x axis in pixels
+    :param y: center of detected object on y axis in pixels
+    :param w: width of detected object on x axis in pixels
+    :param h: height of detected object on y axis in pixels
+    :return: x_rel, y_rel, w_rel, h_rel, area_rel
+    """
+    x_rel = x / Xresolution
+    y_rel = y / Yresolution
+    w_rel = w / Xresolution
+    h_rel = h / Yresolution
+    area_rel = w_rel * h_rel
+    return x_rel, y_rel, w_rel, h_rel, area_rel
 
 
 
