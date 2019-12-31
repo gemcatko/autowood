@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 from dev_env_vars import *
 import multiprocessing
+import time
 import logging
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s', )
 
@@ -14,6 +15,7 @@ class BlinkStickThread(threading.Thread):
         '''Starting blinkStick to blink once in Separate Thread'''
         subprocess.Popen(["python2", "BlinkStick.py"])
         pass
+
 
 class BlinkStickThreadDouble(threading.Thread):
     def run(self):
@@ -59,6 +61,7 @@ def dpi_to_pixels(dpi):
     return (Xres / size_of_one_screen_in_dpi) * dpi
 
 def draw_trail_visualization(objekty,s_distance):
+    start_time = time.time()
 
 
     trail_visualization = np.zeros((int(Yres / scale_trail_visualization), Xres * 2, 3),
@@ -89,6 +92,8 @@ def draw_trail_visualization(objekty,s_distance):
                         (int(visualization_xA), int(yB / scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,
                         (magenta))
     #cv2.imshow("Trail_visualization", trail_visualization)
+    end_time = time.time()
+    show_fps(start_time, end_time, trail_visualization)
     return trail_visualization
 
 def faster_loop_2(faster_loop2_blikaj_first,s_distance):
@@ -201,13 +206,20 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
         last_blinked_class = "first"
         # TODO check if folowing  wood is not contaning any error or second class
 
+def show_fps(start_time, end_time,name_of_frame):
+    duration_of_loop = end_time - start_time
+    FPS = round(1 / duration_of_loop, 1)
+    cv2.putText(name_of_frame, str(FPS), (int(Xres*2 - 80), int(Yres/4 - 10)), cv2.FONT_HERSHEY_COMPLEX, 1,
+                (255, 100, 255))
+    #print(FPS)
+    return FPS
+
 faster_loop2_blikaj_error = 0
 faster_loop2_blikaj_second = 0
 faster_loop2_blikaj_first = 0
 next_possible_blink = 0
 next_possible_blink_second = 0
 last_blinked_class = "error"  # need to be set for as if below is checking it
-# faster_loop2_blikaj_error = Value('b', 0)
 saw_senzor_ofset_from_screen_pixels = int(Xres + dpi_to_pixels(saw_offset))
 
 if __name__=="__main__":

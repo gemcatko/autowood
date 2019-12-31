@@ -55,6 +55,7 @@ metaMain = None
 altNames = None
 
 def YOLO():
+    start_time = time.time()
 
     global metaMain, netMain, altNames ,manager_detections
     if not os.path.exists(configPath):
@@ -107,7 +108,7 @@ def YOLO():
         prev_time = time.time()
         ret, frame_read = cap.read()
         frame_rgb = cv2.cvtColor(frame_read, cv2.COLOR_BGR2RGB)
-        frame_rgb = rotate_by_180_and_delays(frame_rgb,0.13) # use for changing direction of video and speed of video
+        frame_rgb = rotate_by_180_and_delays(frame_rgb,0) # use for changing direction of video and speed of video
         frame_resized = cv2.resize(frame_rgb,
                                    (darknet.network_width(netMain),
                                     darknet.network_height(netMain)),
@@ -121,6 +122,10 @@ def YOLO():
         image = cvDrawBoxes(detections, frame_resized)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         shm_image[:] = image[:]         #copy image to shared memory as array because we would like to share with other proces
+
+        end_time = time.time()
+        show_fps(start_time, end_time, image)
+        start_time = time.time()
         cv2.imshow('Yolo_out', image)
         cv2.waitKey(3)
     cap.release()
@@ -297,11 +302,20 @@ def update_resutls_for_id(results,ct_objects):
     except:
         return idresults
 
+def show_fps(start_time, end_time,name_of_frame):
+    duration_of_loop = end_time - start_time
+    FPS = round(1 / duration_of_loop, 1)
+    cv2.putText(name_of_frame, str(FPS), (int(Xres - 80), int(Yres - 40)), cv2.FONT_HERSHEY_COMPLEX, 1,
+                (255, 100, 255))
+    #print(FPS)
+    return FPS
+
 def second_visualization(net_width,net_heigth):
     existing_shm = shared_memory.SharedMemory(name='psm_c013ddb7')
     image = np.ndarray((net_width,net_heigth,3), dtype=np.uint8, buffer=existing_shm.buf)
     ct = CentroidTracker(maxDisappeared=20)
-    which_id_to_delete=0     # is used for object deletion
+    which_id_to_delete=0     # is used for object deletion start
+    start_time = time.time()    #for FPS counting
     while True:
         frame = image
         # get data from shared memory
@@ -349,11 +363,15 @@ def second_visualization(net_width,net_heigth):
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
-
+        end_time = time.time()
+        show_fps(start_time, end_time,frame)
+        start_time = time.time()
         cv2.imshow('second_visualization', frame)
         k = cv2.waitKey(1)
         if k == 0xFF & ord("q"):
             break
+
+
 
 
 def update_objekty_if_not_detected(objekty,idresults):
