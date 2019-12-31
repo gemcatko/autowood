@@ -92,10 +92,9 @@ def YOLO():
         except Exception:
             pass
     #cap = cv2.VideoCapture(0)
-    #cap = cv2.VideoCapture("test.mp4")
-    cap = cv2.VideoCapture("x64/Release/data/test_01-40_03-17_1440x1080.mp4")
-    cap.set(3, 1280)
-    cap.set(4, 720)
+    cap = cv2.VideoCapture(video_filename_path)
+    cap.set(3, Xresolution)
+    cap.set(4, Yresolution)
     out = cv2.VideoWriter(
         "output.avi", cv2.VideoWriter_fourcc(*"MJPG"), 10.0,
         (darknet.network_width(netMain), darknet.network_height(netMain)))
@@ -108,7 +107,7 @@ def YOLO():
         prev_time = time.time()
         ret, frame_read = cap.read()
         frame_rgb = cv2.cvtColor(frame_read, cv2.COLOR_BGR2RGB)
-        frame_rgb = rotate_by_180_and_delays(frame_rgb,0.1) # use for changing direction of video and speed of video 
+        frame_rgb = rotate_by_180_and_delays(frame_rgb,0.13) # use for changing direction of video and speed of video
         frame_resized = cv2.resize(frame_rgb,
                                    (darknet.network_width(netMain),
                                     darknet.network_height(netMain)),
@@ -121,11 +120,9 @@ def YOLO():
         manager_detections.append(detections)
         image = cvDrawBoxes(detections, frame_resized)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        #copy image to shared memory as array because we would like to share with other proces
-        shm_image[:] = image[:]
-        cv2.imshow('Demo', image)
-        #time.sleep(0.1)
-        #print(image.dtype)
+        shm_image[:] = image[:]         #copy image to shared memory as array because we would like to share with other proces
+        cv2.imshow('Yolo_out', image)
+
 
         cv2.waitKey(3)
     cap.release()
@@ -358,7 +355,7 @@ def second_visualization(net_width,net_heigth):
             message = template.format(type(ex).__name__, ex.args)
             print(message)
 
-        cv2.imshow('second_visualozation', frame)
+        cv2.imshow('second_visualization', frame)
         k = cv2.waitKey(1)
         if k == 0xFF & ord("q"):
             break
@@ -385,10 +382,10 @@ def calculate_relative_coordinates(x, y, w, h):
     :param h: height of detected object on y axis in pixels
     :return: x_rel, y_rel, w_rel, h_rel, area_rel
     """
-    x_rel = x / Xresolution
-    y_rel = y / Yresolution
-    w_rel = w / Xresolution
-    h_rel = h / Yresolution
+    x_rel = x / Xres
+    y_rel = y / Yres
+    w_rel = w / Xres
+    h_rel = h / Yres
     area_rel = w_rel * h_rel
     return x_rel, y_rel, w_rel, h_rel, area_rel
 
@@ -412,11 +409,11 @@ def rotate_by_180_and_delays(frame,delay):
 s_distance = Value('l', 0)
 # create instance of Process subclass Magneto and pass shared value var
 sensor_process = Magneto(shared_distance=s_distance)
+sensor_process.start()
 second_visualization_proc = Process(target=second_visualization, args=(network_width, network_heigth))
 second_visualization_proc.daemon = True
 
 
 if __name__ == "__main__":
-    sensor_process.start()
     second_visualization_proc.start()
     YOLO()
