@@ -8,18 +8,18 @@ def dpi_to_pixels(dpi):
     :param dpi: angle in dpi which you would like to convert to pixels . It is using global variable size_of_one_screen_in_dpi which is defined in dev_env_wars
     :return: pixels
     """
-    return (Xresolution / size_of_one_screen_in_dpi) * dpi
+    return (Xres / size_of_one_screen_in_dpi) * dpi
 
 def draw_trail_visualization(objekty,s_distance):
 
 
-    trail_visualization = np.zeros((int(Yresolution / scale_trail_visualization), Xresolution * 2, 3),
+    trail_visualization = np.zeros((int(Yres / scale_trail_visualization), Xres * 2, 3),
                                    dtype="uint8")
-    saw_senzor_ofset_from_screen_pixels = int(Xresolution + dpi_to_pixels(saw_offset))
+    saw_senzor_ofset_from_screen_pixels = int(Xres + dpi_to_pixels(saw_offset))
     #draw position of senzor with purple line
-    cv2.line(trail_visualization, (int(Xresolution + dpi_to_pixels(saw_offset) ), int(1)), (int(Xresolution + dpi_to_pixels(saw_offset)), int(Yresolution/scale_trail_visualization)), (255, 0, 255), 10)
+    cv2.line(trail_visualization, (int(Xres + dpi_to_pixels(saw_offset) ), int(1)), (int(Xres + dpi_to_pixels(saw_offset)), int(Yres/scale_trail_visualization)), (255, 0, 255), 10)
 
-    cv2.putText(trail_visualization, str(saw_senzor_ofset_from_screen_pixels),(int(Xresolution + dpi_to_pixels(saw_offset)), int(Yresolution/scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,
+    cv2.putText(trail_visualization, str(saw_senzor_ofset_from_screen_pixels),(int(Xres + dpi_to_pixels(saw_offset)), int(Yres/scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,
                 magenta)
     for id in objekty:
         xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id].bounds)
@@ -47,7 +47,7 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
     global faster_loop2_blikaj_error
     global faster_loop2_blikaj_second
     #faster_loop2_blikaj_error = Value('b', 0)
-    saw_senzor_ofset_from_screen_pixels = int(Xresolution + dpi_to_pixels(saw_offset))
+    saw_senzor_ofset_from_screen_pixels = int(Xres + dpi_to_pixels(saw_offset))
 
     # fire mark if first on magenta line
     for id in objekty:

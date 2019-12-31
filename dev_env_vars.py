@@ -1,13 +1,11 @@
 ###################### VARS : ######################################################################################
 
 # set resolution taken from webcam it need to match reality!or relative calculations will not work
-#Xresolution = 640
-#Yresolution = 480
+Xresolution = 1280  #used for setting input camera resolution
+Yresolution = 720   #used for setting input camera resolution
 
-Xresolution = 1280
-Yresolution = 720
-scale_trail_visualization = 4
-
+scale_trail_visualization = 4 # how much compact trail visualization heigth
+# from where to take a video videofile
 video_filename = "test_01-40_03-17_1440x1080.mp4"
 video_filename_path = "/home/automateit/Projects/darknet-alexeyAB/darknet/x64/Release/data/" + video_filename
 
@@ -50,29 +48,29 @@ detection_treshold = 0.15
 #Alternative configuration for net
 object_for_rim_detection = "edge"
 object_to_detect = "error"
-yolov3_cfg = "cfg/2019_12_22_yolo-obj_v3.cfg"
+cat_encoding = "utf-8"
+
 #yolov3_cfg = "cfg/2019_09_07_yolo-obj_v3.cfg"
 #yolov3_cfg = "cfg/2019_12_09_yolo-obj_v3.cfg"
 #yolov3_cfg = "cfg/2019_12_24_yolo-obj_v3.cfg"
-cat_encoding = "utf-8"
+yolov3_cfg = "cfg/2019_12_22_yolo-obj_v3.cfg"                       #used only by main
 #yolov_weights = "weights/2019_03_31_yolo-obj_v3_6904.weights"
 #yolov_weights = "weights/2019_09_07_yolo-obj_v3_7139.weights"
 #yolov_weights = "weigh ts/2019_12_09_yolo-obj_v3_final.weights"
-yolov_weights = "weights/2019_12_22_yolo-obj_v3_18000.weights"
+yolov_weights = "weights/2019_12_22_yolo-obj_v3_18000.weights"      #used only by main
 
-configPath = "./x64/Release/data/2019_12_22_yolo-obj_v3.cfg"
-weightPath = "./backup/2019_12_22_yolo-obj_v3_18000.weights"
-metaPath = "./x64/Release/data/obj.data"
+configPath = "./x64/Release/data/2019_12_22_yolo-obj_v3.cfg"    #used only by autowood
+weightPath = "./backup/2019_12_22_yolo-obj_v3_18000.weights"    #used only by autowood
+metaPath = "./x64/Release/data/obj.data"                        #used only by autowood
 network_width = 416
 network_heigth = 416
-
+Xres = network_width
+Yres = network_heigth
 
 obj_data = "cfg/obj.data"
 detection_treshold = 0.10
 
-
 #Colors
-
 black=(0,0,0)
 white = (255,255,255)
 red = (0,0,255)
