@@ -18,6 +18,7 @@ manager_detections = manager.list()
 from pyimagesearch.centroidtracker import CentroidTracker
 from dev_env_vars import *
 from magneto import Magneto
+from trail_visualization import*
 
 shm = shared_memory.SharedMemory(create=True, size=6520800, name='psm_c013ddb7')
 shm_image = np.ndarray((416,416,3), dtype=np.uint8, buffer=shm.buf)
@@ -122,7 +123,7 @@ def YOLO():
         #copy image to shared memory as array because we would like to share with other proces
         shm_image[:] = image[:]
         cv2.imshow('Demo', image)
-        time.sleep(0.2)
+        time.sleep(0.1)
         #print(image.dtype)
 
         cv2.waitKey(3)
@@ -345,17 +346,17 @@ def second_visualization(net_width,net_heigth):
             # objekty[id].do_not_use_detect_object(object_to_detect, triger_margin, how_big_object_max_small,how_big_object_min_small)
             #objekty[id].save_picure_of_every_detected_object("detected_objects")
         update_objekty_if_not_detected(objekty,idresults)
-        
-        """
+
         try:
             # print ("#draw_trail_visualization(objekty, s_distance)")
             # draw_trail_visualization(objekty, s_distance)
-            check_on_vysialization(draw_trail_visualization(objekty, s_distance))
+            check_on_vysialization(draw_trail_visualization(objekty, s_distance),objekty,s_distance)
+
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
-        """
+
         cv2.imshow('second_visualozation', frame)
         k = cv2.waitKey(1)
         if k == 0xFF & ord("q"):
