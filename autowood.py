@@ -19,10 +19,10 @@ from pyimagesearch.centroidtracker import CentroidTracker
 from dev_env_vars import *
 from magneto import Magneto
 from trail_visualization import*
-
+import logging
 shm = shared_memory.SharedMemory(create=True, size=6520800, name='psm_c013ddb7')
 shm_image = np.ndarray((416,416,3), dtype=np.uint8, buffer=shm.buf)
-
+logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s', )
 
 def convertBack(x, y, w, h):
     xmin = int(round(x - (w / 2)))
