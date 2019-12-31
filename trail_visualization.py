@@ -120,6 +120,9 @@ def convert_from_xywh_to_xAyAxByB_format(bounds):
 def check_on_vysialization (trail_visualization,objekty,s_distance):
     global faster_loop2_blikaj_error
     global faster_loop2_blikaj_second
+    global next_possible_blink
+    global next_possible_blink_second
+    global last_blinked_class
 
     """
     loopa ktra bude stale bezat a bude mat udaj kedy moze ist najblizss dalsi blik
@@ -127,11 +130,6 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
     :param trieda:
     :return: is returning next possible blick
     """
-    next_possible_blink = 0
-    next_possible_blink_second = 0
-    last_blinked_class = "error" # need to be set for as if below is checking it
-    #faster_loop2_blikaj_error = Value('b', 0)
-    saw_senzor_ofset_from_screen_pixels = int(Xres + dpi_to_pixels(saw_offset))
 
     # fire mark if first on magenta line
     for id in objekty:
@@ -142,12 +140,12 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
         #draw error, eye, crack, rot, and crust as red color
         if objekty[id].category == "error" or objekty[id].category == "eye" or objekty[id].category == "crack" or objekty[id].category == "rot" or objekty[id].category == "crust" :
             if (visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
-                faster_loop2_blikaj_error.value = 1
+                faster_loop2_blikaj_error = 1
                 break
-            faster_loop2_blikaj_error.value = 0
+            faster_loop2_blikaj_error = 0
             #print ("neblikaj error")
 
-    cv2.putText(trail_visualization, str(faster_loop2_blikaj_error.value), (int(10), int(30)),
+    cv2.putText(trail_visualization, str(faster_loop2_blikaj_error), (int(10), int(30)),
                 cv2.FONT_HERSHEY_COMPLEX, 1, red)
 
     # fire mark if second class on magenta line
@@ -158,11 +156,11 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
         visualization_xB = xB + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
         if objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" or objekty[id].category == "edge" or objekty[id].category == "darksecondclass" or objekty[id].category == "mark":
             if (visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
-                faster_loop2_blikaj_second.value = 1
+                faster_loop2_blikaj_second = 1
                 break
-            faster_loop2_blikaj_second.value = 0
+            faster_loop2_blikaj_second = 0
     # siganlyze on screen if second class found
-    cv2.putText(trail_visualization, str(faster_loop2_blikaj_second.value), (int(10), int(60)),cv2.FONT_HERSHEY_COMPLEX, 1, brown)
+    cv2.putText(trail_visualization, str(faster_loop2_blikaj_second), (int(10), int(60)),cv2.FONT_HERSHEY_COMPLEX, 1, brown)
     cv2.imshow("Trail_visualization", trail_visualization)
 
     # try:
@@ -177,8 +175,8 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
     # time.sleep(0.0005)
 
     # if for error
-    if (faster_loop2_blikaj_error.value == 1) and (s_distance.value < next_possible_blink):
-        print("Ferror:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
+    if (faster_loop2_blikaj_error== 1) and (s_distance.value < next_possible_blink):
+        print("Ferror:", faster_loop2_blikaj_error, faster_loop2_blikaj_second)
         blink_once()
         next_possible_blink = (s_distance.value - 50)
         next_possible_blink_second = next_possible_blink
@@ -186,9 +184,9 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
         last_blinked_class = "error"
 
     # if for second class
-    if (faster_loop2_blikaj_second.value == 1) and (s_distance.value < next_possible_blink_second) and (
-            faster_loop2_blikaj_error.value == 0):  # and (last_blinked_class != "second")
-        print("FSecond:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
+    if ((faster_loop2_blikaj_second == 1) and (s_distance.value < next_possible_blink_second) and (
+            faster_loop2_blikaj_error == 0)):  # and (last_blinked_class != "second")
+        print("FSecond:", faster_loop2_blikaj_error, faster_loop2_blikaj_second)
         blink_once_double()  # TODO nahrad toto blink once when you will have more stable s_distance
         next_possible_blink_second = (s_distance.value - 100)
         last_blinked_class = "second"
@@ -196,25 +194,21 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
         # TODO check maybe where the second  class is ending
 
     # If first class
-    if (faster_loop2_blikaj_error.value == 0) and (faster_loop2_blikaj_second.value == 0) and (
+    if (faster_loop2_blikaj_error == 0) and (faster_loop2_blikaj_second == 0) and (
             s_distance.value < next_possible_blink_second) and (last_blinked_class == "second"):
-        print("FFirst:", faster_loop2_blikaj_error.value, faster_loop2_blikaj_second.value)
+        print("FFirst:", faster_loop2_blikaj_error, faster_loop2_blikaj_second)
         blink_once()
         last_blinked_class = "first"
         # TODO check if folowing  wood is not contaning any error or second class
 
-
-
-
-
-
-faster_loop2_blikaj_error = multiprocessing.Value('b', 0)
-faster_loop2_blikaj_second = multiprocessing.Value('i', 0)
-faster_loop2_blikaj_first = multiprocessing.Value('i', 0)
-#process2 = multiprocessing.Process(target=faster_loop_2, args=(faster_loop2_blikaj_first,))
-#process2.daemon = True
-#process2.start()
-
+faster_loop2_blikaj_error = 0
+faster_loop2_blikaj_second = 0
+faster_loop2_blikaj_first = 0
+next_possible_blink = 0
+next_possible_blink_second = 0
+last_blinked_class = "error"  # need to be set for as if below is checking it
+# faster_loop2_blikaj_error = Value('b', 0)
+saw_senzor_ofset_from_screen_pixels = int(Xres + dpi_to_pixels(saw_offset))
 
 if __name__=="__main__":
     try:

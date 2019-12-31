@@ -122,8 +122,6 @@ def YOLO():
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         shm_image[:] = image[:]         #copy image to shared memory as array because we would like to share with other proces
         cv2.imshow('Yolo_out', image)
-
-
         cv2.waitKey(3)
     cap.release()
     out.release()
@@ -346,10 +344,7 @@ def second_visualization(net_width,net_heigth):
         update_objekty_if_not_detected(objekty,idresults)
 
         try:
-            # print ("#draw_trail_visualization(objekty, s_distance)")
-            # draw_trail_visualization(objekty, s_distance)
             check_on_vysialization(draw_trail_visualization(objekty, s_distance),objekty,s_distance)
-
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
