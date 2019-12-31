@@ -95,22 +95,6 @@ def draw_trail_visualization(objekty,s_distance):
     end_time = time.time()
     show_fps(start_time, end_time, trail_visualization)
     return trail_visualization
-
-def faster_loop_2(faster_loop2_blikaj_first,s_distance):
-
-    while True:
-        start_time_loop = time.time()
-
-
-
-
-
-        end_time_loop = time.time()
-        # check for how long took execution the loop and log if it is too long
-        last_loop_duration = end_time_loop - start_time_loop
-        #if (last_loop_duration) > 0.010:
-            #logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
-
 def convert_from_xywh_to_xAyAxByB_format(bounds):
     """
 
