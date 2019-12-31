@@ -108,6 +108,7 @@ def YOLO():
         prev_time = time.time()
         ret, frame_read = cap.read()
         frame_rgb = cv2.cvtColor(frame_read, cv2.COLOR_BGR2RGB)
+        frame_rgb = rotate_by_180_and_delays(frame_rgb,0.1) # use for changing direction of video and speed of video 
         frame_resized = cv2.resize(frame_rgb,
                                    (darknet.network_width(netMain),
                                     darknet.network_height(netMain)),
@@ -123,7 +124,7 @@ def YOLO():
         #copy image to shared memory as array because we would like to share with other proces
         shm_image[:] = image[:]
         cv2.imshow('Demo', image)
-        time.sleep(0.1)
+        #time.sleep(0.1)
         #print(image.dtype)
 
         cv2.waitKey(3)
@@ -390,6 +391,17 @@ def calculate_relative_coordinates(x, y, w, h):
     h_rel = h / Yresolution
     area_rel = w_rel * h_rel
     return x_rel, y_rel, w_rel, h_rel, area_rel
+
+def rotate_by_180_and_delays(frame,delay):
+    (h, w) = frame.shape[:2]
+    center = (w / 2, h / 2)
+    angle180 = 180
+    scale = 1.0
+    # 180 degrees
+    M = cv2.getRotationMatrix2D(center, angle180, scale)
+    rotated180 = cv2.warpAffine(frame, M, (w, h))
+    time.sleep(delay)
+    return rotated180
 
 
 
