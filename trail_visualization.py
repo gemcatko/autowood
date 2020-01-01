@@ -147,18 +147,6 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
     # siganlyze on screen if second class found
     cv2.putText(trail_visualization, str(faster_loop2_blikaj_second), (int(10), int(60)),cv2.FONT_HERSHEY_COMPLEX, 1, brown)
     cv2.imshow("Trail_visualization", trail_visualization)
-
-    # try:
-    # needed because qtrigerlist is not always having object inside
-    # @TODO tu zisti preco nedava sharovanu value s druheho procesu !!!!!
-    # blikaj =  faster_loop2_blikaj_error.value
-    # logging.debug("trigerlist%s", blikaj)
-
-    # except:
-    # is setting speed of the loop in case 0.0005 it is 2000 times per second
-    # except is not executed if qtrigerlist is have data
-    # time.sleep(0.0005)
-
     # if for error
     if (faster_loop2_blikaj_error== 1) and (s_distance.value < next_possible_blink):
         print("Ferror:", faster_loop2_blikaj_error, faster_loop2_blikaj_second)

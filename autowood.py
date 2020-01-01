@@ -353,7 +353,6 @@ def second_visualization(net_width,net_heigth):
             objekty[id].draw_object_score(frame, idresults)
             objekty[id].draw_object_id(frame, idresults)
             objekty[id].draw_object_position_on_trail(frame,idresults)
-            # objekty[id].do_not_use_detect_object(object_to_detect, triger_margin, how_big_object_max_small,how_big_object_min_small)
             #objekty[id].save_picure_of_every_detected_object("detected_objects")
         update_objekty_if_not_detected(objekty,idresults)
 
