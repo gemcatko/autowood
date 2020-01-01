@@ -6,6 +6,8 @@ import time
 from typing import List, Any, Union
 
 from pydarknet import Detector, Image
+#import darknet
+
 import cv2
 import numpy as np
 
@@ -218,7 +220,6 @@ class YObject:
             # position_indpi_end = s_distance.value + (((x_rel - (w_rel / 2)) * size_of_one_screen_in_dpi)
             stamplist.append(stamp)
 
-
 class Trail:
     def __int__(self, objekty):
         self.objekty = objekty
@@ -233,7 +234,6 @@ class Trail:
             cv2.rectangle(trail_visualization, (int(xA), int(yA / scale_trail_visualization)),
                           (int(xB), int(yB / scale_trail_visualization)), green)
             cv2.imshow("Trail_visualization", trail_visualization)
-
 
 class BlinkStickThread(threading.Thread):
     def run(self):
@@ -260,7 +260,6 @@ def convert_from_xywh_to_xAyAxByB_format(bounds):
     box = [x - w / 2, y - h / 2, x + w / 2, y + h / 2]
     return box
 
-
 def convert_from_xAyAxByB_to_xywh_format(bounds):
     xA, yA, xB, yB = bounds
     x = (xA + xB) / 2
@@ -269,7 +268,6 @@ def convert_from_xAyAxByB_to_xywh_format(bounds):
     h = abs(yA - yB)
     xywhBox = [x, y, w, h]  # type: List[Union[float, Any]]
     return xywhBox
-
 
 def bb_intersection_over_union(boundsA, boundsB):
     """
@@ -303,7 +301,6 @@ def bb_intersection_over_union(boundsA, boundsB):
     # return the intersection over union value
     return iou
 
-
 def get_bounding_box_around_area_ower_union(boundsA, boundsB):
     """
 
@@ -324,7 +321,6 @@ def get_bounding_box_around_area_ower_union(boundsA, boundsB):
         return bbox_of_area_ower_union
     else:
         return False
-
 
 def blink_once():
     """
@@ -372,7 +368,6 @@ def calculate_relative_coordinates(x, y, w, h):
     area_rel = w_rel * h_rel
     return x_rel, y_rel, w_rel, h_rel, area_rel
 
-
 def show_count_of_objects_in_frame(object_to_check):
     number_of_object_to_check = 0
     for cat, score, bounds in results:
@@ -382,14 +377,12 @@ def show_count_of_objects_in_frame(object_to_check):
                     cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
     return number_of_object_to_check
 
-
 def show_fps(start_time, end_time):
     duration_of_loop = end_time - start_time
     FPS = round(1 / duration_of_loop, 1)
     cv2.putText(frame, str(FPS), (int(Xresolution - 80), int(Yresolution - 40)), cv2.FONT_HERSHEY_COMPLEX, 1,
                 (255, 100, 255))
     return FPS
-
 
 def show_magneto_distance():
     """
@@ -399,7 +392,6 @@ def show_magneto_distance():
     """
     cv2.putText(frame, str(s_distance.value), (int(Xresolution - 250), int(Yresolution - 80)),
                 cv2.FONT_HERSHEY_COMPLEX, 1, blue)
-
 
 def faster_loop_trigerlist_distance(qtrigerlist):
     """
@@ -505,8 +497,6 @@ def faster_loop_2( faster_loop2_blikaj_first):
         #if (last_loop_duration) > 0.010:
             #logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
 
-
-
 def update_resutls_for_id(results):
     """
     loop over the tracked objects from Yolo34
@@ -534,7 +524,6 @@ def update_resutls_for_id(results):
     # print(type(idresults), idresults
     return idresults
 
-
 def convert_bounding_boxes_form_Yolo_Centroid_format(results):
     # clean rect so it is clean an can be filled with new detection from frame\
     # later used in conversion_to_x1y1x2y2 . Conversion from yolo format to Centroid Format
@@ -555,7 +544,6 @@ def convert_bounding_boxes_form_Yolo_Centroid_format(results):
         rects.append(box.astype("int"))
     return rects
 
-
 def dddraw_ids_on_screens(objects):  # DO not use! it was changed to sraw_object_id()
     """
 
@@ -570,7 +558,6 @@ def dddraw_ids_on_screens(objects):  # DO not use! it was changed to sraw_object
         cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
         cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
 
-
 def draw_yolo_output_on_screen(results):  # DO not use! it was changed to draw_object_bb_and_class(self):
     """
 
@@ -582,7 +569,6 @@ def draw_yolo_output_on_screen(results):  # DO not use! it was changed to draw_o
         x, y, w, h = bounds
         cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 0))
         cv2.putText(frame, str(cat.decode("utf-8")), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
-
 
 def update_objekty_if_not_detected(objekty):
     """
@@ -596,7 +582,6 @@ def update_objekty_if_not_detected(objekty):
             objekty[id].is_detected_by_detector = False
             #objekty[id].position_on_trail = s_distance.value
 
-
 def get_path_filename_datetime(folder_name):
     # Use current date to get a text file name.
     return folder_name + "/" + video_filename + "_" + str(round(cap.get(cv2.CAP_PROP_POS_MSEC),0)) + ".jpg"
@@ -605,7 +590,6 @@ def get_path_filename_datetime(folder_name):
 def save_picture_to_file(folder_name):
     rr, oneframe = cap.read()
     cv2.imwrite(get_path_filename_datetime(folder_name), oneframe)
-
 
 def convert_from_xywh_to_xAyAxByB_format(bounds):
     """
@@ -624,7 +608,6 @@ def dpi_to_pixels(dpi):
     :return: pixels
     """
     return (Xresolution / size_of_one_screen_in_dpi) * dpi
-
 
 def draw_trail_visualization(objeky,s_distance):
 
@@ -807,7 +790,7 @@ if __name__ == "__main__":
                 except:
                     # create new object if not existing
                     objekty[id] = YObject(id, category.decode("utf-8"), score, bounds, s_distance.value)
-            print(len(objekty))
+            #print(len(objekty))
             #print(objekty)
             if len(objekty) > 25: # max number of object which draw on trail
                 del objekty[number_of_deleted_objects]

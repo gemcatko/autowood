@@ -29,7 +29,7 @@ class Magneto(Process):
             current_angle = s.readline().decode('ascii')
             self.previous_angle = self.angle
             #self.angle = math.ceil(float(current_angle))
-            self.angle = self.angle - 1
+            self.angle = self.angle - 3 # simulate angle change
 
     def __get_delta__(self):
         self.delta = self.angle - self.previous_angle
