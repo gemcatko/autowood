@@ -1,6 +1,8 @@
 cfg/
 data/
 weights/
+backup/
+x64/
 .idea/
 .git/
 #ignore screenshots
