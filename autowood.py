@@ -314,11 +314,11 @@ def show_fps(start_time, end_time,name_of_frame):
 def is_Yobject_to_big(bounds):
     x,y,w,h = bounds
     #cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), blue, 4)
-    if int(x + w / 2) < (Xres - Xres/3):
-        #updatuj trail_bounds
-        return False
-    print ("objekt is too big")
-    return True
+    if int(x + w / 2) > (Xres - Xres/4):
+        if w > (Xres - Xres/2):
+            print("objekt is too big")
+            return True
+    return False
 
 def second_visualization(net_width,net_heigth):
     existing_shm = shared_memory.SharedMemory(name='psm_c013ddb7')
