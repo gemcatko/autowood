@@ -26,16 +26,16 @@ try:
         print ("    Info Block 2:  " + bstick.get_info_block2())
         """
         bstick.set_color(channel=0, index=0, name="red")
-        #bstick.set_color(channel=0, index=1, name="red")
+        bstick.set_color(channel=0, index=1, name="red") # comment this when you go to try to on Pila
         time.sleep(time_between_blinks2)
         bstick.set_color(channel=0, index=0, name="")
-        #bstick.set_color(channel=0, index=1, name="")
+        bstick.set_color(channel=0, index=1, name="")# comment this when you go to try to on Pila
         time.sleep(time_between_blinks)
         bstick.set_color(channel=0, index=0, name="red")
-        #bstick.set_color(channel=0, index=1, name="red")
+        bstick.set_color(channel=0, index=1, name="red")# comment this when you go to try to on Pila
         time.sleep(time_between_blinks2)
         bstick.set_color(channel=0, index=0, name="")
-        #bstick.set_color(channel=0, index=1, name="")
+        bstick.set_color(channel=0, index=1, name="")# comment this when you go to try to on Pila
         time.sleep(time_between_blinks)
 
         end_time = time.time()
