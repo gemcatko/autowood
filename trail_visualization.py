@@ -116,9 +116,9 @@ def draw_trail_visualization(objekty,s_distance):
                         (magenta))
         if objekty[id].category == "edge" or objekty[id].category == "mark":
             cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),
-                          (int(visualization_xB), int(yB / scale_trail_visualization)), brown, 2)
+                          (int(visualization_xB), int(yB / scale_trail_visualization)), green, 2)
             cv2.putText(trail_visualization, str(objekty[id].id),
-                        (int(visualization_xA), int(yB / scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,(green))
+                        (int(visualization_xA), int(yB / scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,(magenta))
     #cv2.imshow("Trail_visualization", trail_visualization)
     end_time = time.time()
     show_fps(start_time, end_time, trail_visualization)
