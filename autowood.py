@@ -176,8 +176,8 @@ class YObject:
         self.is_detected_by_detector = True
         self.ignore = False
         self.is_picture_saved = False
-        self.ready_for_blink_start = False
-        self.ready_for_blink_end = False
+        #self.ready_for_blink_start = False
+        #self.ready_for_blink_end = False
         global frame
 
     def draw_object_bb_and_class(self, frame,idresults):
@@ -221,27 +221,6 @@ class YObject:
             position_on_trail_for_screen = round((x_rel * size_of_one_screen_in_dpi)  )
             cv2.putText(frame, str(position_on_trail_for_screen), (int(x), int(y + 25)), cv2.FONT_HERSHEY_COMPLEX, 1, (yellow))
 
-    def detect_rim_and_propagate_back_to_yolo_detections(self):
-        """
-        # find rim and back propagate to detection from Yolo in next loop
-        :return:
-        """
-        global rim_results
-        try:
-            # if rim is not detected delete rim_results so it will not be appended to detection from youlo in next loop
-            if objekty[id].detect_rim(object_for_rim_detection, distance_of_second_edge) == False:
-                del rim_results
-            # detect_rim return True hten you need to update
-            else:
-                hcategory, hscore, hbounds = objekty[id].detect_rim(object_for_rim_detection,
-                                                                    distance_of_second_edge)
-                # in rim_results is rim stored so in can be inported to detection from Yolo in next loop
-                rim_results = hcategory.encode("utf-8"), hscore, hbounds
-
-        except Exception as ex:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
-            # print (message)
 
     def save_picure_of_every_detected_object(self, file_name="detected_objects"):
         """
@@ -342,7 +321,7 @@ def second_visualization(net_width,net_heigth):
                 # if Yobjekt with specific id already exists, update it
                 # TODO # to je mozno chyba,co sa stane z objektami ktorych id je este na zobrazene ale nuz je objekt dissapeared
                 if objekty[id].id == id:  # and objekty[id].category == category.decode("utf-8"):
-                    #if objekty[id].category == category.decode("utf-8"): - If you enable you need to take care of umached objects which are deteceted
+                    #if objekty[id].category == category.decode("utf-8"): #- If you enable you need to take care of umached objects which are deteceted
                     if objekty[id].is_big == False:
                         objekty[id].category = category.decode("utf-8")
                         objekty[id].score = score
@@ -352,7 +331,6 @@ def second_visualization(net_width,net_heigth):
                         if is_Yobject_to_big(bounds):
                            objekty[id].is_big = True
 
-
             except:
                 # create new object if not existing
                 objekty[id] = YObject(id, category.decode("utf-8"), score, bounds, s_distance.value)
@@ -361,9 +339,6 @@ def second_visualization(net_width,net_heigth):
             which_id_to_delete = which_id_to_delete + 1
 
         for id in objekty:
-            #objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
-            # TODO #Figure out if ignore_error_in_error_and_create_new_object() is working - it is partly
-            # objekty[id].ignore_error_in_error_and_create_new_object()
             objekty[id].draw_object_bb_and_class(frame, idresults)
             objekty[id].draw_object_score(frame, idresults)
             objekty[id].draw_object_id(frame, idresults)
