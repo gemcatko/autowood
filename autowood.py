@@ -108,7 +108,7 @@ def YOLO():
         prev_time = time.time()
         ret, frame_read = cap.read()
         frame_rgb = cv2.cvtColor(frame_read, cv2.COLOR_BGR2RGB)
-        frame_rgb = rotate_by_180_and_delays(frame_rgb,0) # use for changing direction of video and speed of video
+        frame_rgb = rotate_by_180_and_delays(frame_rgb,0.1) # use for changing direction of video and speed of video
         frame_resized = cv2.resize(frame_rgb,
                                    (darknet.network_width(netMain),
                                     darknet.network_height(netMain)),
@@ -171,6 +171,7 @@ class YObject:
         self.category = category
         self.score = score
         self.bounds = bounds
+        self.is_big = False
         self.position_on_trail = s_distance
         self.is_detected_by_detector = True
         self.ignore = False
@@ -310,6 +311,15 @@ def show_fps(start_time, end_time,name_of_frame):
     #print(FPS)
     return FPS
 
+def is_Yobject_to_big(bounds):
+    x,y,w,h = bounds
+    #cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), blue, 4)
+    if int(x + w / 2) < (Xres - Xres/3):
+        #updatuj trail_bounds
+        return False
+    print ("objekt is too big")
+    return True
+
 def second_visualization(net_width,net_heigth):
     existing_shm = shared_memory.SharedMemory(name='psm_c013ddb7')
     image = np.ndarray((net_width,net_heigth,3), dtype=np.uint8, buffer=existing_shm.buf)
@@ -333,11 +343,16 @@ def second_visualization(net_width,net_heigth):
                 # TODO # to je mozno chyba,co sa stane z objektami ktorych id je este na zobrazene ale nuz je objekt dissapeared
                 if objekty[id].id == id:  # and objekty[id].category == category.decode("utf-8"):
                     #if objekty[id].category == category.decode("utf-8"): - If you enable you need to take care of umached objects which are deteceted
+                    if objekty[id].is_big == False:
                         objekty[id].category = category.decode("utf-8")
                         objekty[id].score = score
                         objekty[id].bounds = bounds
                         objekty[id].position_on_trail = s_distance.value
                         objekty[id].is_detected_by_detector = True
+                        if is_Yobject_to_big(bounds):
+                           objekty[id].is_big = True
+
+
             except:
                 # create new object if not existing
                 objekty[id] = YObject(id, category.decode("utf-8"), score, bounds, s_distance.value)
@@ -369,9 +384,6 @@ def second_visualization(net_width,net_heigth):
         k = cv2.waitKey(1)
         if k == 0xFF & ord("q"):
             break
-
-
-
 
 def update_objekty_if_not_detected(objekty,idresults):
     """
@@ -411,8 +423,6 @@ def rotate_by_180_and_delays(frame,delay):
     rotated180 = cv2.warpAffine(frame, M, (w, h))
     time.sleep(delay)
     return rotated180
-
-
 
 
 # Start loop for blinking in separate process

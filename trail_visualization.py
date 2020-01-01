@@ -60,6 +60,33 @@ def dpi_to_pixels(dpi):
     """
     return (Xres / size_of_one_screen_in_dpi) * dpi
 
+def convert_from_xywh_to_xAyAxByB_format(bounds):
+    """
+
+    :param bounds: bounds of in format xywh
+    :return: return x1x2y1y2  format
+    """
+
+    x, y, w, h = bounds
+    box = [x - w / 2, y - h / 2, x + w / 2, y + h / 2]
+    return box
+
+def show_fps(start_time, end_time,name_of_frame):
+    duration_of_loop = end_time - start_time
+    FPS = round(1 / duration_of_loop, 1)
+    cv2.putText(name_of_frame, str(FPS), (int(Xres*2 - 80), int(Yres/4 - 10)), cv2.FONT_HERSHEY_COMPLEX, 1,
+                (255, 100, 255))
+    #print(FPS)
+    return FPS
+
+def show_magneto_distance(name_of_frame,s_distance):
+    """
+    IT is using s_distance.value which is actual sum of angles from magneto
+    The funktion need to be called every frame you want to sho something
+    :return:
+    """
+    cv2.putText(name_of_frame, str(s_distance.value), (int(Xres*2 -150), int( 30)), cv2.FONT_HERSHEY_COMPLEX, 1, blue)
+
 def draw_trail_visualization(objekty,s_distance):
     start_time = time.time()
     trail_visualization = np.zeros((int(Yres / scale_trail_visualization), Xres * 2, 3),
@@ -71,6 +98,7 @@ def draw_trail_visualization(objekty,s_distance):
     cv2.putText(trail_visualization, str(saw_senzor_ofset_from_screen_pixels),(int(Xres + dpi_to_pixels(saw_offset)), int(Yres/scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,
                 magenta)
     for id in objekty:
+        #xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id].bounds)
         xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id].bounds)
         #calcculate begining xA and endig xB of rectangle in trai_visualization
         visualization_xA = xA + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
@@ -80,7 +108,7 @@ def draw_trail_visualization(objekty,s_distance):
             cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),(int(visualization_xB), int(yB / scale_trail_visualization)), red, 3)
             cv2.putText(trail_visualization, str(objekty[id].id), (int(visualization_xA), int(yB / scale_trail_visualization)),cv2.FONT_HERSHEY_COMPLEX, 1, (magenta))
             # visualization_xB is start location of error and visualization_xA end of error
-        if objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" or objekty[id].category == "edge" or objekty[id].category == "darksecondclass" or objekty[id].category == "mark":
+        if objekty[id].category == "secondclass" or objekty[id].category == "lightsecondclass" or objekty[id].category == "darksecondclass" or objekty[id].category == "edge" or objekty[id].category == "darksecondclass" or objekty[id].category == "mark":
             cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),
                           (int(visualization_xB), int(yB / scale_trail_visualization)), brown, 2)
             cv2.putText(trail_visualization, str(objekty[id].id),
@@ -91,16 +119,6 @@ def draw_trail_visualization(objekty,s_distance):
     show_fps(start_time, end_time, trail_visualization)
     show_magneto_distance(trail_visualization,s_distance)
     return trail_visualization
-def convert_from_xywh_to_xAyAxByB_format(bounds):
-    """
-
-    :param bounds: bounds of in format xywh
-    :return: return x1x2y1y2  format
-    """
-
-    x, y, w, h = bounds
-    box = [x - w / 2, y - h / 2, x + w / 2, y + h / 2]
-    return box
 
 def check_on_vysialization (trail_visualization,objekty,s_distance):
     global faster_loop2_blikaj_error
@@ -174,22 +192,6 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
         last_blinked_class = "first"
         # TODO check if folowing  wood is not contaning any error or second class
 
-def show_fps(start_time, end_time,name_of_frame):
-    duration_of_loop = end_time - start_time
-    FPS = round(1 / duration_of_loop, 1)
-    cv2.putText(name_of_frame, str(FPS), (int(Xres*2 - 80), int(Yres/4 - 10)), cv2.FONT_HERSHEY_COMPLEX, 1,
-                (255, 100, 255))
-    #print(FPS)
-    return FPS
-
-def show_magneto_distance(name_of_frame,s_distance):
-    """
-    IT is using s_distance.value which is actual sum of angles from magneto
-    The funktion need to be called every frame you want to sho something
-    :return:
-    """
-
-    cv2.putText(name_of_frame, str(s_distance.value), (int(Xres*2 -150), int( 30)), cv2.FONT_HERSHEY_COMPLEX, 1, blue)
 
 faster_loop2_blikaj_error = 0
 faster_loop2_blikaj_second = 0
