@@ -174,7 +174,7 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
     cv2.imshow("Trail_visualization", trail_visualization)
     # if for error
     if (blink_error == 1):
-        cv2.line(trail_visualization, (int(Xres + dpi_to_pixels(saw_offset))+(next_possible_blink-s_distance.value),0), (int(Xres + dpi_to_pixels(saw_offset))+(next_possible_blink-s_distance.value),int(Yres/4)), orange, 2)
+        cv2.line(trail_visualization, (int(Xres + dpi_to_pixels(saw_offset))+(next_possible_blink-s_distance.value),0), (int(Xres + dpi_to_pixels(saw_offset))+(next_possible_blink-s_distance.value),int(Yres/scale_trail_visualization)), orange, 2)
         if (s_distance.value < next_possible_blink):
             print("Ferror:", blink_error, blink_second)
             blink_once()
@@ -193,6 +193,14 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
         last_blinked_class = "second"
         logging.debug('Next_possible_blink_second is :%s', next_possible_blink_second)
         # TODO check maybe where the second  class is ending
+    if (blink_second == 1):
+        cv2.line(trail_visualization, (int(Xres + dpi_to_pixels(saw_offset))+(next_possible_blink_second-s_distance.value),0), (int(Xres + dpi_to_pixels(saw_offset))+(next_possible_blink_second-s_distance.value),int(Yres/scale_trail_visualization)), brown, 2)
+        cv2.line(trail_visualization, (int(Xres + dpi_to_pixels(saw_offset))+(next_possible_blink_second-s_distance.value+10),0), (int(Xres + dpi_to_pixels(saw_offset))+(next_possible_blink_second-s_distance.value+10),int(Yres/scale_trail_visualization)), brown, 2)
+
+
+
+
+
     # siganlyze on screen if second class found
     # If first class
     if (blink_error == 0) and (blink_second == 0) and (
