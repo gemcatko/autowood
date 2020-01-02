@@ -1,11 +1,7 @@
-from ctypes import *
-import math
-import random
+
 import os
 import cv2
-import numpy as np
 import time
-# some_file.py
 import sys
 
 # insert at 1, 0 is the script path (or '' in REPL)
@@ -190,16 +186,23 @@ class YObject:
         # self.ready_for_blink_end = False
         global frame
 
-    def draw_object_bb_and_class(self, frame, idresults):
+    def draw_object_bb(self, frame, idresults):
         """
         Draw objects name to CV2 frame  using cv2 only if  detected by detector
         :return: none
         """
         if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
             x, y, w, h = self.bounds
-            # draw what is name of the object
             cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), blue, 4)
-            cv2.putText(frame, str(self.category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
+
+    def draw_category(self, frame, idresults):
+        """
+        Draw objects classto CV2 frame  using cv2 only if  detected by detector
+        :return: none
+        """
+        if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
+            x, y, w, h = self.bounds
+            cv2.putText(frame, str(self.category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, font_size, (255, 255, 0))
 
     def draw_object_score(self, frame, idresults):
         """
@@ -208,7 +211,7 @@ class YObject:
         """
         if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
             x, y, w, h = self.bounds
-            cv2.putText(frame, str(round(self.score, 2)), (int(x - 20), int(y - 20)), cv2.FONT_HERSHEY_COMPLEX, 1,
+            cv2.putText(frame, str(round(self.score, 2)), (int(x - 20), int(y - 20)), cv2.FONT_HERSHEY_COMPLEX, font_size,
                         azzure)
 
     def draw_object_id(self, frame, idresults):
@@ -218,7 +221,7 @@ class YObject:
         """
         if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
             x, y, w, h = self.bounds
-            cv2.putText(frame, str(self.id), (int(x - 30), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (magenta))
+            cv2.putText(frame, str(self.id), (int(x - 30), int(y)), cv2.FONT_HERSHEY_COMPLEX, font_size, (magenta))
 
     def draw_object_position_on_trail(self, frame, idresults):
         """
@@ -230,7 +233,7 @@ class YObject:
             x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
             # position_on_trail_for_screen = round(self.position_on_trail + (x_rel * size_of_one_screen_in_dpi), 1)
             position_on_trail_for_screen = round((x_rel * size_of_one_screen_in_dpi))
-            cv2.putText(frame, str(position_on_trail_for_screen), (int(x), int(y + 25)), cv2.FONT_HERSHEY_COMPLEX, 1,
+            cv2.putText(frame, str(position_on_trail_for_screen), (int(x), int(y + 25)), cv2.FONT_HERSHEY_COMPLEX, font_size,
                         (yellow))
 
     def save_picure_of_every_detected_object(self, file_name="detected_objects"):
@@ -354,10 +357,11 @@ def second_visualization(net_width, net_heigth):
             which_id_to_delete = which_id_to_delete + 1
 
         for id in objekty:
-            objekty[id].draw_object_bb_and_class(frame, idresults)
-            objekty[id].draw_object_score(frame, idresults)
+            objekty[id].draw_object_bb(frame, idresults)
+            #objekty[id].draw_category(frame, idresults)
+            #objekty[id].draw_object_score(frame, idresults)
             objekty[id].draw_object_id(frame, idresults)
-            objekty[id].draw_object_position_on_trail(frame, idresults)
+            #objekty[id].draw_object_position_on_trail(frame, idresults)
             # objekty[id].save_picure_of_every_detected_object("detected_objects")
         update_objekty_if_not_detected(objekty, idresults)
 

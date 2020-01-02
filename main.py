@@ -800,7 +800,7 @@ if __name__ == "__main__":
                 objekty[id].detect_rim_and_propagate_back_to_yolo_detections()
                 # TODO #Figure out if ignore_error_in_error_and_create_new_object() is working - it is partly
                 # objekty[id].ignore_error_in_error_and_create_new_object()
-                objekty[id].draw_object_bb_and_class()
+                objekty[id].draw_object_bb()
                 objekty[id].draw_object_score()
                 objekty[id].draw_object_id()
                 objekty[id].draw_object_position_on_trail()
