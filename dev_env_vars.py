@@ -28,11 +28,11 @@ objekty = {}  # it is storing all detection from program startup
 
 how_big_object_max_small = 0.9  # detect object from how_big_object_min_small to how_big_object_max_small size of screen
 how_big_object_min_small = 0.05 # detect object from how_big_object_min_small to how_big_object_max_small size of screen
-max_dist_of_2nd_edge = 0.4 # max distance of second edge to create rim object
+#max_dist_of_2nd_edge = 0.4 # max distance of second edge to create rim object
 # virtual position of triger relative to camera
 triger_margin = 0.6  # place on screen where it is detecting objects
 number_of_deleted_objects = 0
-number_of_max_detection_per_trail = 5  #if more detection on trail firstly detected will be removed
+#number_of_max_detection_per_trail = 5  #if more detection on trail firstly detected will be removed
 
 #Yolo configuration for net
 """
@@ -46,7 +46,7 @@ detection_treshold = 0.15
 """
 
 #Alternative configuration for net
-object_for_rim_detection = "edge"
+#object_for_rim_detection = "edge"
 object_to_detect = "error"
 cat_encoding = "utf-8"
 
@@ -68,7 +68,7 @@ Xres = network_width
 Yres = network_heigth
 
 obj_data = "cfg/obj.data"
-detection_treshold = 0.10
+detection_treshold = 0.3
 
 #Colors
 black=(0,0,0)
@@ -87,7 +87,9 @@ yellow = (255,255,0)
 azzure = (255, 255, 0)
 brown = (19, 69,139)
 magenta = (255, 0, 255)
+orange =(0, 128, 255)
 
+font_size =0.7
 
 
 

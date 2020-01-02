@@ -116,7 +116,7 @@ def YOLO():
 
         darknet.copy_image_from_bytes(darknet_image,frame_resized.tobytes())
         del manager_detections[:]                       #need to be cleared every iterration
-        detections = darknet.detect_image(netMain, metaMain, darknet_image, thresh=0.25)
+        detections = darknet.detect_image(netMain, metaMain, darknet_image, thresh=detection_treshold)
         #print(detections)
         manager_detections.append(detections)
         image = cvDrawBoxes(detections, frame_resized)

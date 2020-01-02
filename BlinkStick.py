@@ -18,7 +18,7 @@ try:
         print ("    Info Block 2:  " + bstick.get_info_block2())
         """
         bstick.set_color(channel=0, index=0, name="red")
-        bstick.set_color(channel=0, index=1, name="red")
+        #bstick.set_color(channel=0, index=1, name="red")
         #bstick.set_color(channel=0, index=2, name="red")
         #bstick.set_color(channel=0, index=3, name="red")
         """
@@ -33,7 +33,7 @@ try:
             print bstick.get_serial() + " turned off
         """
         bstick.set_color(channel=0, index=0, name="")
-        bstick.set_color(channel=0, index=1, name="")
+        #bstick.set_color(channel=0, index=1, name="")
         #bstick.set_color(channel=0, index=2, name="")
         #bstick.set_color(channel=0, index=3, name="")
         """

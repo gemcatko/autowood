@@ -93,9 +93,8 @@ def draw_trail_visualization(objekty,s_distance):
                                    dtype="uint8")
     saw_senzor_ofset_from_screen_pixels = int(Xres + dpi_to_pixels(saw_offset))
     #draw position of senzor with purple line
-    cv2.line(trail_visualization, (int(Xres + dpi_to_pixels(saw_offset) ), int(1)), (int(Xres + dpi_to_pixels(saw_offset)), int(Yres/scale_trail_visualization)), (255, 0, 255), 10)
-
-    cv2.putText(trail_visualization, str(saw_senzor_ofset_from_screen_pixels),(int(Xres + dpi_to_pixels(saw_offset)), int(Yres/scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,
+    cv2.line(trail_visualization, (int(Xres + dpi_to_pixels(saw_offset) ), int(1)), (int(Xres + dpi_to_pixels(saw_offset)), int(Yres/scale_trail_visualization)), (255, 0, 255),3)
+    cv2.putText(trail_visualization, str(saw_senzor_ofset_from_screen_pixels),(int(Xres + dpi_to_pixels(saw_offset)), int(Yres/scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, font_size,
                 magenta)
     for id in objekty:
         #xA, yA, xB, yB = convert_from_xywh_to_xAyAxByB_format(objekty[id].bounds)
@@ -104,16 +103,26 @@ def draw_trail_visualization(objekty,s_distance):
         visualization_xA = xA + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
         visualization_xB = xB + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
         #draw error, eye, crack, rot, and crust as red color
-        if objekty[id].category == "error" or objekty[id].category == "eye" or objekty[id].category == "crack" or objekty[id].category == "rot" or objekty[id].category == "crust":
+        if objekty[id].category == "error" or objekty[id].category == "eye" or objekty[id].category == "crack" or objekty[id].category == "rot" or objekty[id].category == "crust" or objekty[id].category == "badedge":
             cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),(int(visualization_xB), int(yB / scale_trail_visualization)), red, 3)
-            cv2.putText(trail_visualization, str(objekty[id].id), (int(visualization_xA), int(yB / scale_trail_visualization)),cv2.FONT_HERSHEY_COMPLEX, 1, (magenta))
+            cv2.putText(trail_visualization, str(objekty[id].id), (int(visualization_xA), int(yB / scale_trail_visualization)),cv2.FONT_HERSHEY_COMPLEX, font_size, (magenta))
             # visualization_xB is start location of error and visualization_xA end of error
-        if objekty[id].category == "secondclass" or objekty[id].category == "lightsecondclass" or objekty[id].category == "darksecondclass" or objekty[id].category == "edge" or objekty[id].category == "darksecondclass" or objekty[id].category == "mark":
+        if objekty[id].category == "secondclass" or objekty[id].category == "steamywood" or objekty[id].category == "darksecondclass" :
             cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),
                           (int(visualization_xB), int(yB / scale_trail_visualization)), brown, 2)
             cv2.putText(trail_visualization, str(objekty[id].id),
-                        (int(visualization_xA), int(yB / scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, 1,
+                        (int(visualization_xA), int(yB / scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, font_size,
                         (magenta))
+        if objekty[id].category == "edge" :
+            cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),
+                          (int(visualization_xB), int(yB / scale_trail_visualization)), green, 2)
+            cv2.putText(trail_visualization, str(objekty[id].id),
+                        (int(visualization_xA), int(yB / scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, font_size,(magenta))
+        if objekty[id].category == "mark":
+            cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),
+                          (int(visualization_xB), int(yB / scale_trail_visualization)), azzure, 2)
+            cv2.putText(trail_visualization, str(objekty[id].id),
+                        (int(visualization_xA), int(yB / scale_trail_visualization)), cv2.FONT_HERSHEY_COMPLEX, font_size,(magenta))
     #cv2.imshow("Trail_visualization", trail_visualization)
     end_time = time.time()
     show_fps(start_time, end_time, trail_visualization)
@@ -141,15 +150,14 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
         visualization_xA = xA + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
         visualization_xB = xB + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
         #draw error, eye, crack, rot, and crust as red color
-        if objekty[id].category == "error" or objekty[id].category == "eye" or objekty[id].category == "crack" or objekty[id].category == "rot" or objekty[id].category == "crust" :
+        if objekty[id].category == "error" or objekty[id].category == "eye" or objekty[id].category == "crack" or objekty[id].category == "rot" or objekty[id].category == "crust" or objekty[id].category == "badedge" :
             if (visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
                 faster_loop2_blikaj_error = 1
                 break
             faster_loop2_blikaj_error = 0
             #print ("neblikaj error")
 
-    cv2.putText(trail_visualization, str(faster_loop2_blikaj_error), (int(10), int(30)),
-                cv2.FONT_HERSHEY_COMPLEX, 1, red)
+    cv2.putText(trail_visualization, "Prva T:"+str(faster_loop2_blikaj_error), (int(Xres), int(15)),cv2.FONT_HERSHEY_COMPLEX, font_size, red)
 
     # fire mark if second class on magenta line
     for id in objekty:
@@ -157,13 +165,13 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
         # calcculate begining xA and endig xB of rectangle in trai_visualization
         visualization_xA = xA + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
         visualization_xB = xB + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
-        if objekty[id].category == "secondclass" or objekty[id].category == "zapar" or objekty[id].category == "darksecondclass" or objekty[id].category == "edge" or objekty[id].category == "darksecondclass" or objekty[id].category == "mark":
+        if objekty[id].category == "secondclass" or objekty[id].category == "steamywood" or objekty[id].category == "darksecondclass":
             if (visualization_xB > saw_senzor_ofset_from_screen_pixels) and (visualization_xA < saw_senzor_ofset_from_screen_pixels):
                 faster_loop2_blikaj_second = 1
                 break
             faster_loop2_blikaj_second = 0
     # siganlyze on screen if second class found
-    cv2.putText(trail_visualization, str(faster_loop2_blikaj_second), (int(10), int(60)),cv2.FONT_HERSHEY_COMPLEX, 1, brown)
+    cv2.putText(trail_visualization, "Druha T:"+str(faster_loop2_blikaj_second), (int(Xres), int(100)),cv2.FONT_HERSHEY_COMPLEX, font_size, brown)
     cv2.imshow("Trail_visualization", trail_visualization)
     # if for error
     if (faster_loop2_blikaj_error== 1) and (s_distance.value < next_possible_blink):
