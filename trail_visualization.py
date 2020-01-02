@@ -177,7 +177,7 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
     if (faster_loop2_blikaj_error== 1) and (s_distance.value < next_possible_blink):
         print("Ferror:", faster_loop2_blikaj_error, faster_loop2_blikaj_second)
         blink_once()
-        next_possible_blink = (s_distance.value - 50)
+        #f = (s_distance.value - 50)
         next_possible_blink_second = next_possible_blink
         logging.debug('Next_possible_blink_error is :%s', next_possible_blink)
         last_blinked_class = "error"
@@ -210,8 +210,6 @@ saw_senzor_ofset_from_screen_pixels = int(Xres + dpi_to_pixels(saw_offset))
 
 if __name__=="__main__":
     try:
-        # print ("#draw_trail_visualization(objekty, s_distance)")
-        # draw_trail_visualization(objekty, s_distance)
         check_on_vysialization(draw_trail_visualization(objekty, s_distance),objekty)
     except Exception as ex:
         template = "An exception of type {0} occurred. Arguments:\n{1!r}"

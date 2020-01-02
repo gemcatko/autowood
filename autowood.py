@@ -240,33 +240,6 @@ class YObject:
             save_picture_to_file(file_name)
         self.is_picture_saved = True
 
-        def update_resutls_for_id(results, ct_objects):
-            """
-            loop over the tracked objects from Yolo34
-            Reconstruct Yolo34 results with object id (data from centroid tracker) an put object ID to idresults list, like :
-            class 'list'>[(b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
-            class 'list'>[(1, b'person', 0.9972826838493347, (646.4600219726562, 442.1628112792969, 1113.6322021484375, 609.4992065429688)), (4, b'bottle', 0.5920438170433044, (315.3851318359375, 251.22744750976562, 298.9032287597656, 215.8708953857422))]
-            :param results from Darknet, ct_objects:
-            :return:idresults
-            """
-            idresults = []
-            try:
-                for cat, score, bounds in results:
-                    x, y, w, h = bounds
-                    # loop over the tracked objects from Centroid
-                    for (objectID, centroid) in ct_objects.items():
-                        # put centroid coordinates to cX and Cy variables
-                        cX, cY = centroid[0], centroid[1]
-                        # there is difference between yolo34 centroids and centroids calculated by centroid tracker,Centroid closer then 2 pixel are considired to matcg  TODO find where?
-                        if abs(cX - int(x)) <= 2 and abs(cY - int(y)) <= 2:
-                            # reconstruct detection list as from yolo34 including ID from centroid
-                            idresult = objectID, cat, score, bounds
-                            idresults.append(idresult)
-                return idresults
-            except:
-                return idresults
-
-
 def update_resutls_for_id(results, ct_objects):
     """
     loop over the tracked objects from Yolo34
@@ -342,7 +315,7 @@ def second_visualization(net_width, net_heigth):
                         objekty[id].bounds = bounds
                         objekty[id].position_on_trail = s_distance.value
                         objekty[id].is_detected_by_detector = True
-                        if is_Yobject_to_big(bounds):
+                        if is_Yobject_to_big(bounds):           # if objects is across whole camera view it need to go to trail visulaization so it can be marked. If not done centroid tracker whould hold it on  visible screen and it would be marked as very smal object when leaving camera view
                             objekty[id].is_big = True
 
             except:
