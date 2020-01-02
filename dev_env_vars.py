@@ -22,7 +22,6 @@ alreadyBlinkedList = []
 #x_norm_last = 0
 #y_norm_last = 0
 size_of_one_screen_in_dpi = 400 # one screen view in angles , the value need to be calibrated when angle or distance or zoom of camera changes
-delay = 1  # time in s to delay marking, can be use to set distance of sensing camera from BliknStick.
 saw_offset = 200 # saw ofset in dpi
 objekty = {}  # it is storing all detection from program startup
 
@@ -30,8 +29,8 @@ how_big_object_max_small = 0.9  # detect object from how_big_object_min_small to
 how_big_object_min_small = 0.05 # detect object from how_big_object_min_small to how_big_object_max_small size of screen
 #max_dist_of_2nd_edge = 0.4 # max distance of second edge to create rim object
 # virtual position of triger relative to camera
-triger_margin = 0.6  # place on screen where it is detecting objects
-number_of_deleted_objects = 0
+#triger_margin = 0.6  # place on screen where it is detecting objects
+number_of_deleted_objects = 0 # used  for main is to be deleted
 #number_of_max_detection_per_trail = 5  #if more detection on trail firstly detected will be removed
 
 #Yolo configuration for net
@@ -64,11 +63,12 @@ weightPath = "./backup/2019_12_22_yolo-obj_v3_18000.weights"    #used only by au
 metaPath = "./x64/Release/data/obj.data"                        #used only by autowood
 network_width = 416
 network_heigth = 416
+
 Xres = network_width
 Yres = network_heigth
 
 obj_data = "cfg/obj.data"
-detection_treshold = 0.3
+detection_treshold = 0.3     # percentage
 
 #Colors
 black=(0,0,0)
@@ -89,9 +89,10 @@ brown = (19, 69,139)
 magenta = (255, 0, 255)
 orange =(0, 128, 255)
 
-font_size =0.7
-delay_off_whole_program = 0.2
-max_Yobject = 50
+font_size =0.7              # used for drawing on screen
+delay_off_whole_program = 0 # speed of whole program it gives delay to YOLO loop
+max_Yobject = 50            # maxinimum amount of objects to keep im memory older than the mentioned number will be deleted
+
 
 
 

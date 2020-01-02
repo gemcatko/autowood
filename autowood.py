@@ -1,9 +1,7 @@
-
 import os
 import cv2
 import time
 import sys
-
 # insert at 1, 0 is the script path (or '' in REPL)
 sys.path.insert(1, '/home/automateit/Projects/darknet-alexeyAB/darknet')
 import darknet
@@ -23,14 +21,12 @@ shm = shared_memory.SharedMemory(create=True, size=6520800, name='psm_c013ddb8')
 shm_image = np.ndarray((network_width, network_heigth, 3), dtype=np.uint8, buffer=shm.buf)
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s', )
 
-
 def convertBack(x, y, w, h):
     xmin = int(round(x - (w / 2)))
     xmax = int(round(x + (w / 2)))
     ymin = int(round(y - (h / 2)))
     ymax = int(round(y + (h / 2)))
     return xmin, ymin, xmax, ymax
-
 
 def cvDrawBoxes(detections, img):
     for detection in detections:
