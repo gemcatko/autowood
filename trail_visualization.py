@@ -173,17 +173,16 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
     cv2.putText(trail_visualization, "2st C:" + str(blink_second), (int(Xres), int(100)), cv2.FONT_HERSHEY_COMPLEX, font_size, brown)
     cv2.imshow("Trail_visualization", trail_visualization)
     # if for error
-    if (blink_error == 1) and (s_distance.value < next_possible_blink):
-        print("Ferror:", blink_error, blink_second)
-        blink_once()
-        next_possible_blink =(s_distance.value - 50)
-        #f = (s_distance.value - 50)
-        next_possible_blink_second = next_possible_blink
-        logging.debug('Next_possible_blink_error is :%s', next_possible_blink)
-        last_blinked_class = "error"
-    if blink_error == 1:
+    if (blink_error == 1):
         cv2.line(trail_visualization, (int(Xres + dpi_to_pixels(saw_offset))+(next_possible_blink-s_distance.value),0), (int(Xres + dpi_to_pixels(saw_offset))+(next_possible_blink-s_distance.value),int(Yres/4)), orange, 2)
-
+        if (s_distance.value < next_possible_blink):
+            print("Ferror:", blink_error, blink_second)
+            blink_once()
+            next_possible_blink =(s_distance.value - 50)
+            #f = (s_distance.value - 50)
+            next_possible_blink_second = next_possible_blink
+            logging.debug('Next_possible_blink_error is :%s', next_possible_blink)
+            last_blinked_class = "error"
 
     # if for second class
     if ((blink_second == 1) and (s_distance.value < next_possible_blink_second) and (
