@@ -179,7 +179,6 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
             print("Ferror:", blink_error, blink_second)
             blink_once()
             error_next_possible_blink =(s_distance.value - error_next_possible_blink_min)
-            #f = (s_distance.value - 50)
             second_next_possible_blink = error_next_possible_blink
             logging.debug('Next_possible_blink_error is :%s', error_next_possible_blink)
             last_blinked_class = "error"
@@ -192,13 +191,14 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
     # if second class do blink
     if ((blink_second == 1)  and (blink_error == 0)):  # and (last_blinked_class != "second")
         #second_next_possible_blink = int( visualization_xA - 10)
-        if (s_distance.value < second_next_possible_blink):
+        if (s_distance.value < second_next_possible_blink) and not (last_blinked_class == "second"):    # pravdepodobne uz vobec nepotrebujes next posible blik tak sah ho treba zbavit
             print("FSecond:", blink_error, blink_second)
             blink_double()  # TODO nahrad toto blink once when you will have more stable s_distance
             second_next_possible_blink = (s_distance.value - second_next_possible_blink_min)
             last_blinked_class = "second"
             logging.debug('Next_possible_blink_second is :%s', second_next_possible_blink)
             # TODO check maybe where the second  class is ending
+
     #do drawing on trail_visualization  if second class blink
     if ((blink_second == 1)  and (blink_error == 0)):  # and (last_blinked_class != "second")
         cv2.line(trail_visualization,

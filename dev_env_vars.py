@@ -93,7 +93,7 @@ font_size =0.7              # used for drawing on screen
 delay_off_whole_program = 0.1 # speed of whole program it gives delay to YOLO loop
 max_Yobject = 50            # maxinimum amount of objects to keep im memory older than the mentioned number will be deleted
 error_next_possible_blink_min = 50   # value in angles from magneto
-second_next_possible_blink_min = 400 # value in angles from magneto
+second_next_possible_blink_min = 100 # value in angles from magneto
 
 
 
