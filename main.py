@@ -438,8 +438,8 @@ def faster_loop_trigerlist_distance(qtrigerlist):
             logging.debug('loopTrigerlistThread duration %s:', end_time_loop - start_time_loop)
 
 def faster_loop_2( faster_loop2_blikaj_first):
-    global faster_loop2_blikaj_error
-    global faster_loop2_blikaj_second
+    global blink_error
+    global blink_second
 
     """
     loopa ktra bude stale bezat a bude mat udaj kedy moze ist najblizss dalsi blik
@@ -643,8 +643,8 @@ def draw_trail_visualization(objeky,s_distance):
     return trail_visualization
 
 def check_on_vysialization (trail_visualization):
-    global faster_loop2_blikaj_error
-    global faster_loop2_blikaj_second
+    global blink_error
+    global blink_second
     #faster_loop2_blikaj_error = Value('b', 0)
     saw_senzor_ofset_from_screen_pixels = int(Xresolution + dpi_to_pixels(saw_offset))
 
@@ -738,8 +738,8 @@ if __name__ == "__main__":
     process1 = multiprocessing.Process(target=faster_loop_trigerlist_distance, args=(qtrigerlist,))
     process1.daemon = True
     #process1.start()
-    faster_loop2_blikaj_error = multiprocessing.Value('b', 0)
-    faster_loop2_blikaj_second = multiprocessing.Value('i', 0)
+    blink_error = multiprocessing.Value('b', 0)
+    blink_second = multiprocessing.Value('i', 0)
     faster_loop2_blikaj_first = multiprocessing.Value('i', 0)
     process2 = multiprocessing.Process(target=faster_loop_2, args=(faster_loop2_blikaj_first,))
     process2.daemon = True
