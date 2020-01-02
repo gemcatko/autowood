@@ -90,6 +90,8 @@ magenta = (255, 0, 255)
 orange =(0, 128, 255)
 
 font_size =0.7
+delay_off_whole_program = 0.2
+max_Yobject = 50
 
 
 

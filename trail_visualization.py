@@ -200,7 +200,6 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
         last_blinked_class = "first"
         # TODO check if folowing  wood is not contaning any error or second class
 
-
 faster_loop2_blikaj_error = 0
 faster_loop2_blikaj_second = 0
 faster_loop2_blikaj_first = 0

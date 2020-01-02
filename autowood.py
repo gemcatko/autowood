@@ -7,22 +7,26 @@ import numpy as np
 import time
 # some_file.py
 import sys
+
 # insert at 1, 0 is the script path (or '' in REPL)
 sys.path.insert(1, '/home/automateit/Projects/darknet-alexeyAB/darknet')
 import darknet
 from multiprocessing import Process, Value, Array, Manager
 from multiprocessing import shared_memory
 import numpy as np
+
 manager = Manager()
 manager_detections = manager.list()
 from pyimagesearch.centroidtracker import CentroidTracker
 from dev_env_vars import *
 from magneto import Magneto
-from trail_visualization import*
+from trail_visualization import *
 import logging
-shm = shared_memory.SharedMemory(create=True, size=6520800, name='psm_c013ddb7')
-shm_image = np.ndarray((416,416,3), dtype=np.uint8, buffer=shm.buf)
+
+shm = shared_memory.SharedMemory(create=True, size=6520800, name='psm_c013ddb8')
+shm_image = np.ndarray((network_width, network_heigth, 3), dtype=np.uint8, buffer=shm.buf)
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s', )
+
 
 def convertBack(x, y, w, h):
     xmin = int(round(x - (w / 2)))
@@ -31,12 +35,13 @@ def convertBack(x, y, w, h):
     ymax = int(round(y + (h / 2)))
     return xmin, ymin, xmax, ymax
 
+
 def cvDrawBoxes(detections, img):
     for detection in detections:
-        x, y, w, h = detection[2][0],\
-            detection[2][1],\
-            detection[2][2],\
-            detection[2][3]
+        x, y, w, h = detection[2][0], \
+                     detection[2][1], \
+                     detection[2][2], \
+                     detection[2][3]
         xmin, ymin, xmax, ymax = convertBack(
             float(x), float(y), float(w), float(h))
         pt1 = (xmin, ymin)
@@ -54,19 +59,20 @@ netMain = None
 metaMain = None
 altNames = None
 
+
 def YOLO():
     start_time = time.time()
 
-    global metaMain, netMain, altNames ,manager_detections
+    global metaMain, netMain, altNames, manager_detections
     if not os.path.exists(configPath):
         raise ValueError("Invalid config path `" +
-                         os.path.abspath(configPath)+"`")
+                         os.path.abspath(configPath) + "`")
     if not os.path.exists(weightPath):
         raise ValueError("Invalid weight path `" +
-                         os.path.abspath(weightPath)+"`")
+                         os.path.abspath(weightPath) + "`")
     if not os.path.exists(metaPath):
         raise ValueError("Invalid data file path `" +
-                         os.path.abspath(metaPath)+"`")
+                         os.path.abspath(metaPath) + "`")
     if netMain is None:
         netMain = darknet.load_net_custom(configPath.encode(
             "ascii"), weightPath.encode("ascii"), 0, 1)  # batch size = 1
@@ -92,7 +98,7 @@ def YOLO():
                     pass
         except Exception:
             pass
-    #cap = cv2.VideoCapture(0)
+    # cap = cv2.VideoCapture(0)
     cap = cv2.VideoCapture(video_filename_path)
     cap.set(3, Xresolution)
     cap.set(4, Yresolution)
@@ -103,25 +109,26 @@ def YOLO():
 
     # Create an image we reuse for each detect
     darknet_image = darknet.make_image(darknet.network_width(netMain),
-                                    darknet.network_height(netMain),3)
+                                       darknet.network_height(netMain), 3)
     while True:
         prev_time = time.time()
         ret, frame_read = cap.read()
         frame_rgb = cv2.cvtColor(frame_read, cv2.COLOR_BGR2RGB)
-        frame_rgb = rotate_by_180_and_delays(frame_rgb,0.1) # use for changing direction of video and speed of video
+        frame_rgb = rotate_by_180_and_delay(frame_rgb,
+                                            delay_off_whole_program)  # use for changing direction of video and speed of video
         frame_resized = cv2.resize(frame_rgb,
                                    (darknet.network_width(netMain),
                                     darknet.network_height(netMain)),
                                    interpolation=cv2.INTER_LINEAR)
 
-        darknet.copy_image_from_bytes(darknet_image,frame_resized.tobytes())
-        del manager_detections[:]                       #need to be cleared every iterration
+        darknet.copy_image_from_bytes(darknet_image, frame_resized.tobytes())
+        del manager_detections[:]  # need to be cleared every iterration
         detections = darknet.detect_image(netMain, metaMain, darknet_image, thresh=detection_treshold)
-        #print(detections)
+        # print(detections)
         manager_detections.append(detections)
         image = cvDrawBoxes(detections, frame_resized)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        shm_image[:] = image[:]         #copy image to shared memory as array because we would like to share with other proces
+        shm_image[:] = image[:]  # copy image to shared memory as array because we would like to share with other proces
 
         end_time = time.time()
         show_fps(start_time, end_time, image)
@@ -131,16 +138,17 @@ def YOLO():
     cap.release()
     out.release()
 
+
 def convert_bounding_boxes_form_Yolo_Centroid_format(results):
     # clean rect so it is clean an can be filled with new detection from frame\
     # later used in conversion_to_x1y1x2y2 . Conversion from yolo format to Centroid Format
     # rects are needed for centroid to work. They need to be cleared every time
     rects = []
 
-    #if len(results) <= 1: # check if array is not empty, for prevention of crashing in later stage
+    # if len(results) <= 1: # check if array is not empty, for prevention of crashing in later stage
     #    return []
     try:
-        for cat, score, bounds in results:    # unpacking
+        for cat, score, bounds in results:  # unpacking
             x, y, w, h = bounds
             """
             convert from yolo format to cetroid format
@@ -154,13 +162,15 @@ def convert_bounding_boxes_form_Yolo_Centroid_format(results):
             rects.append(box.astype("int"))
         return rects
     except:
-        #print("There was a problem with extrection from result:", rects)
+        # print("There was a problem with extrection from result:", rects)
         return rects
+
 
 def unpack_results(results):
     for oneresult in results:  # unpacking
-        #print(oneresult)
+        # print(oneresult)
         return oneresult
+
 
 class YObject:
     # use for creating objects from Yolo.
@@ -176,11 +186,11 @@ class YObject:
         self.is_detected_by_detector = True
         self.ignore = False
         self.is_picture_saved = False
-        #self.ready_for_blink_start = False
-        #self.ready_for_blink_end = False
+        # self.ready_for_blink_start = False
+        # self.ready_for_blink_end = False
         global frame
 
-    def draw_object_bb_and_class(self, frame,idresults):
+    def draw_object_bb_and_class(self, frame, idresults):
         """
         Draw objects name to CV2 frame  using cv2 only if  detected by detector
         :return: none
@@ -191,16 +201,17 @@ class YObject:
             cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), blue, 4)
             cv2.putText(frame, str(self.category), (int(x), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 0))
 
-    def draw_object_score(self,frame,idresults):
+    def draw_object_score(self, frame, idresults):
         """
         Draw objects score to CV2 frame  using cv2 only if still detected by detector
         :return: none
         """
         if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
             x, y, w, h = self.bounds
-            cv2.putText(frame, str(round(self.score, 2)), (int(x - 20), int(y - 20)), cv2.FONT_HERSHEY_COMPLEX, 1, azzure)
+            cv2.putText(frame, str(round(self.score, 2)), (int(x - 20), int(y - 20)), cv2.FONT_HERSHEY_COMPLEX, 1,
+                        azzure)
 
-    def draw_object_id(self,frame,idresults):
+    def draw_object_id(self, frame, idresults):
         """
         Drae object Id to CV2 frame only if still detected by detector
         :return:
@@ -209,7 +220,7 @@ class YObject:
             x, y, w, h = self.bounds
             cv2.putText(frame, str(self.id), (int(x - 30), int(y)), cv2.FONT_HERSHEY_COMPLEX, 1, (magenta))
 
-    def draw_object_position_on_trail(self,frame,idresults):
+    def draw_object_position_on_trail(self, frame, idresults):
         """
         Drae object Id to CV2 frame only if still detected by detector
         :return:
@@ -217,10 +228,10 @@ class YObject:
         if self.is_detected_by_detector or id in (item for sublist in idresults for item in sublist):
             x, y, w, h = self.bounds
             x_rel, y_rel, w_rel, h_rel, area_rel = calculate_relative_coordinates(x, y, w, h)
-            #position_on_trail_for_screen = round(self.position_on_trail + (x_rel * size_of_one_screen_in_dpi), 1)
-            position_on_trail_for_screen = round((x_rel * size_of_one_screen_in_dpi)  )
-            cv2.putText(frame, str(position_on_trail_for_screen), (int(x), int(y + 25)), cv2.FONT_HERSHEY_COMPLEX, 1, (yellow))
-
+            # position_on_trail_for_screen = round(self.position_on_trail + (x_rel * size_of_one_screen_in_dpi), 1)
+            position_on_trail_for_screen = round((x_rel * size_of_one_screen_in_dpi))
+            cv2.putText(frame, str(position_on_trail_for_screen), (int(x), int(y + 25)), cv2.FONT_HERSHEY_COMPLEX, 1,
+                        (yellow))
 
     def save_picure_of_every_detected_object(self, file_name="detected_objects"):
         """
@@ -256,7 +267,8 @@ class YObject:
             except:
                 return idresults
 
-def update_resutls_for_id(results,ct_objects):
+
+def update_resutls_for_id(results, ct_objects):
     """
     loop over the tracked objects from Yolo34
     Reconstruct Yolo34 results with object id (data from centroid tracker) an put object ID to idresults list, like :
@@ -282,59 +294,62 @@ def update_resutls_for_id(results,ct_objects):
     except:
         return idresults
 
-def show_fps(start_time, end_time,name_of_frame):
+
+def show_fps(start_time, end_time, name_of_frame):
     duration_of_loop = end_time - start_time
     FPS = round(1 / duration_of_loop, 1)
     cv2.putText(name_of_frame, str(FPS), (int(Xres - 80), int(Yres - 40)), cv2.FONT_HERSHEY_COMPLEX, 1,
                 (255, 100, 255))
-    #print(FPS)
+    # print(FPS)
     return FPS
 
+
 def is_Yobject_to_big(bounds):
-    x,y,w,h = bounds
-    #cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), blue, 4)
-    if int(x + w / 2) > (Xres - Xres/4):
-        if w > (Xres - Xres/2):
+    x, y, w, h = bounds
+    # cv2.rectangle(frame, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), blue, 4)
+    if int(x + w / 2) > (Xres - Xres / 4):
+        if w > (Xres - Xres / 2):
             print("objekt is too big")
             return True
     return False
 
-def second_visualization(net_width,net_heigth):
-    existing_shm = shared_memory.SharedMemory(name='psm_c013ddb7')
-    image = np.ndarray((net_width,net_heigth,3), dtype=np.uint8, buffer=existing_shm.buf)
+
+def second_visualization(net_width, net_heigth):
+    existing_shm = shared_memory.SharedMemory(name='psm_c013ddb8')
+    image = np.ndarray((net_width, net_heigth, 3), dtype=np.uint8, buffer=existing_shm.buf)
     ct = CentroidTracker(maxDisappeared=20)
-    which_id_to_delete=0     # is used for object deletion start
-    start_time = time.time()    #for FPS counting
+    which_id_to_delete = 0  # is used for object deletion start
+    start_time = time.time()  # for FPS counting
     while True:
         frame = image
         # get data from shared memory
         results = manager_detections
         results = unpack_results(results)
-        #print("Results from darkent:",results)
+        # print("Results from darkent:",results)
         # genreate IDs for for results from Darknet
         ct_objects = ct.update(convert_bounding_boxes_form_Yolo_Centroid_format(results))
-        idresults = update_resutls_for_id(results,ct_objects)
-        #print("Resultswith ID", idresults)
+        idresults = update_resutls_for_id(results, ct_objects)
+        # print("Resultswith ID", idresults)
         cv2.waitKey(3)
         for id, category, score, bounds in idresults:
-            try:#
+            try:  #
                 # if Yobjekt with specific id already exists, update it
                 # TODO # to je mozno chyba,co sa stane z objektami ktorych id je este na zobrazene ale nuz je objekt dissapeared
                 if objekty[id].id == id:  # and objekty[id].category == category.decode("utf-8"):
-                    #if objekty[id].category == category.decode("utf-8"): #- If you enable you need to take care of umached objects which are deteceted
-                    if objekty[id].is_big == False:
+                    # if objekty[id].category == category.decode("utf-8"): #- If you enable you need to take care of umached objects which are deteceted
+                    if not objekty[id].is_big:
                         objekty[id].category = category.decode("utf-8")
                         objekty[id].score = score
                         objekty[id].bounds = bounds
                         objekty[id].position_on_trail = s_distance.value
                         objekty[id].is_detected_by_detector = True
                         if is_Yobject_to_big(bounds):
-                           objekty[id].is_big = True
+                            objekty[id].is_big = True
 
             except:
                 # create new object if not existing
                 objekty[id] = YObject(id, category.decode("utf-8"), score, bounds, s_distance.value)
-        if len(objekty) > 25:  # max number of object which to keep
+        if len(objekty) > max_Yobject:  # max number of object which to keep
             del objekty[which_id_to_delete]
             which_id_to_delete = which_id_to_delete + 1
 
@@ -342,25 +357,26 @@ def second_visualization(net_width,net_heigth):
             objekty[id].draw_object_bb_and_class(frame, idresults)
             objekty[id].draw_object_score(frame, idresults)
             objekty[id].draw_object_id(frame, idresults)
-            objekty[id].draw_object_position_on_trail(frame,idresults)
-            #objekty[id].save_picure_of_every_detected_object("detected_objects")
-        update_objekty_if_not_detected(objekty,idresults)
+            objekty[id].draw_object_position_on_trail(frame, idresults)
+            # objekty[id].save_picure_of_every_detected_object("detected_objects")
+        update_objekty_if_not_detected(objekty, idresults)
 
         try:
-            check_on_vysialization(draw_trail_visualization(objekty, s_distance),objekty,s_distance)
+            check_on_vysialization(draw_trail_visualization(objekty, s_distance), objekty, s_distance)
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print(message)
         end_time = time.time()
-        show_fps(start_time, end_time,frame)
+        show_fps(start_time, end_time, frame)
         start_time = time.time()
         cv2.imshow('second_visualization', frame)
         k = cv2.waitKey(1)
         if k == 0xFF & ord("q"):
             break
 
-def update_objekty_if_not_detected(objekty,idresults):
+
+def update_objekty_if_not_detected(objekty, idresults):
     """
     :param objekty:
     Is updating all objects store in objekty if not in in idresults list from detector
@@ -370,7 +386,8 @@ def update_objekty_if_not_detected(objekty,idresults):
         # id in (item for sublist in idresults for item in sublist) is returning True or False good explanation is https://www.geeksforgeeks.org/python-check-if-element-exists-in-list-of-lists/
         if not id in (item for sublist in idresults for item in sublist):
             objekty[id].is_detected_by_detector = False
-            #objekty[id].position_on_trail = s_distance.value
+            # objekty[id].position_on_trail = s_distance.value
+
 
 def calculate_relative_coordinates(x, y, w, h):
     """
@@ -388,7 +405,8 @@ def calculate_relative_coordinates(x, y, w, h):
     area_rel = w_rel * h_rel
     return x_rel, y_rel, w_rel, h_rel, area_rel
 
-def rotate_by_180_and_delays(frame,delay):
+
+def rotate_by_180_and_delay(frame, delay):
     (h, w) = frame.shape[:2]
     center = (w / 2, h / 2)
     angle180 = 180
@@ -409,7 +427,6 @@ sensor_process = Magneto(shared_distance=s_distance)
 sensor_process.start()
 second_visualization_proc = Process(target=second_visualization, args=(network_width, network_heigth))
 second_visualization_proc.daemon = True
-
 
 if __name__ == "__main__":
     second_visualization_proc.start()
