@@ -91,9 +91,24 @@ def YOLO():
         except Exception:
             pass
     # cap = cv2.VideoCapture(0)
-    cap = cv2.VideoCapture(video_filename_path)
+    # USE if  webcam
+
+    cap = cv2.VideoCapture(0)  # set web cam properties width and height, working for USB for webcam
     cap.set(3, Xresolution)
     cap.set(4, Yresolution)
+    ##Use webcam with high frame rate
+    codec = cv2.VideoWriter_fourcc("M", "J", "P", "G")
+    cap.set(cv2.CAP_PROP_FPS, 50)  # FPS60FPS
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, Xresolution)  # set resolutionx of webcam
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Yresolution)  # set resolutiony of webcam
+    cap.set(cv2.CAP_PROP_FOURCC, codec)
+    print(cap.get(cv2.CAP_PROP_FPS))
+    print(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    print(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    #cap = cv2.VideoCapture(video_filename_path)
+    #cap.set(3, Xresolution)
+    #cap.set(4, Yresolution)
     out = cv2.VideoWriter(
         "output.avi", cv2.VideoWriter_fourcc(*"MJPG"), 10.0,
         (darknet.network_width(netMain), darknet.network_height(netMain)))

@@ -1,12 +1,16 @@
 ###################### VARS : ######################################################################################
 
 # set resolution taken from webcam it need to match reality!or relative calculations will not work
-Xresolution = 1280  #used for setting input camera resolution
-Yresolution = 720   #used for setting input camera resolution
+Xresolution = 640  #used for setting input camera resolution
+Yresolution = 480   #used for setting input camera resolution
+
+#Xresolution = 1920  #used for setting input camera resolution
+#Yresolution = 1080  #used for setting input camera resolution
 
 scale_trail_visualization = 4 # how much compact trail visualization heigth
 # from where to take a video videofile
-video_filename = "test_01-40_03-17_1440x1080.mp4"
+#video_filename = "test_01-40_03-17_1440x1080.mp4"
+video_filename = "VID_20190711_065005.mp4"
 video_filename_path = "/home/automateit/Projects/darknet-alexeyAB/darknet/x64/Release/data/" + video_filename
 
 cell_phone = []
@@ -90,7 +94,7 @@ magenta = (255, 0, 255)
 orange =(0, 128, 255)
 
 font_size =0.7              # used for drawing on screen
-delay_off_whole_program = 0.1 # speed of whole program it gives delay to YOLO loop
+delay_off_whole_program = 0 # speed of whole program it gives delay to YOLO loop
 max_Yobject = 50            # maxinimum amount of objects to keep im memory older than the mentioned number will be deleted
 error_next_possible_blink_min = 50   # value in angles from magneto
 second_next_possible_blink_min = 100 # value in angles from magneto
