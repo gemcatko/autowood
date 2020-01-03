@@ -213,13 +213,14 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
         blink_once()
         last_blinked_class = "first"
     # If First class after second class make drawing on trail_visualization
+    """
     if (blink_error == 0) and (blink_second == 0) and (s_distance.value > second_next_possible_blink) and (last_blinked_class == "second"):
         cv2.line(trail_visualization,
                  (int(Xres + dpi_to_pixels(saw_offset)) + (second_next_possible_blink - s_distance.value), 0), (
                      int(Xres + dpi_to_pixels(saw_offset)) + (second_next_possible_blink - s_distance.value),
                      int(Yres / scale_trail_visualization)), green, 2)
         # TODO check if folowing  wood is not contaning any error or second class
-
+    """
 
     #cv2.line(trail_visualization, (next_possible_blink-s_distance.value,0), (next_possible_blink-s_distance.value,int(Yres/4)), orange, 1)
     cv2.imshow("Trail_visualization", trail_visualization)
