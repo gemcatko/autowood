@@ -200,16 +200,10 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
             # TODO check maybe where the second  class is ending
 
     #do drawing on trail_visualization  if second class blink
+    xcor=int(Xres + dpi_to_pixels(saw_offset)) + (second_next_possible_blink - s_distance.value + second_next_possible_blink_min)
     if ((blink_second == 1)  and (blink_error == 0)):  # and (last_blinked_class != "second")
-        cv2.line(trail_visualization,
-                 (int(Xres + dpi_to_pixels(saw_offset)) + (second_next_possible_blink - s_distance.value), 0), (
-                 int(Xres + dpi_to_pixels(saw_offset)) + (second_next_possible_blink - s_distance.value),
-                 int(Yres / scale_trail_visualization)), brown, 2)
-        cv2.line(trail_visualization,
-                 (int(Xres + dpi_to_pixels(saw_offset)) + (second_next_possible_blink - s_distance.value + 8), 0), (
-                 int(Xres + dpi_to_pixels(saw_offset)) + (second_next_possible_blink - s_distance.value + 8),
-                 int(Yres / scale_trail_visualization)), brown, 2)
-
+        cv2.line(trail_visualization, (xcor, 0), (xcor,int(Yres / scale_trail_visualization)), brown, 2)
+        cv2.line(trail_visualization, (xcor + 8, 0), (xcor + 8,int(Yres / scale_trail_visualization)), brown, 2)
 
     # If First class after second class found
     if (blink_error == 0) and (blink_second == 0) and (
