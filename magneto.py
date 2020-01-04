@@ -28,8 +28,8 @@ class Magneto(Process):
             #read curr. angle from serial con
             current_angle = s.readline().decode('ascii')
             self.previous_angle = self.angle
-            #self.angle = math.ceil(float(current_angle))
-            self.angle = self.angle - 3 # simulate angle change
+            self.angle = math.ceil(float(current_angle))
+            #self.angle = self.angle - 3 # simulate angle change
 
     def __get_delta__(self):
         self.delta = self.angle - self.previous_angle
@@ -40,6 +40,7 @@ class Magneto(Process):
         self.__get_delta__()
         self.distance += self.delta
         self.s_distance.value += self.delta
+        print(s_distance.value)
 
     def get_distance(self):
         return self.distance

@@ -13,6 +13,33 @@ try:
 
         time_between_blinks = 0.0035
         time_between_blinks2 = 0.005 # jaks tak funguje
+        bstick.blink(channel=0, index=2, red=255, green=0, blue=0, name=None, hex=None, repeats=4, delay=7)
+
+
+        """
+        bstick.set_color(channel=0, index=0, name="red")
+        # bstick.set_color(channel=0, index=1, name="red")
+        time.sleep(time_between_blinks2)
+        bstick.set_color(channel=0, index=0, name="")
+        # bstick.set_color(channel=0, index=1, name="")
+        time.sleep(time_between_blinks)
+        bstick.set_color(channel=0, index=0, name="red")
+        # bstick.set_color(channel=0, index=1, name="red")
+        time.sleep(time_between_blinks2)
+        bstick.set_color(channel=0, index=0, name="")
+        # bstick.set_color(channel=0, index=1, name="")
+        time.sleep(time_between_blinks)
+        bstick.set_color(channel=0, index=0, name="red")
+        # bstick.set_color(channel=0, index=1, name="red")
+        time.sleep(time_between_blinks2)
+        bstick.set_color(channel=0, index=0, name="")
+        # bstick.set_color(channel=0, index=1, name="")
+        time.sleep(time_between_blinks)
+        bstick.set_color(channel=0, index=0, name="red")
+        # bstick.set_color(channel=0, index=1, name="red")
+        time.sleep(time_between_blinks2)
+        bstick.set_color(channel=0, index=0, name="")
+        """
         """
         print ("Found device:")
         print ("    Manufacturer:  " + bstick.get_manufacturer())
@@ -22,31 +49,6 @@ try:
         print ("    Info Block 1:  " + bstick.get_info_block1())
         print ("    Info Block 2:  " + bstick.get_info_block2())
         """
-        """
-        bstick.set_color(channel=0, index=0, name="red")
-        # bstick.set_color(channel=0, index=1, name="red")
-        time.sleep(time_between_blinks2)
-        bstick.set_color(channel=0, index=0, name="")
-        # bstick.set_color(channel=0, index=1, name="")
-        time.sleep(time_between_blinks)
-        bstick.set_color(channel=0, index=0, name="red")
-        # bstick.set_color(channel=0, index=1, name="red")
-        time.sleep(time_between_blinks2)
-        bstick.set_color(channel=0, index=0, name="")
-        # bstick.set_color(channel=0, index=1, name="")
-        time.sleep(time_between_blinks)
-        bstick.set_color(channel=0, index=0, name="red")
-        # bstick.set_color(channel=0, index=1, name="red")
-        time.sleep(time_between_blinks2)
-        bstick.set_color(channel=0, index=0, name="")
-        # bstick.set_color(channel=0, index=1, name="")
-        time.sleep(time_between_blinks)
-        bstick.set_color(channel=0, index=0, name="red")
-        # bstick.set_color(channel=0, index=1, name="red")
-        time.sleep(time_between_blinks2)
-        bstick.set_color(channel=0, index=0, name="")
-        """
-        bstick.blink(channel=0, index=0, red=255, green=0, blue=0, name=None, hex=None, repeats=4, delay=7)
 
 
         end_time = time.time()

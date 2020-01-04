@@ -8,6 +8,7 @@ logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-
 try:
     for bstick in blinkstick.find_all():
         start_time = time.time()
+        bstick.blink(channel=0, index=2, red=255, green=0, blue=0, name=None, hex=None, repeats=2, delay=7)
 
         #time_between_blinks = 0.005
         #time_between_blinks2 = 0.007
@@ -16,15 +17,7 @@ try:
 
         #time_between_blinks = 0.009 # pri 3m zaje vzdialenost ~47mm
         #time_between_blinks2 = 0.007 #pri 2m zaje vzdialenost !32mm
-        """
-        print ("Found device:")
-        print ("    Manufacturer:  " + bstick.get_manufacturer())
-        print ("    Description:   " + bstick.get_description())
-        print ("    Serial:        " + bstick.get_serial())
-        print ("    Current Color: " + bstick.get_color(color_format="hex"))
-        print ("    Info Block 1:  " + bstick.get_info_block1())
-        print ("    Info Block 2:  " + bstick.get_info_block2())
-        """
+
         bstick.set_color(channel=0, index=0, name="red")
         bstick.set_color(channel=0, index=1, name="red") # comment this when you go to try to on Pila
         time.sleep(time_between_blinks2)
