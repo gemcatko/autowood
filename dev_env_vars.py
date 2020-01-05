@@ -30,6 +30,8 @@ alreadyBlinkedList = []
 #y_norm_last = 0
 size_of_one_screen_in_dpi = 400 # one screen view in angles , the value need to be calibrated when angle or distance or zoom of camera changes
 saw_offset = 50 # saw senzor ofset in dpi (camera field of vision)
+#30,47344874  obvod kolecka = 360 dpi
+#1 dpi = 0,084648469 cm
 objekty = {}  # it is storing all detection from program startup
 
 how_big_object_max_small = 0.9  # detect object from how_big_object_min_small to how_big_object_max_small size of screen
@@ -68,8 +70,8 @@ yolov_weights = "weights/2019_12_22_yolo-obj_v3_18000.weights"      #used only b
 configPath = "./x64/Release/data/2019_12_22_yolo-obj_v3.cfg"    #used only by autowood
 weightPath = "./backup/2019_12_22_yolo-obj_v3_18000.weights"    #used only by autowood
 metaPath = "./x64/Release/data/obj.data"                        #used only by autowood
-network_width = 416
-network_heigth = 416
+network_width = 416     # this need to be changed in cfg file as well
+network_heigth = 416    # this need to be changed in cfg file as well
 
 Xres = network_width
 Yres = network_heigth
