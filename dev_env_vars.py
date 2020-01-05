@@ -29,7 +29,7 @@ alreadyBlinkedList = []
 #x_norm_last = 0
 #y_norm_last = 0
 size_of_one_screen_in_dpi = 400 # one screen view in angles , the value need to be calibrated when angle or distance or zoom of camera changes
-saw_offset = 200 # saw ofset in dpi
+saw_offset = 50 # saw senzor ofset in dpi (camera field of vision)
 objekty = {}  # it is storing all detection from program startup
 
 how_big_object_max_small = 0.9  # detect object from how_big_object_min_small to how_big_object_max_small size of screen
@@ -75,7 +75,7 @@ Xres = network_width
 Yres = network_heigth
 
 obj_data = "cfg/obj.data"
-detection_treshold = 0.3     # percentage
+detection_treshold = 0.3     # percentage which detection to consider
 
 #Colors
 black=(0,0,0)
@@ -97,7 +97,7 @@ magenta = (255, 0, 255)
 orange =(0, 128, 255)
 
 font_size =0.7              # used for drawing on screen
-delay_off_whole_program = 0.1 # speed of whole program it gives delay to YOLO loop
+delay_off_whole_program = 0 # speed of whole program it gives delay to YOLO loop
 max_Yobject = 50            # maxinimum amount of objects to keep im memory older than the mentioned number will be deleted
 error_next_possible_blink_min = 50   # value in angles from magneto
 second_next_possible_blink_min = 100 # value in angles from magneto
