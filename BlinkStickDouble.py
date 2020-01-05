@@ -17,7 +17,7 @@ try:
 
         #time_between_blinks = 0.009 # pri 3m zaje vzdialenost ~47mm
         #time_between_blinks2 = 0.007 #pri 2m zaje vzdialenost !32mm
-
+        """
         bstick.set_color(channel=0, index=0, name="red")
         bstick.set_color(channel=0, index=1, name="red") # comment this when you go to try to on Pila
         time.sleep(time_between_blinks2)
@@ -30,7 +30,7 @@ try:
         bstick.set_color(channel=0, index=0, name="")
         bstick.set_color(channel=0, index=1, name="")# comment this when you go to try to on Pila
         time.sleep(time_between_blinks)
-
+        """
         end_time = time.time()
         #print("You have bliked, Elapsed Time of the Blink:", end_time - start_time)
         #logging.debug('You have bliked, Elapsed Time of the Blink: %s', end_time - start_time)

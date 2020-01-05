@@ -40,7 +40,6 @@ class Magneto(Process):
         self.__get_delta__()
         self.distance += self.delta
         self.s_distance.value += self.delta
-        print(s_distance.value)
 
     def get_distance(self):
         return self.distance

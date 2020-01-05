@@ -17,7 +17,7 @@ from magneto import Magneto
 from trail_visualization import *
 import logging
 
-shm = shared_memory.SharedMemory(create=True, size=6520800, name='psm_c013ddb6')
+shm = shared_memory.SharedMemory(create=True, size=6520800, name='psm_c013ddb9')
 shm_image = np.ndarray((network_width, network_heigth, 3), dtype=np.uint8, buffer=shm.buf)
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-10s) %(message)s', )
 
@@ -106,9 +106,11 @@ def YOLO():
     print(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     print(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-    #cap = cv2.VideoCapture(video_filename_path)
-    #cap.set(3, Xresolution)
-    #cap.set(4, Yresolution)
+    """
+    cap = cv2.VideoCapture(video_filename_path)
+    cap.set(3, Xresolution)
+    cap.set(4, Yresolution)
+    """
     out = cv2.VideoWriter(
         "output.avi", cv2.VideoWriter_fourcc(*"MJPG"), 10.0,
         (darknet.network_width(netMain), darknet.network_height(netMain)))
@@ -302,7 +304,7 @@ def is_Yobject_to_big(bounds):
 
 
 def second_visualization(net_width, net_heigth):
-    existing_shm = shared_memory.SharedMemory(name='psm_c013ddb6')
+    existing_shm = shared_memory.SharedMemory(name='psm_c013ddb9')
     image = np.ndarray((net_width, net_heigth, 3), dtype=np.uint8, buffer=existing_shm.buf)
     ct = CentroidTracker(maxDisappeared=20)
     which_id_to_delete = 0  # is used for object deletion start
