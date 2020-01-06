@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] (%(threadName)-
 try:
     for bstick in blinkstick.find_all():
         start_time = time.time()
-        bstick.blink(channel=0, index=2, red=255, green=0, blue=0, name=None, hex=None, repeats=2, delay=7)
+        bstick.blink(channel=0, index=3, red=255, green=0, blue=0, name=None, hex=None, repeats=2, delay=1)
 
         #time_between_blinks = 0.005
         #time_between_blinks2 = 0.007
