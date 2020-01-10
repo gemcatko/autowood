@@ -29,7 +29,7 @@ alreadyBlinkedList = []
 #x_norm_last = 0
 #y_norm_last = 0
 size_of_one_screen_in_dpi = 472 # one screen view in angles , the value need to be calibrated when angle or distance or zoom of camera changes
-saw_offset = 200 # saw senzor ofset in dpi (camera field of vision)
+saw_offset = 0 # saw senzor ofset in dpi (camera field of vision)
 #30,47344874  obvod kolecka = 360 dpi
 #1 dpi = 0,084648469 cm
 objekty = {}  # it is storing all detection from program startup
@@ -77,7 +77,7 @@ Xres = network_width
 Yres = network_heigth
 
 obj_data = "cfg/obj.data"
-detection_treshold = 0.3     # percentage which detection to consider
+detection_treshold = 0.6     # percentage which detection to consider
 
 #Colors
 black=(0,0,0)

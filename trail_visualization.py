@@ -107,7 +107,7 @@ def draw_trail_visualization(objekty,s_distance):
             cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),(int(visualization_xB), int(yB / scale_trail_visualization)), red, 3)
             cv2.putText(trail_visualization, str(objekty[id].id), (int(visualization_xA), int(yB / scale_trail_visualization)),cv2.FONT_HERSHEY_COMPLEX, font_size, (magenta))
             # visualization_xB is start location of error and visualization_xA end of error
-        if objekty[id].category == "secondclass" or objekty[id].category == "steamywood" or objekty[id].category == "darksecondclass" :
+        if objekty[id].category == "mark" :
             cv2.rectangle(trail_visualization, (int(visualization_xA), int(yA / scale_trail_visualization)),
                           (int(visualization_xB), int(yB / scale_trail_visualization)), brown, 2)
             cv2.putText(trail_visualization, str(objekty[id].id),
@@ -164,7 +164,7 @@ def check_on_vysialization (trail_visualization,objekty,s_distance):
         # calcculate begining xA and endig xB of rectangle in trai_visualization
         visualization_xA = xA + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
         visualization_xB = xB + dpi_to_pixels(objekty[id].position_on_trail) - dpi_to_pixels(s_distance.value)
-        if objekty[id].category == "secondclass" or objekty[id].category == "steamywood" or objekty[id].category == "darksecondclass":
+        if objekty[id].category == "mark":
             if (visualization_xA < saw_senzor_ofset_from_screen_pixels) and (visualization_xB > saw_senzor_ofset_from_screen_pixels):
                 blink_second = 1
                 break
